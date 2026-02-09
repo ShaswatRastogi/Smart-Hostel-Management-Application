@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "939850531410",
+    "project_id": "smart-hostel-27f16",
+    "storage_bucket": "smart-hostel-27f16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939850531410:android:6d005259111df9e9f6158b",
+        "android_client_info": {
+          "package_name": "com.anonymous.smartstay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcLIivkEbvdMsOM6Pepv4uB2rr4CZj69A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

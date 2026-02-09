@@ -1,0 +1,3 @@
+--- PENDING PAYMENTS LIST ---
+- STUDENT: Shaswat Rastogi | ROLL: R2142220755 | OWE: ₹150,000
+- STUDENT: zuess | ROLL: aj | OWE: ₹54
