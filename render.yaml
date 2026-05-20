@@ -2,6 +2,7 @@ services:
   - type: web
     name: smartstay-backend
     env: node
+    plan: free
     rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -20,6 +21,7 @@ services:
   - type: web
     name: smartstay-ai-service
     env: python
+    plan: free
     rootDir: ai-service
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
