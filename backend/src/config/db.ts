@@ -160,7 +160,7 @@ export const pool = new Proxy({} as Pool, {
         }
 
         if (prop === 'query') {
-            return async (...args: any[]) => {
+            return async (...args: [string, any[]?]) => {
                 try {
                     return await activePool.query(...args);
                 } catch (err: any) {
