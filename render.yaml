@@ -9,8 +9,22 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: AI_SERVICE_URL
         value: https://smartstay-ai-service.onrender.com
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ANDROID_CLIENT_ID
+        sync: false
       - key: EXPO_PUBLIC_FIREBASE_PROJECT_ID
         sync: false
       - key: EXPO_PUBLIC_FIREBASE_APP_ID
@@ -29,4 +43,6 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_API_KEY
         sync: false
