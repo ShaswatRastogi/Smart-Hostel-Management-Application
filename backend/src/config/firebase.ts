@@ -5,9 +5,19 @@ import * as path from 'path';
 const serviceAccountPath = path.resolve(__dirname, '../../../smart-hostel-service-account.json');
 let isInitialized = false;
 
-if (fs.existsSync(serviceAccountPath)) {
-    try {
-        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+try {
+    let serviceAccount: any = null;
+    
+    // 1. Try reading from environment variable first (Best for Render/Cloud)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    } 
+    // 2. Fall back to local file if it exists
+    else if (fs.existsSync(serviceAccountPath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+    }
+
+    if (serviceAccount) {
         if (!admin.apps.length) {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
@@ -16,11 +26,11 @@ if (fs.existsSync(serviceAccountPath)) {
         }
         isInitialized = true;
         console.log('✅ Firebase Admin SDK initialized globally.');
-    } catch (err) {
-        console.error('❌ Failed to initialize Firebase Admin SDK:', err);
+    } else {
+        console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT_JSON env var or smart-hostel-service-account.json file not found — Firebase services disabled.');
     }
-} else {
-    console.warn('⚠️  firebase-service-account.json not found — Firebase services disabled.');
+} catch (err) {
+    console.error('❌ Failed to initialize Firebase Admin SDK:', err);
 }
 
 export const firebaseAdmin = admin;

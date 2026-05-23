@@ -56,7 +56,7 @@ export const getMessages = async (req: Request, res: Response) => {
             // Actually, staff usually clicks a conversation which has an ID.
             // But the frontend currently uses studentId as the URL param.
             if (!targetStaffId) {
-                targetStaffId = userId; // Assume they want to see their own chats with this student
+                targetStaffId = userId ?? null; // Assume they want to see their own chats with this student
             }
         } else {
             // Student
@@ -228,7 +228,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
         if (isStaff(role)) {
             targetStudentId = parseInt(id);
-            if (!targetStaffId) targetStaffId = userId;
+            if (!targetStaffId) targetStaffId = userId ?? null;
         } else {
             const sRes = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
             if (sRes.rows.length === 0) {
