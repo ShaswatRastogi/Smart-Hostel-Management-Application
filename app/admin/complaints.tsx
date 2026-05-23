@@ -405,7 +405,7 @@ export default function ComplaintsPage() {
     return (
       <View style={{ alignItems: 'center', padding: 40 }}>
         <Image
-          source={require('../../assets/images/empty-complaints.png')}
+          source={require('../../assets/images/empty-complaints.jpg')}
           style={{ width: 220, height: 220, resizeMode: 'contain', marginBottom: 16 }}
         />
         <AppText style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No complaints found</AppText>

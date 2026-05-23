@@ -10,10 +10,24 @@
         },
         "preview": {
             "distribution": "internal",
-            "channel": "preview"
+            "channel": "preview",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://smartstay-backend-5a3s.onrender.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "smart-hostel-27f16",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:939850531410:android:6d005259111df9e9f6158b",
+                "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com",
+                "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com"
+            }
         },
         "production": {
-            "channel": "production"
+            "channel": "production",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://smartstay-backend-5a3s.onrender.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "smart-hostel-27f16",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:939850531410:android:6d005259111df9e9f6158b",
+                "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com",
+                "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com"
+            }
         }
     },
     "submit": {

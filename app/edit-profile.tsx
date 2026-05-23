@@ -81,8 +81,13 @@ export default function EditProfile() {
     const pickImage = async () => {
         try {
             const ImagePicker = await import('expo-image-picker');
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                showAlert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+                return;
+            }
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'] as any,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.5,
@@ -103,11 +108,26 @@ export default function EditProfile() {
                 name: 'profile_photo.jpg',
                 type: 'image/jpeg',
             } as any);
-            const response = await api.post('/students/profile/photo', formDataUpload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+
+            const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
+
+            const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, {
+                method: 'POST',
+                body: formDataUpload,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
             });
-            if (response.data.success && response.data.profilePhoto) {
-                setProfilePhoto(response.data.profilePhoto);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Upload failed: ${response.status} ${errorText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.profilePhoto) {
+                setProfilePhoto(result.profilePhoto);
                 DeviceEventEmitter.emit('profileUpdated');
                 showAlert('Success', 'Profile photo updated successfully!', [], 'success');
             }

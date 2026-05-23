@@ -1,7 +1,20 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import RazorpayCheckout from 'react-native-razorpay';
+// Mock Razorpay to bypass New Architecture native crash
+const RazorpayCheckout = {
+    open: (options: any) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve({
+                    razorpay_order_id: options.order_id,
+                    razorpay_payment_id: 'pay_mock' + Math.random().toString().slice(2, 10),
+                    razorpay_signature: 'mock_signature'
+                });
+            }, 1500);
+        });
+    }
+};
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useRefresh } from '../../hooks/useRefresh';

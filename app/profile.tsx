@@ -50,8 +50,14 @@ export default function ProfilePage() {
     const pickImage = async () => {
         try {
             const ImagePicker = await import('expo-image-picker');
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                showAlert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+                return;
+            }
+
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'] as any,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.5,

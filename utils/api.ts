@@ -3,16 +3,8 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 
 const getApiUrl = () => {
-    // 1. Try to auto-detect from debuggerHost (works best during development)
-    const debuggerHost = Constants.expoConfig?.hostUri;
-    if (debuggerHost) {
-        const ip = debuggerHost.split(':')[0];
-        return `http://${ip}:5000`;
-    }
-    // 2. Read from .env (set EXPO_PUBLIC_API_URL in root .env)
-    //    - Emulator: http://10.0.2.2:5000
-    //    - Physical device: http://<your-lan-ip>:5000
-    return process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:5000";
+    // Force the app to use the Render cloud backend to avoid any local IP routing issues
+    return process.env.EXPO_PUBLIC_API_URL || "https://smartstay-backend-5a3s.onrender.com";
 };
 
 export const API_BASE_URL = getApiUrl();

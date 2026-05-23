@@ -9,6 +9,8 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: AI_SERVICE_URL
+        value: https://smartstay-ai-service.onrender.com
       - key: EXPO_PUBLIC_FIREBASE_PROJECT_ID
         sync: false
       - key: EXPO_PUBLIC_FIREBASE_APP_ID
