@@ -65,9 +65,11 @@ export const deregisterPushToken = async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (token) {
             console.log("🔄 Deregistering Push Token for logout");
-            await api.post('/auth/push-token/remove', {}, {
+            const devicePushToken = await AsyncStorage.getItem('devicePushToken');
+            await api.post('/auth/push-token/remove', { pushToken: devicePushToken }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            await AsyncStorage.removeItem('devicePushToken');
             console.log("✅ Push Token deregistered successfully");
         }
     } catch (error) {
@@ -253,6 +255,7 @@ export const usePushNotifications = () => {
                 try {
                     console.log(`🔄 [Push] Syncing Token for ${user.role}: ${user.name || 'User'} (attempt ${attempt})`);
                     await api.post('/auth/push-token', { pushToken: expoPushToken });
+                    await AsyncStorage.setItem('devicePushToken', expoPushToken);
                     console.log('✅ [Push] Token successfully saved/synced to backend');
                 } catch (err: any) {
                     const status = err.response ? err.response.status : 'Network Error';

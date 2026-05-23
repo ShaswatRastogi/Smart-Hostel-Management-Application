@@ -124,6 +124,17 @@ const startServer = async () => {
             ADD COLUMN IF NOT EXISTS sms_otp VARCHAR(10),
             ADD COLUMN IF NOT EXISTS sms_otp_expires TIMESTAMPTZ;
             
+            CREATE TABLE IF NOT EXISTS push_tokens (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                token VARCHAR(255) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            INSERT INTO push_tokens (user_id, token) 
+            SELECT id, push_token FROM users WHERE push_token IS NOT NULL
+            ON CONFLICT (token) DO NOTHING;
+            
             CREATE TABLE IF NOT EXISTS visitors (
                 id SERIAL PRIMARY KEY,
                 student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,

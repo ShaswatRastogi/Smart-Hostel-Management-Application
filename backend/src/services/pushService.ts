@@ -4,7 +4,7 @@ import { query } from '../config/db';
 // Auto-clear a bad token from the database
 async function clearInvalidToken(token: string) {
     try {
-        await query(`UPDATE users SET push_token = NULL WHERE push_token = $1`, [token]);
+        await query(`DELETE FROM push_tokens WHERE token = $1`, [token]);
         console.log(`[Push] 🧹 Cleared invalid token from DB: ${token.substring(0, 20)}...`);
     } catch (e) {
         console.error('[Push] Failed to clear invalid token:', e);
@@ -77,35 +77,60 @@ export const sendPushNotification = async (
 };
 
 // ─── Token Helpers ────────────────────────────────────────────────────────────
-export const getAdminTokens = async (): Promise<string[]> => {
-    const res = await query(`SELECT push_token FROM users WHERE role = 'admin' AND push_token IS NOT NULL`);
-    return res.rows.map(r => r.push_token).filter(Boolean);
+export const getAdminTokens = async (roles: string[] = ['admin', 'owner', 'warden']): Promise<string[]> => {
+    const res = await query(`
+        SELECT t.token 
+        FROM push_tokens t 
+        JOIN users u ON t.user_id = u.id 
+        WHERE u.role = ANY($1)
+    `, [roles]);
+    return res.rows.map(r => r.token).filter(Boolean);
 };
 
 export const getUserToken = async (userId: number, category?: string): Promise<string[]> => {
-    let sql = `SELECT push_token, notification_preferences FROM users WHERE id = $1 AND push_token IS NOT NULL`;
+    let sql = `
+        SELECT t.token, u.notification_preferences 
+        FROM users u 
+        JOIN push_tokens t ON u.id = t.user_id 
+        WHERE u.id = $1
+    `;
     const res = await query(sql, [userId]);
 
-    if (res.rows.length === 0) return [];
+    if (res.rows.length === 0) {
+        // Check if user exists but has no tokens (for preference check log)
+        const userCheck = await query(`SELECT notification_preferences FROM users WHERE id = $1`, [userId]);
+        if (userCheck.rows.length === 0) return [];
+        
+        const prefs = userCheck.rows[0].notification_preferences;
+        if (prefs?.master === false || (category && prefs?.[category] === false)) {
+            console.log(`[Push] 🔇 User ${userId} has disabled notifications. Skipping.`);
+        }
+        return [];
+    }
 
-    const user = res.rows[0];
-    if (user.notification_preferences) {
-        if (user.notification_preferences.master === false) {
+    const prefs = res.rows[0].notification_preferences;
+    if (prefs) {
+        if (prefs.master === false) {
             console.log(`[Push] 🔇 User ${userId} has disabled ALL notifications (master toggle). Skipping.`);
             return [];
         }
 
-        if (category && user.notification_preferences[category] === false) {
+        if (category && prefs[category] === false) {
             console.log(`[Push] 🔇 User ${userId} has disabled "${category}" notifications. Skipping.`);
             return [];
         }
     }
 
-    return [user.push_token].filter(Boolean);
+    return res.rows.map(r => r.token).filter(Boolean);
 };
 
 export const getAllStudentTokens = async (category?: string): Promise<string[]> => {
-    let sql = `SELECT push_token, notification_preferences FROM users WHERE role = 'student' AND push_token IS NOT NULL`;
+    let sql = `
+        SELECT t.token, u.notification_preferences 
+        FROM users u 
+        JOIN push_tokens t ON u.id = t.user_id 
+        WHERE u.role = 'student'
+    `;
     const res = await query(sql);
 
     return res.rows
@@ -116,6 +141,6 @@ export const getAllStudentTokens = async (category?: string): Promise<string[]> 
             }
             return true;
         })
-        .map(r => r.push_token)
+        .map(r => r.token)
         .filter(Boolean);
 };

@@ -306,11 +306,11 @@ export const updatePushToken = async (req: Request, res: Response) => {
     }
 
     try {
-        // First, guarantee no other user owns this physical device token
-        await query('UPDATE users SET push_token = NULL WHERE push_token = $1', [pushToken]);
-
-        // Then, assign it exclusively to the current user
-        await query('UPDATE users SET push_token = $1 WHERE id = $2', [pushToken, userId]);
+        // Assign token exclusively to the current user (overwrites if it belonged to someone else)
+        await query(
+            'INSERT INTO push_tokens (user_id, token) VALUES ($1, $2) ON CONFLICT (token) DO UPDATE SET user_id = EXCLUDED.user_id',
+            [userId, pushToken]
+        );
         res.json({ message: 'Push token updated' });
     } catch (err) {
         console.error('Error updating push token:', err);
@@ -322,6 +322,8 @@ export const removePushToken = async (req: Request, res: Response) => {
     // @ts-ignore
     const userId = req.currentUser?.id;
 
+    const { pushToken } = req.body;
+
     console.log(`[Push] Attempting to remove push token for user ID: ${userId}`);
 
     if (!userId) {
@@ -330,8 +332,13 @@ export const removePushToken = async (req: Request, res: Response) => {
     }
 
     try {
-        const result = await query('UPDATE users SET push_token = NULL WHERE id = $1 RETURNING email', [userId]);
-        console.log(`[Push] Successfully removed push token for user ID: ${userId}, Email: ${result.rows[0]?.email}`);
+        if (pushToken) {
+            await query('DELETE FROM push_tokens WHERE token = $1 AND user_id = $2', [pushToken, userId]);
+            console.log(`[Push] Successfully removed specific push token for user ID: ${userId}`);
+        } else {
+            await query('DELETE FROM push_tokens WHERE user_id = $1', [userId]);
+            console.log(`[Push] Successfully removed ALL push tokens for user ID: ${userId}`);
+        }
         res.json({ message: 'Push token removed successfully' });
     } catch (err: any) {
         console.error('[Push] Error removing push token:', err);
