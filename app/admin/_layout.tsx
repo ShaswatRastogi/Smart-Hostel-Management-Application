@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../utils/ThemeContext';
+import { isAdmin } from '../../utils/authUtils';
 
 
 export default function AdminLayout() {
@@ -15,13 +16,13 @@ export default function AdminLayout() {
         if (!isLoading) {
             // Check if we are trying to access admin
             const inAdminTab = segments[0] === 'admin';
-            if (inAdminTab && (!user || user.role !== 'admin')) {
+            if (inAdminTab && !isAdmin(user)) {
                 router.replace('/login');
             }
         }
     }, [user, isLoading, segments, router]);
 
-    if (isLoading || (!user || user.role !== 'admin')) {
+    if (isLoading || !isAdmin(user)) {
         return <View style={{ flex: 1, backgroundColor: colors.background }} />;
     }
 

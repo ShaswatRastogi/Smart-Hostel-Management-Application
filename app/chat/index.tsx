@@ -3,16 +3,18 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { subscribeToChatList } from '../../utils/chatUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 interface Conversation {
     id: number;
     studentId: number;
+    staffId: number | null;
     studentName: string;
     lastMessage: string;
     time: string;
@@ -111,7 +113,7 @@ export default function ChatIndex() {
         const date = new Date(item.time);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         return (
-            <TouchableOpacity style={[styles.chatItem, { backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]} onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.studentId.toString(), name: item.studentName } })}><View style={styles.avatarWrapper}>{item.profilePhoto ? (<Image source={{ uri: API_BASE_URL + item.profilePhoto }} style={styles.avatar} />) : (<View style={styles.avatarPlaceholder}><Text style={styles.avatarText}>{item.studentName.charAt(0).toUpperCase()}</Text></View>)}{item.unread > 0 ? <View style={styles.unreadDot} /> : null}</View><View style={styles.chatContent}><View style={styles.chatHeader}><Text style={[styles.studentName, { color: theme === 'dark' ? '#F8FAFC' : '#0F172A' }]}>{item.studentName}</Text><Text style={[styles.timeText, { color: theme === 'dark' ? '#94A3B8' : '#64748B' }]}>{timeStr}</Text></View><View style={styles.lastMessageRow}><Text style={[styles.lastMessage, { color: item.unread > 0 ? (theme === 'dark' ? '#E2E8F0' : '#1E293B') : (theme === 'dark' ? '#94A3B8' : '#64748B'), fontWeight: item.unread > 0 ? '700' : '400' }]} numberOfLines={1}>{item.lastMessage || 'No messages yet'}</Text>{item.unread > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{item.unread}</Text></View> : null}</View></View><MaterialCommunityIcons name="chevron-right" size={20} color={theme === 'dark' ? '#334155' : '#CBD5E1'} style={{ marginLeft: 8 }} /></TouchableOpacity>
+            <TouchableOpacity style={[styles.chatItem, { backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]} onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.studentId.toString(), name: item.studentName, staffId: item.staffId?.toString() || '' } })}><View style={styles.avatarWrapper}>{item.profilePhoto ? (<Image source={{ uri: item.profilePhoto.startsWith('http') ? item.profilePhoto : API_BASE_URL + item.profilePhoto }} style={styles.avatar} />) : (<View style={styles.avatarPlaceholder}><AppText style={styles.avatarText}>{item.studentName.charAt(0).toUpperCase()}</AppText></View>)}{item.unread > 0 ? <View style={styles.unreadDot} /> : null}</View><View style={styles.chatContent}><View style={styles.chatHeader}><AppText style={[styles.studentName, { color: theme === 'dark' ? '#F8FAFC' : '#0F172A' }]}>{item.studentName}</AppText><AppText style={[styles.timeText, { color: theme === 'dark' ? '#94A3B8' : '#64748B' }]}>{timeStr}</AppText></View><View style={styles.lastMessageRow}><AppText style={[styles.lastMessage, { color: item.unread > 0 ? (theme === 'dark' ? '#E2E8F0' : '#1E293B') : (theme === 'dark' ? '#94A3B8' : '#64748B'), fontWeight: item.unread > 0 ? '700' : '400' }]} numberOfLines={1}>{item.lastMessage || 'No messages yet'}</AppText>{item.unread > 0 ? <View style={styles.badge}><AppText style={styles.badgeText}>{item.unread}</AppText></View> : null}</View></View><MaterialCommunityIcons name="chevron-right" size={20} color={theme === 'dark' ? '#334155' : '#CBD5E1'} style={{ marginLeft: 8 }} /></TouchableOpacity>
         );
     };
 
@@ -131,7 +133,7 @@ export default function ChatIndex() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialIcons name="chevron-left" size={32} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Messages</Text>
+                    <AppText style={styles.headerTitle}>Messages</AppText>
                     <TouchableOpacity onPress={() => router.push('/chat/new')} style={styles.backBtn}>
                         <MaterialIcons name="add" size={28} color="#fff" />
                     </TouchableOpacity>
@@ -165,7 +167,7 @@ export default function ChatIndex() {
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <MaterialCommunityIcons name={searchQuery ? "chat-alert-outline" : "chat-outline"} size={64} color={colors.textSecondary} />
-                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{searchQuery ? 'No students match search' : 'No conversations yet'}</Text>
+                            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>{searchQuery ? 'No students match search' : 'No conversations yet'}</AppText>
                         </View>
                     } 
                 />

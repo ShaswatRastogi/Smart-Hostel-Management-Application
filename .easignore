@@ -1,0 +1,96 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env.local
+.env.*
+!.env.example
+backend/.env
+ai-service/.env
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders
+/ios
+/android
+
+# Logs
+*.log
+logs/
+backend/*.log
+
+# Database
+*.db
+*.sqlite
+backend/src/database.db
+backend/backups/
+
+# Temporary files
+*_files.txt
+disk_files.txt
+git_files.txt
+missing_files.txt
+
+# Firebase & Service Accounts (NEVER commit)
+
+GoogleService-Info.plist
+firestore.rules
+serviceAccountKey.json
+*firebase-adminsdk*.json
+firebase-service-account.json
+backend/firebase-service-account.json
+*-service-account*.json
+*serviceAccount*.json
+debug.keystore
+
+# Team onboarding (contains secrets - share privately)
+TEAM_ONBOARDING.txt
+
+# IDE
+.vscode/
+.idea/
+
+# User uploads (contains PII)
+backend/uploads/
+uploads/
+backend/users_push_tokens.json
+

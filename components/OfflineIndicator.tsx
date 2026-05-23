@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Animated, StyleSheet, Text } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 import { useOffline } from '../context/OfflineContext';
+import AppText from './AppText';
 
 export default function OfflineIndicator() {
     const { isOnline, isLoading } = useOffline();
@@ -67,9 +68,9 @@ export default function OfflineIndicator() {
                 size={20}
                 color="#fff"
             />
-            <Text style={styles.text}>
+            <AppText style={styles.text}>
                 {isLoading ? 'Syncing data...' : "You're offline"}
-            </Text>
+            </AppText>
         </Animated.View>
     );
 }

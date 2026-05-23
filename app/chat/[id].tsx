@@ -3,17 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StudentDetailsModal from '../../components/StudentDetailsModal';
 import { useAlert } from '../../context/AlertContext';
@@ -23,9 +13,10 @@ import { isAdmin, useUser } from '../../utils/authUtils';
 import { ChatMessage, emitStopTyping, emitTyping, sendMessage, subscribeToMessages } from '../../utils/chatUtils';
 import { deleteStudent } from '../../utils/studentUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function ChatScreen() {
-    const { id, name } = useLocalSearchParams<{ id: string, name?: string }>();
+    const { id, name, staffId } = useLocalSearchParams<{ id: string, name?: string, staffId?: string }>();
     const router = useRouter();
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
@@ -38,8 +29,6 @@ export default function ChatScreen() {
     const currentUserName = isUserAdmin ? 'Admin' : ((user as any)?.displayName || (user as any)?.name || 'Student');
 
     // Determine Chat Title
-    // If Admin -> Show Student Name (passed via params)
-    // If Student -> Show "Admin Support"
     const chatTitle = name || (isUserAdmin ? 'Student Chat' : 'Admin Support');
 
     const [partnerStatus, setPartnerStatus] = useState<{ online: boolean; lastSeen: string | null }>({ online: false, lastSeen: null });
@@ -71,10 +60,11 @@ export default function ChatScreen() {
                     return [msg, ...prev];
                 });
             },
-            (isTyping) => setIsPartnerTyping(isTyping)
+            (isTyping) => setIsPartnerTyping(isTyping),
+            staffId
         );
         return () => unsubscribe();
-    }, [id]);
+    }, [id, staffId]);
 
     const handleTyping = (text: string) => {
         setInputText(text);
@@ -96,10 +86,11 @@ export default function ChatScreen() {
         setInputText(''); // Clear immediately for responsiveness
         if (targetId) emitStopTyping(targetId);
 
+        console.log(`[DEBUG] handleSend: sending to ${id}, staffId=${staffId}`);
         await sendMessage(id, textToSend, {
             _id: currentUserId,
             name: currentUserName
-        });
+        }, staffId);
     };
 
     const handleDeleteStudent = () => {
@@ -153,24 +144,6 @@ export default function ChatScreen() {
         const processed: (ChatMessage | { _id: string, type: 'day', date: string })[] = [];
         let lastDateString = '';
 
-        // Iterate backwards (since messages are Newest -> Oldest)
-        // For visual Top-to-Bottom:
-        // List (Inverted): [Newest (Index 0), ..., Oldest (Index N)]
-        // Visually: Oldest (Top) -> Newest (Bottom)
-
-        // In renderItem, item at Index i is rendered.
-        // We want a date header ABOVE the group of messages from that day.
-        // Inverted list: Date Header should be inserted AFTER the last message of that day in the array (so it renders "above" it).
-
-        // Let's create a new list for non-inverted logic first, then reverse it? 
-        // Or just handle inverted logic.
-
-        // Let's stick to standard handling logic:
-        // We will pass the processed list to FlatList.
-
-        // Array: [MsgToday1, MsgToday2, MsgYest1, MsgYest2]
-        // We want: [MsgToday1, MsgToday2, DayToday, MsgYest1, MsgYest2, DayYest]
-
         for (let i = 0; i < msgs.length; i++) {
             const currentMsg = msgs[i];
             const currentDate = new Date(currentMsg.createdAt);
@@ -178,7 +151,6 @@ export default function ChatScreen() {
 
             processed.push(currentMsg);
 
-            // Check if next message (older) belongs to a different day
             const nextMsg = msgs[i + 1];
             if (nextMsg) {
                 const nextDate = new Date(nextMsg.createdAt);
@@ -187,7 +159,6 @@ export default function ChatScreen() {
                     processed.push({ _id: `day-${dateString}`, type: 'day', date: dateString });
                 }
             } else {
-                // Last message (Oldest) -> Always add its date separator
                 processed.push({ _id: `day-${dateString}`, type: 'day', date: dateString });
             }
         }
@@ -200,7 +171,7 @@ export default function ChatScreen() {
         if (item.type === 'day') {
             return (
                 <View style={[styles.dateSeparator, { marginVertical: 16 }]}>
-                    <Text style={[
+                    <AppText style={[
                         styles.dateText,
                         {
                             color: theme === 'dark' ? '#94A3B8' : '#64748B',
@@ -208,7 +179,7 @@ export default function ChatScreen() {
                         }
                     ]}>
                         {item.date}
-                    </Text>
+                    </AppText>
                 </View>
             );
         }
@@ -226,17 +197,16 @@ export default function ChatScreen() {
                 isMe ? styles.myMessageRow : styles.otherMessageRow,
                 isContinuous ? { marginBottom: 2 } : { marginBottom: 12 }
             ]}>
-                {/* Avatar for 'Other' user only */}
                 {!isMe && !isContinuous && (
                     <View style={styles.messageAvatar}>
                         {item.user.avatar ? (
                             <Image
-                                source={{ uri: `${API_BASE_URL}${item.user.avatar}` }}
+                                source={{ uri: item.user.avatar.startsWith('http') ? item.user.avatar : `${API_BASE_URL}${item.user.avatar}` }}
                                 style={{ width: 36, height: 36, borderRadius: 18 }}
                                 contentFit="cover"
                             />
                         ) : (
-                            <Text style={styles.avatarLetter}>{chatTitle.charAt(0)}</Text>
+                            <AppText style={styles.avatarLetter}>{chatTitle.charAt(0)}</AppText>
                         )}
                     </View>
                 )}
@@ -246,7 +216,7 @@ export default function ChatScreen() {
                     styles.bubble,
                     isMe ? styles.myBubble : styles.otherBubble,
                     {
-                        backgroundColor: isMe ? '#2CB4FF' : (theme === 'dark' ? '#1E293B' : '#FFFFFF'), // Vibrant Cyan-Blue for me
+                        backgroundColor: isMe ? '#2CB4FF' : (theme === 'dark' ? '#1E293B' : '#FFFFFF'),
                         borderBottomRightRadius: isMe && !isContinuous ? 4 : 20,
                         borderTopRightRadius: isMe && isContinuous ? 4 : 20,
                         borderBottomLeftRadius: !isMe && !isContinuous ? 4 : 20,
@@ -255,19 +225,19 @@ export default function ChatScreen() {
                         borderColor: theme === 'dark' ? '#334155' : 'transparent',
                     }
                 ]}>
-                    <Text style={[
+                    <AppText style={[
                         styles.messageText,
                         { color: isMe ? '#ffffff' : (theme === 'dark' ? '#F8FAFC' : '#0F172A') }
                     ]}>
                         {item.text}
-                    </Text>
+                    </AppText>
                     <View style={styles.timeContainer}>
-                        <Text style={[
+                        <AppText style={[
                             styles.timeText,
                             { color: isMe ? 'rgba(255,255,255,0.85)' : (theme === 'dark' ? '#94A3B8' : '#64748B') }
                         ]}>
                             {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                        </Text>
+                        </AppText>
                         {isMe && (
                             <MaterialCommunityIcons
                                 name={item.read ? "check-all" : "check"}
@@ -294,9 +264,8 @@ export default function ChatScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#0F172A' : '#F1F5F9' }]}>
-            {/* Modern Gradient Header */}
             <LinearGradient
-                colors={['#1e3c72', '#2a5298']} // Deep Blue Gradient
+                colors={['#1e3c72', '#2a5298']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
@@ -314,20 +283,23 @@ export default function ChatScreen() {
                         <View style={styles.headerAvatar}>
                             {partnerDetails?.profilePhoto ? (
                                 <Image
-                                    source={{ uri: `${API_BASE_URL}${partnerDetails.profilePhoto}` }}
+                                    source={{ uri: partnerDetails.profilePhoto.startsWith('http') ? partnerDetails.profilePhoto : `${API_BASE_URL}${partnerDetails.profilePhoto}` }}
                                     style={{ width: 44, height: 44, borderRadius: 22 }}
                                     contentFit="cover"
                                 />
                             ) : (
-                                <Text style={styles.headerAvatarText}>{chatTitle.charAt(0).toUpperCase()}</Text>
+                                <AppText style={styles.headerAvatarText}>{chatTitle.charAt(0).toUpperCase()}</AppText>
                             )}
                             {partnerStatus.online && <View style={styles.onlineDot} />}
                         </View>
                         <View>
-                            <Text style={styles.headerName}>{chatTitle}</Text>
-                            <Text style={[styles.headerStatus, { color: partnerStatus.online ? '#4ADE80' : 'rgba(255,255,255,0.7)' }]}>
+                            <AppText style={styles.headerName}>{chatTitle}</AppText>
+                            {staffId && !isUserAdmin && (
+                                <AppText style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '600' }}>Direct Message to Warden</AppText>
+                            )}
+                            <AppText style={[styles.headerStatus, { color: partnerStatus.online ? '#4ADE80' : 'rgba(255,255,255,0.7)' }]}>
                                 {getStatusText()}
-                            </Text>
+                            </AppText>
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -338,7 +310,6 @@ export default function ChatScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                {/* Chat Area */}
                 <LinearGradient
                     colors={theme === 'dark' ? ['#0B1121', '#0F172A'] : ['#F8FAFC', '#F1F5F9']}
                     style={{ flex: 1 }}
@@ -363,14 +334,13 @@ export default function ChatScreen() {
                     {isPartnerTyping && (
                         <View style={styles.typingIndicatorContainer}>
                             <View style={[styles.typingBubble, { backgroundColor: theme === 'dark' ? '#1E293B' : '#E2E8F0' }]}>
-                                <Text style={[styles.typingIndicatorText, { color: theme === 'dark' ? '#94A3B8' : '#64748B' }]}>
+                                <AppText style={[styles.typingIndicatorText, { color: theme === 'dark' ? '#94A3B8' : '#64748B' }]}>
                                     {chatTitle} is typing...
-                                </Text>
+                                </AppText>
                             </View>
                         </View>
                     )}
 
-                    {/* Floating Input Area with Glassmorphism */}
                     <View style={[styles.inputWrapper, { paddingBottom: Math.max(insets.bottom, 12), paddingTop: 8, backgroundColor: theme === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)' }]}>
                         <View style={[styles.inputContainer, { backgroundColor: theme === 'dark' ? '#1E293B' : '#F1F5F9', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0', borderWidth: 1 }]}>
                             <TextInput
@@ -405,8 +375,6 @@ export default function ChatScreen() {
         </View>
     );
 }
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -463,7 +431,7 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: '#4ADE80', // Green
+        backgroundColor: '#4ADE80',
         borderWidth: 2,
         borderColor: '#fff',
     },
@@ -534,12 +502,8 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
-    myBubble: {
-        // Handled in inline style for theme dynamic
-    },
-    otherBubble: {
-        // Handled inline
-    },
+    myBubble: {},
+    otherBubble: {},
     messageText: {
         fontSize: 15,
         lineHeight: 22,
@@ -555,8 +519,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '500',
     },
-
-    // Input Bar
     inputWrapper: {
         paddingHorizontal: 16,
         paddingTop: 10,
@@ -566,7 +528,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 8,
         paddingVertical: 8,
-        borderRadius: 30, // Pill shape
+        borderRadius: 30,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,

@@ -2,9 +2,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function BusTimings() {
     // Define BusRoute interface locally
@@ -74,8 +75,8 @@ export default function BusTimings() {
                 <SafeAreaView edges={['top', 'left', 'right']}>
                     <View style={styles.headerContent}>
                         <View>
-                            <Text style={styles.headerTitle}>Bus Schedule</Text>
-                            <Text style={styles.headerSubtitle}>Campus Shuttle Timings</Text>
+                            <AppText style={styles.headerTitle}>Bus Schedule</AppText>
+                            <AppText style={styles.headerSubtitle}>Campus Shuttle Timings</AppText>
                         </View>
                         <View style={styles.headerIcon}>
                             <MaterialCommunityIcons name="bus-clock" size={28} color="#fff" />
@@ -99,9 +100,9 @@ export default function BusTimings() {
             >
                 <View style={{ padding: 20 }}>
                     {routes.length === 0 ? (
-                        <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
+                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
                             No bus timings available at the moment.
-                        </Text>
+                        </AppText>
                     ) : (
                         routes.map((route) => (
                             <View key={route.id} style={styles.section}>
@@ -109,7 +110,7 @@ export default function BusTimings() {
                                     <View style={[styles.routeIconBox, { backgroundColor: isDark ? '#172554' : '#EFF6FF' }]}>
                                         <MaterialCommunityIcons name="bus-stop" size={22} color={isDark ? '#60A5FA' : '#004e92'} />
                                     </View>
-                                    <Text style={[styles.routeTitle, { color: colors.text }]}>{route.route}</Text>
+                                    <AppText style={[styles.routeTitle, { color: colors.text }]}>{route.route}</AppText>
                                 </View>
 
                                 <View style={[styles.timingsCard, styles.shadowProp, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -124,7 +125,7 @@ export default function BusTimings() {
                                             <View style={[styles.timeIconBox, { backgroundColor: isDark ? colors.background : '#F8FAFC' }]}>
                                                 <MaterialCommunityIcons name="clock-time-four-outline" size={18} color={colors.textSecondary} />
                                             </View>
-                                            <Text style={[styles.timeText, { color: colors.text }]}>{item}</Text>
+                                            <AppText style={[styles.timeText, { color: colors.text }]}>{item}</AppText>
                                         </View>
                                     ))}
 
@@ -132,7 +133,7 @@ export default function BusTimings() {
                                     {route.message ? (
                                         <View style={{ padding: 12, backgroundColor: isDark ? 'rgba(59,130,246,0.1)' : '#EFF6FF', borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : '#E2E8F0', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                                             <MaterialCommunityIcons name="information-outline" size={16} color={colors.primary} />
-                                            <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1 }}>{route.message}</Text>
+                                            <AppText style={{ fontSize: 13, color: colors.textSecondary, flex: 1 }}>{route.message}</AppText>
                                         </View>
                                     ) : null}
                                 </View>
@@ -142,9 +143,9 @@ export default function BusTimings() {
 
                     <View style={styles.infoCard}>
                         <MaterialCommunityIcons name="information" size={24} color="#004e92" />
-                        <Text style={styles.infoText}>
+                        <AppText style={styles.infoText}>
                             Please arrive 5 minutes before the scheduled time at the pickup point. Timings are managed by the administration.
-                        </Text>
+                        </AppText>
                     </View>
                 </View>
             </ScrollView>

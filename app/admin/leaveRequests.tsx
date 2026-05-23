@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -10,6 +10,7 @@ import { useTheme } from '../../utils/ThemeContext';
 import { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { getAllLeaves, LeaveRequest, updateLeaveStatus } from '../../utils/leavesUtils';
+import AppText from '../../components/AppText';
 
 export default function LeaveRequestsPage() {
   const { colors, theme } = useTheme();
@@ -161,7 +162,7 @@ export default function LeaveRequestsPage() {
             <MaterialIcons name="chevron-left" size={32} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Leave Requests</Text>
+            <AppText style={styles.headerTitle}>Leave Requests</AppText>
           </View>
         </LinearGradient>
 
@@ -174,8 +175,8 @@ export default function LeaveRequestsPage() {
             style={styles.heroCard}
           >
             <View>
-              <Text style={styles.heroLabel}>Pending Request{pendingCount !== 1 ? 's' : ''}</Text>
-              <Text style={styles.heroValue}>{pendingCount}</Text>
+              <AppText style={styles.heroLabel}>Pending Request{pendingCount !== 1 ? 's' : ''}</AppText>
+              <AppText style={styles.heroValue}>{pendingCount}</AppText>
             </View>
             <MaterialIcons name="clock-outline" size={48} color="rgba(255,255,255,0.9)" />
             <View style={styles.cardWatermark}>
@@ -193,9 +194,9 @@ export default function LeaveRequestsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="check-circle-outline" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>Approved</Text>
+                <AppText style={styles.miniLabel}>Approved</AppText>
               </View>
-              <Text style={styles.miniValue}>{approvedCount}</Text>
+              <AppText style={styles.miniValue}>{approvedCount}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="check-circle-outline" size={80} color="#fff" />
               </View>
@@ -210,9 +211,9 @@ export default function LeaveRequestsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="calendar-month" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>Total</Text>
+                <AppText style={styles.miniLabel}>Total</AppText>
               </View>
-              <Text style={styles.miniValue}>{requests.length}</Text>
+              <AppText style={styles.miniValue}>{requests.length}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="calendar-month" size={80} color="#fff" />
               </View>
@@ -232,7 +233,7 @@ export default function LeaveRequestsPage() {
                 style={[styles.filterBtn, activeTab === index && styles.filterBtnActive]}
                 onPress={() => setActiveTab(index)}
               >
-                <Text style={[styles.filterBtnText, activeTab === index && styles.filterBtnTextActive]}>{item.label}</Text>
+                <AppText style={[styles.filterBtnText, activeTab === index && styles.filterBtnTextActive]}>{item.label}</AppText>
               </TouchableOpacity>
             )}
           />
@@ -296,20 +297,20 @@ export default function LeaveRequestsPage() {
               >
                 {item.studentProfilePhoto ? (
                   <Image
-                    source={{ uri: `${API_BASE_URL}${item.studentProfilePhoto}` }}
+                    source={{ uri: item.studentProfilePhoto.startsWith('http') ? item.studentProfilePhoto : `${API_BASE_URL}${item.studentProfilePhoto}` }}
                     style={{ width: '100%', height: '100%' }}
                   />
                 ) : (
-                  <Text style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
+                  <AppText style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
                     {item.studentName.charAt(0).toUpperCase()}
-                  </Text>
+                  </AppText>
                 )}
               </LinearGradient>
               <View style={styles.textInfo}>
-                <Text style={[styles.studentName, { color: colors.text }]}>{item.studentName}</Text>
-                <Text style={[styles.dateRange, { color: colors.textSecondary }]}>
+                <AppText style={[styles.studentName, { color: colors.text }]}>{item.studentName}</AppText>
+                <AppText style={[styles.dateRange, { color: colors.textSecondary }]}>
                   {new Date(item.startDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} - {new Date(item.endDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                </Text>
+                </AppText>
               </View>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
@@ -320,22 +321,26 @@ export default function LeaveRequestsPage() {
           {selectedId === item.id && (
             <View style={[styles.expandedContent, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#F8FAFC' }]}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Room No:</Text>
-                <Text style={styles.detailValue}>{item.studentRoom}</Text>
+                <AppText style={styles.detailLabel}>Room No:</AppText>
+                <AppText style={styles.detailValue}>{item.studentRoom}</AppText>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Reason:</Text>
-                <Text style={[styles.detailValue, { flex: 1, textAlign: 'right' }]}>{item.reason}</Text>
+                <AppText style={styles.detailLabel}>Going to:</AppText>
+                <AppText style={[styles.detailValue, { flex: 1, textAlign: 'right' }]}>{item.category || 'General'}</AppText>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Duration:</Text>
-                <Text style={styles.detailValue}>{item.days} days</Text>
+                <AppText style={styles.detailLabel}>Reason:</AppText>
+                <AppText style={[styles.detailValue, { flex: 1, textAlign: 'right' }]}>{item.reason}</AppText>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Current Status:</Text>
-                <Text style={[styles.detailValue, { color: statusColor, fontWeight: '800' }]}>
+                <AppText style={styles.detailLabel}>Duration:</AppText>
+                <AppText style={styles.detailValue}>{item.days} days</AppText>
+              </View>
+              <View style={styles.detailRow}>
+                <AppText style={styles.detailLabel}>Current Status:</AppText>
+                <AppText style={[styles.detailValue, { color: statusColor, fontWeight: '800' }]}>
                   {item.status.toUpperCase()}
-                </Text>
+                </AppText>
               </View>
 
               {item.status === 'pending' && (
@@ -345,24 +350,24 @@ export default function LeaveRequestsPage() {
                     onPress={() => handleUpdateStatus(item.id, 'approved')}
                   >
                     <MaterialIcons name="check" size={16} color="#fff" />
-                    <Text style={styles.actionBtnText}>Approve</Text>
+                    <AppText style={styles.actionBtnText}>Approve</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.actionBtn, styles.rejectBtn]}
                     onPress={() => handleUpdateStatus(item.id, 'rejected')}
                   >
                     <MaterialIcons name="close" size={16} color="#fff" />
-                    <Text style={styles.actionBtnText}>Reject</Text>
+                    <AppText style={styles.actionBtnText}>Reject</AppText>
                   </TouchableOpacity>
                 </View>
               )}
 
               {item.status !== 'pending' && (
                 <View style={styles.statusMessage}>
-                  <Text style={styles.statusMessageText}>
+                  <AppText style={styles.statusMessageText}>
                     This request has already been{' '}
-                    <Text style={{ fontWeight: '700' }}>{item.status}</Text>
-                  </Text>
+                    <AppText style={{ fontWeight: '700' }}>{item.status}</AppText>
+                  </AppText>
                 </View>
               )}
             </View>
@@ -390,7 +395,7 @@ export default function LeaveRequestsPage() {
     return (
       <View style={{ alignItems: 'center', padding: 40 }}>
         <MaterialIcons name="calendar-remove" size={80} color="#CBD5E1" style={{ marginBottom: 16 }} />
-        <Text style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No leave requests found</Text>
+        <AppText style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No leave requests found</AppText>
       </View>
     );
   }
@@ -691,7 +696,7 @@ export default function LeaveRequestsPage() {
   if (!isAdmin(user))
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Access denied.</Text>
+        <AppText>Access denied.</AppText>
       </View>
     );
 

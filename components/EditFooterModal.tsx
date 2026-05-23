@@ -1,19 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import { updateHostelInfo } from '../utils/hostelUtils';
 import InputField from './InputField';
+import AppText from './AppText';
 
 interface EditFooterModalProps {
     visible: boolean;
@@ -91,15 +82,15 @@ export default function EditFooterModal({ visible, onClose, currentFooterText, o
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Edit Footer Note</Text>
+                        <AppText style={styles.modalTitle}>Edit Footer Note</AppText>
                         <TouchableOpacity onPress={onClose}>
                             <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
                     </View>
 
-                    <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
+                    <AppText style={{ color: colors.textSecondary, marginBottom: 16 }}>
                         This text will appear at the bottom of the facilities list for all users.
-                    </Text>
+                    </AppText>
 
                     <InputField
                         placeholder="e.g. Terms & Conditions, Contact: +91..."
@@ -119,7 +110,7 @@ export default function EditFooterModal({ visible, onClose, currentFooterText, o
                         {saving ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.submitBtnText}>Save Footer</Text>
+                            <AppText style={styles.submitBtnText}>Save Footer</AppText>
                         )}
                     </TouchableOpacity>
                 </View>

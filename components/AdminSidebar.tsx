@@ -2,7 +2,7 @@ import { MaterialCommunityIcons as MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   SharedValue,
   interpolate,
@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { setStoredUser } from '../utils/authUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 
 
@@ -30,8 +31,16 @@ type NavItem = {
 };
 
 export const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Home', icon: 'home', color: '#3B82F6', path: '/admin' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'view-dashboard', color: '#3B82F6', path: '/admin' },
   { id: 'studentManagement', label: 'Student Management', icon: 'account-school', color: '#6366F1', path: '/admin/student-management' },
+  { id: 'attendance', label: 'Attendance', icon: 'calendar-check', color: '#10B981', path: '/admin/attendance' },
+  { id: 'mess', label: 'Mess Menu', icon: 'silverware-fork-knife', color: '#F59E0B', path: '/admin/messMenu' },
+  { id: 'laundry', label: 'Laundry', icon: 'tshirt-crew', color: '#3B82F6', path: '/admin/laundry' },
+  { id: 'cleaning', label: 'Cleaning', icon: 'broom', color: '#059669', path: '/admin/services' },
+  { id: 'maintenance', label: 'Maintenance', icon: 'wrench', color: '#64748B', path: '/admin/complaints' },
+  { id: 'notices', label: 'Notice Board', icon: 'bullhorn', color: '#8B5CF6', path: '/admin/notices' },
+  { id: 'chat', label: 'Chat Support', icon: 'message-text', color: '#6366F1', path: '/chat' },
+  { id: 'teamManagement', label: 'Team Management', icon: 'account-group', color: '#10B981', path: '/admin/team' },
 ];
 
 interface AdminSidebarProps {
@@ -128,6 +137,27 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
 
   const renderNavItem = (item: NavItem, level = 0) => {
     const isActive = activeNav === item.id;
+    const { useUser, isWardenOrOwner, isAdmin } = require('../utils/authUtils');
+    const user = useUser();
+    
+    // Role-based visibility logic
+    const role = user?.role;
+    const isPowerUser = isWardenOrOwner(user) || role === 'admin';
+
+    // Define allowed items per role
+    const rolePermissions: Record<string, string[]> = {
+      'owner': ['dashboard', 'studentManagement', 'teamManagement'],
+      'admin': ['dashboard', 'studentManagement', 'teamManagement'],
+      'warden': ['dashboard', 'studentManagement', 'teamManagement'],
+      'guard': ['dashboard', 'attendance', 'notices', 'chat'],
+      'mess_staff': ['dashboard', 'mess', 'notices', 'chat'],
+      'laundry_staff': ['dashboard', 'laundry', 'notices', 'chat'],
+      'cleaning_staff': ['dashboard', 'cleaning', 'notices', 'chat'],
+      'maintenance_staff': ['dashboard', 'maintenance', 'notices', 'chat'],
+    };
+
+    const allowedItems = rolePermissions[role] || ['dashboard', 'notices', 'chat'];
+    if (!allowedItems.includes(item.id)) return null;
 
     return (
       <View key={item.id}>
@@ -146,12 +176,12 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
               color={isActive ? item.color : colors.textSecondary}
             />
           </View>
-          <Text style={[
+          <AppText style={[
             styles.navText,
             { color: isActive ? item.color : colors.textSecondary, fontWeight: isActive ? '700' : '600', flex: 1 }
           ]}>
             {item.label}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
     );
@@ -172,7 +202,7 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
               style={{ width: 40, height: 40, borderRadius: 10 }}
               resizeMode="contain"
             />
-            <Text style={styles.sidebarTitle}>SmartStay</Text>
+            <AppText style={styles.sidebarTitle}>SmartStay</AppText>
           </View>
           <TouchableOpacity onPress={onClose}>
             <MaterialIcons name="close" size={24} color="#fff" />
@@ -185,7 +215,7 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
 
         <TouchableOpacity style={[styles.logoutBtn, { borderTopColor: colors.border }]} onPress={handleLogout}>
           <MaterialIcons name="logout" size={20} color="#EF4444" />
-          <Text style={styles.logoutText}>Log Out</Text>
+          <AppText style={styles.logoutText}>Log Out</AppText>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>

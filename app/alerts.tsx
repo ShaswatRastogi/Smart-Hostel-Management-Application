@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoticeListSkeleton, StudentComplaintListSkeleton } from '../components/SkeletonLists';
 import { useRefresh } from '../hooks/useRefresh';
@@ -11,6 +11,7 @@ import { Complaint, subscribeToStudentComplaints } from '../utils/complaintsSync
 import { Notice, subscribeToNotices } from '../utils/noticesSyncUtils';
 import { useTheme } from '../utils/ThemeContext';
 import { formatUniversalTime } from '../utils/timeUtils';
+import AppText from '../components/AppText';
 
 const { width } = Dimensions.get('window');
 
@@ -167,7 +168,7 @@ export default function Alerts() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialIcons name="chevron-left" size={32} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Notifications</Text>
+                    <AppText style={styles.headerTitle}>Notifications</AppText>
 
                     {/* Clear Button (Always visible on Alerts tab) */}
                     {activeTab === 'alerts' ? (
@@ -176,7 +177,7 @@ export default function Alerts() {
                             style={styles.clearBtn}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.clearBtnText}>CLEAR</Text>
+                            <AppText style={styles.clearBtnText}>CLEAR</AppText>
                         </TouchableOpacity>
                     ) : (
                         <View style={styles.notificationBadge}>
@@ -199,13 +200,13 @@ export default function Alerts() {
                             ]}
                             onPress={() => setActiveTab(tab)}
                         >
-                            <Text style={[
+                            <AppText style={[
                                 styles.navItemLabel,
                                 { color: activeTab === tab ? colors.primary : colors.textSecondary },
                                 activeTab === tab && { fontWeight: '700' }
                             ]}>
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            </Text>
+                            </AppText>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -234,18 +235,18 @@ export default function Alerts() {
                                                     <MaterialCommunityIcons name="bullhorn" size={20} color={isDark ? '#60A5FA' : '#004e92'} />
                                                 </View>
                                                 <View style={{ flex: 1 }}>
-                                                    <Text style={[styles.cardTitle, { color: colors.text }]}>{notice.title}</Text>
-                                                    <Text style={[styles.cardDate, { color: colors.textSecondary }]}>{formatUniversalTime(notice.date)}</Text>
+                                                    <AppText style={[styles.cardTitle, { color: colors.text }]}>{notice.title}</AppText>
+                                                    <AppText style={[styles.cardDate, { color: colors.textSecondary }]}>{formatUniversalTime(notice.date)}</AppText>
                                                 </View>
                                                 {notice.priority === 'emergency' && <MaterialIcons name="warning" size={20} color="#EF4444" />}
                                             </View>
-                                            <Text style={[styles.cardBody, { color: colors.text }]}>{notice.body}</Text>
+                                            <AppText style={[styles.cardBody, { color: colors.text }]}>{notice.body}</AppText>
                                         </View>
                                     ))
                                 ) : (
                                     <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                         <MaterialCommunityIcons name="bell-sleep" size={48} color={isDark ? colors.secondary : "#CBD5E1"} />
-                                        <Text style={[styles.emptyText, { color: colors.text }]}>No new notices</Text>
+                                        <AppText style={[styles.emptyText, { color: colors.text }]}>No new notices</AppText>
                                     </View>
                                 )}
                             </>
@@ -263,15 +264,15 @@ export default function Alerts() {
                                             style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.textSecondary }]}
                                         >
                                             <View style={styles.cardHeaderRow}>
-                                                <Text style={[styles.cardTitle, { color: colors.text }]}>{complaint.title}</Text>
+                                                <AppText style={[styles.cardTitle, { color: colors.text }]}>{complaint.title}</AppText>
                                                 <View style={[styles.statusTag, { backgroundColor: getPriorityColor(complaint.priority) + '20' }]}>
-                                                    <Text style={[styles.statusTagText, { color: getPriorityColor(complaint.priority) }]}>
+                                                    <AppText style={[styles.statusTagText, { color: getPriorityColor(complaint.priority) }]}>
                                                         {complaint.priority?.toUpperCase()}
-                                                    </Text>
+                                                    </AppText>
                                                 </View>
                                             </View>
 
-                                            <Text style={[styles.cardBody, { marginTop: 8, color: colors.text }]}>{complaint.description}</Text>
+                                            <AppText style={[styles.cardBody, { marginTop: 8, color: colors.text }]}>{complaint.description}</AppText>
 
                                             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -282,22 +283,22 @@ export default function Alerts() {
                                                         size={16}
                                                         color={complaint.status === 'resolved' ? '#10B981' : colors.textSecondary}
                                                     />
-                                                    <Text style={[
+                                                    <AppText style={[
                                                         styles.statusText,
                                                         { color: complaint.status === 'resolved' ? '#10B981' : colors.textSecondary },
                                                         complaint.status === 'resolved' && { fontWeight: '600' }
                                                     ]}>
                                                         {complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
-                                                    </Text>
+                                                    </AppText>
                                                 </View>
-                                                <Text style={[styles.cardDate, { color: colors.textSecondary }]}>{formatDate(complaint.createdAt)}</Text>
+                                                <AppText style={[styles.cardDate, { color: colors.textSecondary }]}>{formatDate(complaint.createdAt)}</AppText>
                                             </View>
                                         </View>
                                     ))
                                 ) : (
                                     <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                         <MaterialCommunityIcons name="clipboard-check-outline" size={48} color={isDark ? colors.secondary : "#CBD5E1"} />
-                                        <Text style={[styles.emptyText, { color: colors.text }]}>No complaints history</Text>
+                                        <AppText style={[styles.emptyText, { color: colors.text }]}>No complaints history</AppText>
                                     </View>
                                 )}
                             </>
@@ -307,8 +308,8 @@ export default function Alerts() {
                         {activeTab === 'documents' && (
                             <View style={[styles.card, styles.emptyState, { height: 200, backgroundColor: colors.card, shadowColor: colors.textSecondary }]}>
                                 <MaterialCommunityIcons name="file-document-outline" size={48} color={isDark ? colors.secondary : "#CBD5E1"} />
-                                <Text style={[styles.emptyText, { color: colors.text }]}>No documents available</Text>
-                                <Text style={[styles.subEmptyText, { color: colors.textSecondary }]}>Hostel circulars and forms will appear here.</Text>
+                                <AppText style={[styles.emptyText, { color: colors.text }]}>No documents available</AppText>
+                                <AppText style={[styles.subEmptyText, { color: colors.textSecondary }]}>Hostel circulars and forms will appear here.</AppText>
                             </View>
                         )}
                     </View>

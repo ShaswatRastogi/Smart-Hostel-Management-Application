@@ -3,18 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
 import { useAccessibilityStore } from '../../store/useAccessibilityStore';
 import { triggerHaptic } from '../../utils/haptics';
+import AppText from '../../components/AppText';
 
 const FONT_SIZES = [
   { id: 'small', label: 'Small', scale: 0.85, preview: 13 },
@@ -30,16 +24,18 @@ export default function Accessibility() {
 
   const {
     fontSize: selectedFontSize,
-    reduceMotion,
     hapticFeedback,
     highContrast,
     boldText,
     setFontSize,
-    setReduceMotion,
     setHapticFeedback,
     setHighContrast,
     setBoldText
   } = useAccessibilityStore();
+
+  const textContrastColor = highContrast ? (isDark ? '#FFFFFF' : '#000000') : colors.text;
+  const textSecondaryContrastColor = highContrast ? (isDark ? '#E2E8F0' : '#1E293B') : colors.textSecondary;
+  const borderContrastColor = highContrast ? (isDark ? '#475569' : '#94A3B8') : colors.border;
 
   const handleToggle = (setter: any, value: boolean) => {
     triggerHaptic('light');
@@ -50,7 +46,6 @@ export default function Accessibility() {
       // Need to find the key. For simplicity here, we'll map setter names to API keys, 
       // or we can just send the whole pref payload in real app.
       let key = '';
-      if (setter === setReduceMotion) key = 'reduce_motion';
       if (setter === setHapticFeedback) key = 'haptic_feedback';
       if (setter === setHighContrast) key = 'high_contrast';
       if (setter === setBoldText) key = 'bold_text';
@@ -70,19 +65,19 @@ export default function Accessibility() {
   };
 
   const ToggleRow = ({ icon, iconColor, iconBg, label, description, value, onToggle, isLast }: any) => (
-    <View style={[styles.toggleRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+    <View style={[styles.toggleRow, !isLast && { borderBottomWidth: highContrast ? 2 : 1, borderBottomColor: borderContrastColor }]}>
       <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
         <MaterialCommunityIcons name={icon} size={22} color={iconColor} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
-        <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{description}</Text>
+        <AppText style={[styles.rowLabel, { color: textContrastColor }]}>{label}</AppText>
+        <AppText style={[styles.rowDesc, { color: textSecondaryContrastColor }]}>{description}</AppText>
       </View>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: colors.border, true: '#60A5FA' }}
-        thumbColor={value ? '#004e92' : '#f4f3f4'}
+        trackColor={{ false: borderContrastColor, true: highContrast ? '#2563EB' : '#60A5FA' }}
+        thumbColor={value ? (highContrast ? '#003366' : '#004e92') : '#f4f3f4'}
       />
     </View>
   );
@@ -101,7 +96,7 @@ export default function Accessibility() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Accessibility</Text>
+          <AppText style={styles.headerTitle}>Accessibility</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -118,15 +113,15 @@ export default function Accessibility() {
               <MaterialCommunityIcons name="human-handsup" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Personalize Your Experience</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
-            Adjust text size, contrast, and motion to make the app comfortable for you.
-          </Text>
+          <AppText style={[styles.heroTitle, { color: textContrastColor }]}>Personalize Your Experience</AppText>
+          <AppText style={[styles.heroSub, { color: textSecondaryContrastColor }]}>
+            Adjust text size, contrast, and layout to make the app comfortable for you.
+          </AppText>
         </View>
 
         {/* Font Size Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>TEXT SIZE</Text>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <AppText style={[styles.sectionTitle, { color: textSecondaryContrastColor }]}>TEXT SIZE</AppText>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: borderContrastColor, borderWidth: highContrast ? 2 : 1 }]}>
           {FONT_SIZES.map((size, index) => {
             const isSelected = selectedFontSize === size.id;
             return (
@@ -134,16 +129,16 @@ export default function Accessibility() {
                 key={size.id}
                 style={[
                   styles.fontRow,
-                  index !== FONT_SIZES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                  isSelected && { backgroundColor: isDark ? 'rgba(96,165,250,0.06)' : 'rgba(0,78,146,0.04)' },
+                  index !== FONT_SIZES.length - 1 && { borderBottomWidth: highContrast ? 2 : 1, borderBottomColor: borderContrastColor },
+                  isSelected && { backgroundColor: isDark ? (highContrast ? 'rgba(96,165,250,0.15)' : 'rgba(96,165,250,0.06)') : (highContrast ? 'rgba(0,78,146,0.1)' : 'rgba(0,78,146,0.04)') },
                 ]}
                 onPress={() => handleFontSelect(size.id)}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fontLabel, { color: colors.text, fontSize: size.preview }]}>{size.label}</Text>
-                  <Text style={[styles.fontPreview, { color: colors.textSecondary, fontSize: size.preview - 2 }]}>
+                  <AppText style={[styles.fontLabel, { color: textContrastColor, fontSize: size.preview }]}>{size.label}</AppText>
+                  <AppText style={[styles.fontPreview, { color: textSecondaryContrastColor, fontSize: size.preview - 2 }]}>
                     Preview text at this size
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={[styles.radioOuter, {
                   borderColor: isSelected ? '#004e92' : colors.border,
@@ -157,8 +152,8 @@ export default function Accessibility() {
         </View>
 
         {/* Visual Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>VISUAL</Text>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <AppText style={[styles.sectionTitle, { color: textSecondaryContrastColor }]}>VISUAL</AppText>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: borderContrastColor, borderWidth: highContrast ? 2 : 1 }]}>
           <ToggleRow
             icon="format-bold"
             iconColor="#8B5CF6"
@@ -180,18 +175,9 @@ export default function Accessibility() {
           />
         </View>
 
-        {/* Motion & Feedback */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>MOTION & FEEDBACK</Text>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <ToggleRow
-            icon="motion-outline"
-            iconColor="#EF4444"
-            iconBg="rgba(239, 68, 68, 0.1)"
-            label="Reduce Motion"
-            description="Minimize animations and transitions"
-            value={reduceMotion}
-            onToggle={(v: boolean) => handleToggle(setReduceMotion, v)}
-          />
+        {/* Feedback */}
+        <AppText style={[styles.sectionTitle, { color: textSecondaryContrastColor }]}>FEEDBACK</AppText>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: borderContrastColor, borderWidth: highContrast ? 2 : 1 }]}>
           <ToggleRow
             icon="vibrate"
             iconColor="#10B981"
@@ -204,9 +190,9 @@ export default function Accessibility() {
           />
         </View>
 
-        <Text style={[styles.footerNote, { color: colors.textSecondary }]}>
+        <AppText style={[styles.footerNote, { color: textSecondaryContrastColor }]}>
           These accessibility changes apply instantly across the entire app!
-        </Text>
+        </AppText>
       </ScrollView>
     </View>
   );

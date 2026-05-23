@@ -28,6 +28,12 @@ export const initSocket = (server: http.Server) => {
             console.log(`Admin ${socket.id} joined global chat list updates`);
         });
 
+        // Join staff-specific conversation list for 1-on-1 DM updates
+        socket.on('joinStaffChatList', (staffUserId: string) => {
+            socket.join(`staff:${staffUserId}:conversations`);
+            console.log(`Staff ${socket.id} joined personal chat list: staff:${staffUserId}:conversations`);
+        });
+
         // Handle Typing indicators
         socket.on('typing', ({ conversationId, user }) => {
             socket.to(conversationId.toString()).emit('typing', { user });

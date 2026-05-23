@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import { Notice, subscribeToNotices } from '../utils/noticesSyncUtils';
 import { CompactNoticeListSkeleton } from './SkeletonLists';
+import AppText from './AppText';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -115,15 +116,15 @@ export default function NotificationOverlay({ visible, onClose, lastClearedTimes
                 <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={styles.headerCompact}>
                         <View style={[styles.headerTitleContainer, { flex: 1 }]}>
-                            <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
+                            <AppText style={[styles.headerTitle, { color: colors.text }]}>Notifications</AppText>
                             {(visibleNotices.length > 0) && (
                                 <View style={styles.badgeSmall}>
-                                    <Text style={styles.badgeText}>{visibleNotices.length}</Text>
+                                    <AppText style={styles.badgeText}>{visibleNotices.length}</AppText>
                                 </View>
                             )}
                         </View>
                         <TouchableOpacity onPress={handleClearNotifications} style={styles.clearBtnCompact}>
-                            <Text style={[styles.clearBtnText, { color: colors.primary }]}>Clear</Text>
+                            <AppText style={[styles.clearBtnText, { color: colors.primary }]}>Clear</AppText>
                         </TouchableOpacity>
                     </View>
 
@@ -155,28 +156,28 @@ export default function NotificationOverlay({ visible, onClose, lastClearedTimes
                                         {/* Content */}
                                         <View style={{ flex: 1, gap: 4 }}>
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <Text style={[styles.noticeTitle, { color: colors.text }]}>{notice.title}</Text>
+                                                <AppText style={[styles.noticeTitle, { color: colors.text }]}>{notice.title}</AppText>
                                                 {notice.priority === 'emergency' && (
                                                     <View style={styles.urgentBadge}>
-                                                        <Text style={styles.urgentText}>URGENT</Text>
+                                                        <AppText style={styles.urgentText}>URGENT</AppText>
                                                     </View>
                                                 )}
                                             </View>
 
-                                            <Text style={[styles.noticeBody, { color: colors.textSecondary }]} numberOfLines={3}>
+                                            <AppText style={[styles.noticeBody, { color: colors.textSecondary }]} numberOfLines={3}>
                                                 {notice.body}
-                                            </Text>
+                                            </AppText>
 
-                                            <Text style={[styles.noticeDate, { color: colors.textSecondary }]}>
+                                            <AppText style={[styles.noticeDate, { color: colors.textSecondary }]}>
                                                 {notice.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                     </View>
                                 ))
                             ) : (
                                 <View style={styles.emptyStateCompact}>
                                     <MaterialIcons name="notifications-paused" size={32} color={colors.textSecondary} style={{ opacity: 0.5, marginBottom: 8 }} />
-                                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No new notices</Text>
+                                    <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No new notices</AppText>
                                 </View>
                             )}
                         </View>

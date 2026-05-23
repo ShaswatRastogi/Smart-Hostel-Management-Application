@@ -2,18 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    UIManager,
-    View
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, UIManager, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InputField from '../../components/InputField';
@@ -21,6 +10,7 @@ import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { LaundryRequestDisplay, LaundrySettings, subscribeToAllLaundryRequests, subscribeToLaundry, updateLaundrySettings } from '../../utils/laundrySyncUtils';
+import AppText from '../../components/AppText';
 
 const STATUS_OPTIONS = ['On Schedule', 'Delayed', 'No Service', 'Holiday'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -406,7 +396,7 @@ export default function LaundryManagementPage() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                     <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Laundry Management</Text>
+                <AppText style={styles.headerTitle}>Laundry Management</AppText>
             </LinearGradient>
 
             {/* Tab Bar */}
@@ -423,9 +413,9 @@ export default function LaundryManagementPage() {
                         size={20}
                         color={activeTab === 'timings' ? colors.primary : colors.textSecondary}
                     />
-                    <Text style={[styles.navItemLabel, activeTab === 'timings' && styles.navItemLabelActive]}>
+                    <AppText style={[styles.navItemLabel, activeTab === 'timings' && styles.navItemLabelActive]}>
                         Laundry Timings
-                    </Text>
+                    </AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -440,9 +430,9 @@ export default function LaundryManagementPage() {
                         size={20}
                         color={activeTab === 'requests' ? colors.primary : colors.textSecondary}
                     />
-                    <Text style={[styles.navItemLabel, activeTab === 'requests' && styles.navItemLabelActive]}>
+                    <AppText style={[styles.navItemLabel, activeTab === 'requests' && styles.navItemLabelActive]}>
                         Clothes Details
-                    </Text>
+                    </AppText>
                 </TouchableOpacity>
             </View>
 
@@ -463,7 +453,7 @@ export default function LaundryManagementPage() {
                         <View key="timings">
                             <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                                 <View style={styles.section}>
-                                    <Text style={[styles.label, { marginTop: 0 }]}>Service Status</Text>
+                                    <AppText style={[styles.label, { marginTop: 0 }]}>Service Status</AppText>
                                     <View style={styles.statusContainer}>
                                         {STATUS_OPTIONS.map((status) => (
                                             <TouchableOpacity
@@ -471,14 +461,14 @@ export default function LaundryManagementPage() {
                                                 style={[styles.statusBtn, settings.status === status && styles.statusBtnActive]}
                                                 onPress={() => setSettings({ ...settings, status: status as any })}
                                             >
-                                                <Text style={[styles.statusText, settings.status === status && styles.statusTextActive]}>
+                                                <AppText style={[styles.statusText, settings.status === status && styles.statusTextActive]}>
                                                     {status}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
 
-                                    <Text style={styles.label}>Pickup Schedule</Text>
+                                    <AppText style={styles.label}>Pickup Schedule</AppText>
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
                                         {DAYS.map(day => (
                                             <TouchableOpacity
@@ -486,7 +476,7 @@ export default function LaundryManagementPage() {
                                                 style={[styles.dayBtn, settings.pickupDay === day && styles.dayBtnActive]}
                                                 onPress={() => setSettings({ ...settings, pickupDay: day })}
                                             >
-                                                <Text style={[styles.dayBtnText, settings.pickupDay === day && styles.dayBtnTextActive]}>{day}</Text>
+                                                <AppText style={[styles.dayBtnText, settings.pickupDay === day && styles.dayBtnTextActive]}>{day}</AppText>
                                             </TouchableOpacity>
                                         ))}
                                     </ScrollView>
@@ -505,18 +495,18 @@ export default function LaundryManagementPage() {
                                                 style={[styles.periodOption, settings.pickupPeriod === 'AM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setSettings({ ...settings, pickupPeriod: 'AM' })}
                                             >
-                                                <Text style={[styles.periodText, { color: settings.pickupPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</Text>
+                                                <AppText style={[styles.periodText, { color: settings.pickupPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</AppText>
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={[styles.periodOption, settings.pickupPeriod === 'PM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setSettings({ ...settings, pickupPeriod: 'PM' })}
                                             >
-                                                <Text style={[styles.periodText, { color: settings.pickupPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</Text>
+                                                <AppText style={[styles.periodText, { color: settings.pickupPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</AppText>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
 
-                                    <Text style={styles.label}>Drop-off Schedule</Text>
+                                    <AppText style={styles.label}>Drop-off Schedule</AppText>
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
                                         {DAYS.map(day => (
                                             <TouchableOpacity
@@ -524,7 +514,7 @@ export default function LaundryManagementPage() {
                                                 style={[styles.dayBtn, settings.dropoffDay === day && styles.dayBtnActive]}
                                                 onPress={() => setSettings({ ...settings, dropoffDay: day })}
                                             >
-                                                <Text style={[styles.dayBtnText, settings.dropoffDay === day && styles.dayBtnTextActive]}>{day}</Text>
+                                                <AppText style={[styles.dayBtnText, settings.dropoffDay === day && styles.dayBtnTextActive]}>{day}</AppText>
                                             </TouchableOpacity>
                                         ))}
                                     </ScrollView>
@@ -543,18 +533,18 @@ export default function LaundryManagementPage() {
                                                 style={[styles.periodOption, settings.dropoffPeriod === 'AM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setSettings({ ...settings, dropoffPeriod: 'AM' })}
                                             >
-                                                <Text style={[styles.periodText, { color: settings.dropoffPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</Text>
+                                                <AppText style={[styles.periodText, { color: settings.dropoffPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</AppText>
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={[styles.periodOption, settings.dropoffPeriod === 'PM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setSettings({ ...settings, dropoffPeriod: 'PM' })}
                                             >
-                                                <Text style={[styles.periodText, { color: settings.dropoffPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</Text>
+                                                <AppText style={[styles.periodText, { color: settings.dropoffPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</AppText>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
 
-                                    <Text style={styles.label}>Custom Message</Text>
+                                    <AppText style={styles.label}>Custom Message</AppText>
                                     <TextInput
                                         style={styles.textArea}
                                         placeholder="Any special announcements? (Optional)"
@@ -575,7 +565,7 @@ export default function LaundryManagementPage() {
                                     ) : (
                                         <>
                                             <MaterialCommunityIcons name="content-save" size={24} color="#fff" />
-                                            <Text style={styles.saveBtnText}>Save Settings</Text>
+                                            <AppText style={styles.saveBtnText}>Save Settings</AppText>
                                         </>
                                     )}
                                 </TouchableOpacity>
@@ -588,7 +578,7 @@ export default function LaundryManagementPage() {
                                 {requests.length === 0 ? (
                                     <View style={[styles.section, { alignItems: 'center', padding: 40 }]}>
                                         <MaterialCommunityIcons name="washing-machine-off" size={48} color={colors.textSecondary} />
-                                        <Text style={{ color: colors.textSecondary, marginTop: 12 }}>No laundry requests found</Text>
+                                        <AppText style={{ color: colors.textSecondary, marginTop: 12 }}>No laundry requests found</AppText>
                                     </View>
                                 ) : (
                                     requests.map(req => (
@@ -605,31 +595,31 @@ export default function LaundryManagementPage() {
                                                         <MaterialCommunityIcons name="account" size={24} color={colors.primary} />
                                                     </View>
                                                     <View style={styles.reqNameBlock}>
-                                                        <Text style={styles.reqName}>{req.studentName || 'Unknown'}</Text>
+                                                        <AppText style={styles.reqName}>{req.studentName || 'Unknown'}</AppText>
                                                         <View style={styles.reqRoomBadge}>
-                                                            <Text style={styles.reqRoomText}>Room {req.roomNo}</Text>
+                                                            <AppText style={styles.reqRoomText}>Room {req.roomNo}</AppText>
                                                         </View>
                                                     </View>
                                                 </View>
-                                                <Text style={styles.reqTime}>
+                                                <AppText style={styles.reqTime}>
                                                     {req.createdAt ? new Date(req.createdAt).toLocaleDateString(undefined, {
                                                         month: 'short',
                                                         day: 'numeric',
                                                         hour: '2-digit',
                                                         minute: '2-digit'
                                                     }) : 'Just now'}
-                                                </Text>
+                                                </AppText>
                                             </View>
 
                                             <View style={styles.reqDetailsBlock}>
-                                                <Text style={styles.reqLabel}>CLOTHES DETAILS</Text>
-                                                <Text style={styles.reqText}>{req.clothesDetails}</Text>
+                                                <AppText style={styles.reqLabel}>CLOTHES DETAILS</AppText>
+                                                <AppText style={styles.reqText}>{req.clothesDetails}</AppText>
                                             </View>
 
                                             <View style={styles.reqFooter}>
                                                 <View style={styles.totalBadge}>
                                                     <MaterialCommunityIcons name="tshirt-crew" size={16} color={colors.textSecondary} />
-                                                    <Text style={styles.totalText}>Total: {req.totalClothes}</Text>
+                                                    <AppText style={styles.totalText}>Total: {req.totalClothes}</AppText>
                                                 </View>
                                             </View>
                                         </View>

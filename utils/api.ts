@@ -3,14 +3,8 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 
 const getApiUrl = () => {
-    // 1. Try to auto-detect from debuggerHost (works best during development)
-    const debuggerHost = Constants.expoConfig?.hostUri;
-    if (debuggerHost) {
-        const ip = debuggerHost.split(':')[0];
-        return `http://${ip}:5000`;
-    }
-    // 2. Fallback to the last known working IP
-    return "http://10.102.116.195:5000";
+    // Force the app to use the Render cloud backend to avoid any local IP routing issues
+    return process.env.EXPO_PUBLIC_API_URL || "https://smartstay-backend-5a3s.onrender.com";
 };
 
 export const API_BASE_URL = getApiUrl();
@@ -22,7 +16,7 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Bypass-Tunnel-Reminder': 'true',
     },
-    timeout: 10000,
+    timeout: 20000,
 });
 
 
@@ -40,19 +34,22 @@ api.interceptors.response.use(
         return response;
     },
     error => {
+        const { useAlertStore } = require('../store/useAlertStore');
+        
         if (error.code === 'ECONNABORTED') {
-            console.error('Request Timed Out:', error.config.url);
+            // Timeout — just show popup, no noisy log
+            useAlertStore.getState().showAlert('Connection Timeout', 'The server took too long to respond. Please check your connection.', [], 'warning');
         } else if (error.response) {
-            // Suppress 401/403 errors as they are handled by auth redirect/logic
-            if (error.response.status !== 401 && error.response.status !== 403) {
-                console.error('API Error Response:', error.response.status, error.response.data);
+            // Server responded with error status
+            if (error.response.status >= 500) {
+                useAlertStore.getState().showAlert('Server Error', 'Our servers are having a moment. Please try again later.', [], 'error');
             }
+            // 400/401/403/404 are handled silently by calling pages
         } else if (error.request) {
-            console.error('Network Error (No Response):', error.message);
-            console.error('Target URL:', error.config.url);
-        } else {
-            console.error('API Setup Error:', error.message);
+            // No response at all (network unreachable)
+            useAlertStore.getState().showAlert('Network Error', 'Could not reach the server. Please check your internet connection.', [], 'error');
         }
+        // Silently reject — no console.error (prevents noisy call stacks in Metro)
         return Promise.reject(error);
     }
 );
@@ -70,8 +67,6 @@ api.interceptors.request.use(
 
         if (token) {
             config.headers.set('Authorization', `Bearer ${token}`);
-        } else {
-            // No token found, proceed without it
         }
 
         // Handle FormData uploads
@@ -83,17 +78,15 @@ api.interceptors.request.use(
                 (config.data._parts && Array.isArray(config.data._parts))
             )
         ) {
-
             console.log('📸 Uploading FormData with file');
-
-            if (config.headers instanceof axios.AxiosHeaders) {
-                config.headers.delete('Content-Type');
-            } else {
-                delete (config.headers as any)['Content-Type'];
+            
+            // In React Native + Axios >= 1.0, do NOT delete the Content-Type.
+            // Axios will automatically set the boundary.
+            if (!config.headers.get('Content-Type')) {
+                config.headers.set('Content-Type', 'multipart/form-data');
             }
 
-            config.timeout = 80000;
-            config.transformRequest = (data) => data;
+            config.timeout = 120000; // Increase timeout for large uploads
         }
 
         return config;

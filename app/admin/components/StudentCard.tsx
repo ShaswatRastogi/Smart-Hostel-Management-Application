@@ -2,7 +2,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import AppText from '../../../components/AppText';
 
 interface StudentCardProps {
     item: any;
@@ -44,31 +45,31 @@ export default function StudentCard({ item, onPress, colors, theme, API_BASE_URL
                     >
                         {item.profilePhoto ? (
                             <Image
-                                source={{ uri: `${API_BASE_URL}${item.profilePhoto}` }}
+                                source={{ uri: item.profilePhoto.startsWith('http') ? item.profilePhoto : `${API_BASE_URL}${item.profilePhoto}` }}
                                 style={styles.avatarImage}
                                 contentFit="cover"
                             />
                         ) : (
-                            <Text style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
+                            <AppText style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
                                 {item.name
                                     .split(' ')
                                     .map((n: string) => n[0])
                                     .join('')
                                     .toUpperCase()}
-                            </Text>
+                            </AppText>
                         )}
                     </LinearGradient>
                 </View>
 
                 <View style={styles.studentInfo}>
-                    <Text style={[styles.studentName, { color: colors.text }]} numberOfLines={1}>
+                    <AppText style={[styles.studentName, { color: colors.text }]} numberOfLines={1}>
                         {item.name}
-                    </Text>
+                    </AppText>
                     <View style={styles.roomRollContainer}>
                         <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9' }]}>
-                            <Text style={[styles.detailSmall, { color: isDark ? '#94A3B8' : '#64748B' }]}>Room {item.room}</Text>
+                            <AppText style={[styles.detailSmall, { color: isDark ? '#94A3B8' : '#64748B' }]}>Room {item.room}</AppText>
                         </View>
-                        <Text style={[styles.detailSmallLight, { color: colors.textSecondary }]}>• {item.rollNo}</Text>
+                        <AppText style={[styles.detailSmallLight, { color: colors.textSecondary }]}>• {item.rollNo}</AppText>
                     </View>
                 </View>
 

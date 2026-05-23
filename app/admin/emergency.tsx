@@ -2,22 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InputField from '../../components/InputField';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { addContact, deleteContact, EmergencyContact, subscribeToContacts, updateContact } from '../../utils/emergencySyncUtils';
+import AppText from '../../components/AppText';
 
 const HOSTEL_ICONS = [
     { name: 'phone-in-talk', label: 'General' },
@@ -346,7 +338,7 @@ export default function ManageEmergencyPage() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                     <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Emergency Contacts</Text>
+                <AppText style={styles.headerTitle}>Emergency Contacts</AppText>
             </LinearGradient>
 
             {loading ? (
@@ -359,7 +351,7 @@ export default function ManageEmergencyPage() {
                     ListHeaderComponent={
                         <TouchableOpacity style={styles.createBtn} onPress={handleAddNew}>
                             <MaterialCommunityIcons name="plus" size={24} color="#fff" />
-                            <Text style={styles.createBtnText}>Add New Contact</Text>
+                            <AppText style={styles.createBtnText}>Add New Contact</AppText>
                         </TouchableOpacity>
                     }
                     renderItem={({ item }) => (
@@ -368,10 +360,10 @@ export default function ManageEmergencyPage() {
                                 <MaterialCommunityIcons name={item.icon as any} size={24} color={colors.primary} />
                             </View>
                             <View style={styles.cardContent}>
-                                <Text style={styles.cardTitle}>{item.title}</Text>
-                                <Text style={styles.cardSubtitle}>
+                                <AppText style={styles.cardTitle}>{item.title}</AppText>
+                                <AppText style={styles.cardSubtitle}>
                                     {item.name ? `${item.name} • ` : ''}{item.number}
-                                </Text>
+                                </AppText>
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editBtn}>
@@ -384,9 +376,9 @@ export default function ManageEmergencyPage() {
                         </View>
                     )}
                     ListEmptyComponent={
-                        <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
+                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
                             No emergency contacts added yet.
-                        </Text>
+                        </AppText>
                     }
                 />
             )}
@@ -401,14 +393,14 @@ export default function ManageEmergencyPage() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{editingId ? 'Edit Contact' : 'Add Contact'}</Text>
+                            <AppText style={styles.modalTitle}>{editingId ? 'Edit Contact' : 'Add Contact'}</AppText>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            {/* <Text style={[styles.label, { marginTop: 0 }]}>Title (Role)</Text>
+                            {/* <AppText style={[styles.label, { marginTop: 0 }]}>Title (Role)</AppText>
                             <InputField
                                 icon="card-account-details-outline"
                                 placeholder="e.g. Warden"
@@ -417,7 +409,7 @@ export default function ManageEmergencyPage() {
                             /> */
                             /* Removed Title Input */}
 
-                            <Text style={styles.label}>Name (Optional)</Text>
+                            <AppText style={styles.label}>Name (Optional)</AppText>
                             <InputField
                                 icon="account-outline"
                                 placeholder="e.g. Mr. Sharma"
@@ -425,7 +417,7 @@ export default function ManageEmergencyPage() {
                                 onChangeText={setNewName}
                             />
 
-                            <Text style={styles.label}>Phone Number</Text>
+                            <AppText style={styles.label}>Phone Number</AppText>
                             <InputField
                                 icon="phone-outline"
                                 placeholder="e.g. 9876543210"
@@ -435,7 +427,7 @@ export default function ManageEmergencyPage() {
                             />
 
 
-                            <Text style={styles.sectionLabel}>Hostel Services</Text>
+                            <AppText style={styles.sectionLabel}>Hostel Services</AppText>
                             <View style={styles.iconGrid}>
                                 {HOSTEL_ICONS.map((item) => (
                                     <TouchableOpacity
@@ -448,14 +440,14 @@ export default function ManageEmergencyPage() {
                                             size={24}
                                             color={selectedIcon === item.name ? '#fff' : colors.textSecondary}
                                         />
-                                        <Text style={[styles.iconLabel, selectedIcon === item.name && styles.iconLabelSelected]} numberOfLines={1}>
+                                        <AppText style={[styles.iconLabel, selectedIcon === item.name && styles.iconLabelSelected]} numberOfLines={1}>
                                             {item.label}
-                                        </Text>
+                                        </AppText>
                                     </TouchableOpacity>
                                 ))}
                             </View>
 
-                            <Text style={styles.sectionLabel}>Emergency Services</Text>
+                            <AppText style={styles.sectionLabel}>Emergency Services</AppText>
                             <View style={styles.iconGrid}>
                                 {EMERGENCY_ICONS.map((item) => (
                                     <TouchableOpacity
@@ -468,9 +460,9 @@ export default function ManageEmergencyPage() {
                                             size={24}
                                             color={selectedIcon === item.name ? '#fff' : colors.textSecondary}
                                         />
-                                        <Text style={[styles.iconLabel, selectedIcon === item.name && styles.iconLabelSelected]} numberOfLines={1}>
+                                        <AppText style={[styles.iconLabel, selectedIcon === item.name && styles.iconLabelSelected]} numberOfLines={1}>
                                             {item.label}
-                                        </Text>
+                                        </AppText>
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -483,7 +475,7 @@ export default function ManageEmergencyPage() {
                                 {saving ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.submitBtnText}>{editingId ? 'Update Contact' : 'Save Contact'}</Text>
+                                    <AppText style={styles.submitBtnText}>{editingId ? 'Update Contact' : 'Save Contact'}</AppText>
                                 )}
                             </TouchableOpacity>
                         </ScrollView>

@@ -1,26 +1,6 @@
 import { Request, Response } from 'express';
 import { query } from '../config/db';
 
-// Helper to ensure column exists (Lazy Migration)
-const ensureColumnExists = async () => {
-    try {
-        await query(`
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS last_notifications_cleared_at TIMESTAMPTZ DEFAULT to_timestamp(0);
-
-            ALTER TABLE bus_timings
-            ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
-
-            ALTER TABLE emergency_contacts
-            ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
-        `);
-    } catch (e) {
-        console.error("Auto-migration failed (columns):", e);
-    }
-};
-
-// Run once on load
-ensureColumnExists();
 
 export const getStudentNotifications = async (req: Request, res: Response) => {
     try {
@@ -293,6 +273,7 @@ export const getAdminNotifications = async (req: Request, res: Response) => {
         // We use conversations.admin_unread instead of messages table because messages lacks receiver_id
         const messagesRes = await query(`
             SELECT 
+                c.id as conversation_id,
                 c.student_id, 
                 u.full_name as sender_name, 
                 s.profile_photo,
@@ -302,18 +283,11 @@ export const getAdminNotifications = async (req: Request, res: Response) => {
             JOIN students s ON c.student_id = s.id
             JOIN users u ON s.user_id = u.id
             WHERE c.admin_unread > 0
-        `); // Messages are always "live" unread status, so we don't strictly filter by cleared time for badge, BUT user wants "unread only"
-        // Wait, if I clear notifications, should I clear the unread BADGE on messages? 
-        // User said: "show the new unread requests"
-        // Message unread status is stateful in DB. If I "clear" notification panel, it shouldn't auto-read the message. 
-        // BUT, for the PANEL LIST, we can hide them if they are older than clear time? 
-        // No, unread messages are persistent until read. filtering by time might hide unread messages if you cleared them but didn't read them?
-        // User said: "only the unread ones". If they are unread, they show. If I clear, that implies I "saw" the notification list?
-        // Let's stick to showing ALL unread messages regardless of clear time, because "Unread" is the status.
-        // For Complaints/Services, "Pending" is the status, but they stick around for days. THOSE should be filtered by time.
+            AND (c.staff_id = $1 OR (c.staff_id IS NULL AND $2 = ANY($3)))
+        `, [userId, req.currentUser?.role, ['admin', 'owner']]);
 
         const messageNotifs = messagesRes.rows.map(row => ({
-            id: `msg-${row.student_id}`,
+            id: `msg-${row.conversation_id}`,
             type: 'message',
             title: `New messages from ${row.sender_name}`,
             subtitle: `${row.count} unread message${row.count > 1 ? 's' : ''}`,

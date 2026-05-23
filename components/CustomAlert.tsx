@@ -1,15 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
-import {
-    Animated,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { Animated, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 export type AlertButton = {
     text: string;
@@ -200,8 +194,8 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
                         </View>
                     </View>
 
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.message}>{message}</Text>
+                    <AppText style={styles.title}>{title}</AppText>
+                    <AppText style={styles.message}>{message}</AppText>
 
                     <View style={[
                         styles.buttonContainer,
@@ -235,14 +229,14 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
                                             end={{ x: 1, y: 0 }}
                                         />
                                     ) : null}
-                                    <Text style={[
+                                    <AppText style={[
                                         styles.buttonText,
                                         isCancel && styles.textCancel,
                                         isDestructive && styles.textDestructive,
                                         isPrimary && styles.textPrimary
                                     ]}>
                                         {btn.text}
-                                    </Text>
+                                    </AppText>
                                 </TouchableOpacity>
                             );
                         })}

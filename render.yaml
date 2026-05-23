@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: smartstay-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        value: https://smartstay-ai-service.onrender.com
+      - key: EXPO_PUBLIC_FIREBASE_PROJECT_ID
+        sync: false
+      - key: EXPO_PUBLIC_FIREBASE_APP_ID
+        sync: false
+      - key: EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+        sync: false
+      - key: EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+        sync: false
+
+  - type: web
+    name: smartstay-ai-service
+    env: python
+    plan: free
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false

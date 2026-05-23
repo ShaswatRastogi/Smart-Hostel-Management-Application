@@ -4,23 +4,47 @@ import { getAdminTokens, getUserToken, sendPushNotification } from '../services/
 import { getIO } from '../socket'; // Import WebSockets via helper
 
 // Helper to get conversation ID (Find or Create)
-const getConversationId = async (studentId: number) => {
-    let res = await query('SELECT id FROM conversations WHERE student_id = $1', [studentId]);
-    if (res.rows.length === 0) {
-        res = await query('INSERT INTO conversations (student_id, created_at, updated_at) VALUES ($1, NOW(), NOW()) RETURNING id', [studentId]);
+const getConversationId = async (studentId: number, staffId?: number | null) => {
+    let res;
+    if (staffId) {
+        res = await query(
+            'SELECT id FROM conversations WHERE student_id = $1 AND staff_id = $2',
+            [studentId, staffId]
+        );
+        if (res.rows.length === 0) {
+            res = await query(
+                'INSERT INTO conversations (student_id, staff_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) RETURNING id',
+                [studentId, staffId]
+            );
+        }
+    } else {
+        // General support chat (shared)
+        res = await query('SELECT id FROM conversations WHERE student_id = $1 AND staff_id IS NULL', [studentId]);
+        if (res.rows.length === 0) {
+            res = await query(
+                'INSERT INTO conversations (student_id, created_at, updated_at) VALUES ($1, NOW(), NOW()) RETURNING id',
+                [studentId]
+            );
+        }
     }
     return res.rows[0].id;
 };
 
+const STAFF_ROLES = ['admin', 'owner', 'warden', 'cleaning_staff', 'mess_staff', 'laundry_staff', 'guard', 'maintenance_staff'];
+const isStaff = (role?: string) => role && STAFF_ROLES.includes(role);
+
 export const getMessages = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params; // potentially studentId from URL
+        const { id } = req.params;
         const userId = req.currentUser?.id;
         const role = req.currentUser?.role;
+        const staffIdRaw = req.query.staffId as string;
+        const staffIdParam = (staffIdRaw && staffIdRaw !== 'undefined' && staffIdRaw !== 'null') ? parseInt(staffIdRaw) : null;
+        let targetStaffId: number | null = (staffIdParam && !isNaN(staffIdParam)) ? staffIdParam : null;
 
         let targetStudentId: number;
 
-        if (role === 'admin') {
+        if (isStaff(role)) {
             const parsedId = parseInt(id);
             if (isNaN(parsedId)) {
                 console.error(`[ERROR] getMessages: Invalid student ID '${id}' for admin`);
@@ -28,8 +52,14 @@ export const getMessages = async (req: Request, res: Response) => {
                 return;
             }
             targetStudentId = parsedId;
+            // If staff is viewing, and no staffIdParam, we assume it's their private chat or general
+            // Actually, staff usually clicks a conversation which has an ID.
+            // But the frontend currently uses studentId as the URL param.
+            if (!targetStaffId) {
+                targetStaffId = userId ?? null; // Assume they want to see their own chats with this student
+            }
         } else {
-            // Student can only see their own chat
+            // Student
             const sRes = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
             if (sRes.rows.length === 0) {
                 res.status(404).json({ error: 'Student profile not found' });
@@ -41,7 +71,7 @@ export const getMessages = async (req: Request, res: Response) => {
         // Update current user last_seen
         await query('UPDATE users SET last_seen = NOW() WHERE id = $1', [userId]);
 
-        const conversationId = await getConversationId(targetStudentId);
+        const conversationId = await getConversationId(targetStudentId, targetStaffId);
 
         // Mark incoming messages as read AND reset conversation counter
         await query(
@@ -50,7 +80,7 @@ export const getMessages = async (req: Request, res: Response) => {
         );
 
         // Reset unread count for the viewer
-        if (role === 'admin') {
+        if (isStaff(role)) {
             await query('UPDATE conversations SET admin_unread = 0 WHERE id = $1', [conversationId]);
         } else {
             await query('UPDATE conversations SET student_unread = 0 WHERE id = $1', [conversationId]);
@@ -72,7 +102,7 @@ export const getMessages = async (req: Request, res: Response) => {
         let partnerLastSeen = null;
         let partnerDetails = null;
 
-        if (role === 'admin') {
+        if (isStaff(role)) {
             // Check Student Status
             const statusRes = await query(`
                 SELECT u.last_seen 
@@ -138,10 +168,10 @@ export const getMessages = async (req: Request, res: Response) => {
             }
 
         } else {
-            // Check Admin Status (Any admin active recently?)
+            // Check Admin Status (Any staff active recently?)
             const statusRes = await query(`
-                SELECT MAX(last_seen) as last_seen FROM users WHERE role = 'admin'
-            `);
+                SELECT MAX(last_seen) as last_seen FROM users WHERE role = ANY($1)
+            `, [STAFF_ROLES]);
             if (statusRes.rows.length > 0 && statusRes.rows[0].last_seen) {
                 const lastSeen = new Date(statusRes.rows[0].last_seen);
                 partnerLastSeen = lastSeen;
@@ -155,7 +185,7 @@ export const getMessages = async (req: Request, res: Response) => {
             text: row.text,
             createdAt: row.created_at,
             user: {
-                _id: row.role === 'admin' ? 'admin' : 'student',
+                _id: isStaff(row.role) ? 'admin' : 'student',
                 name: row.full_name,
                 originalId: row.user_id,
                 avatar: row.profile_photo // Return avatar (URL)
@@ -182,8 +212,8 @@ export const getMessages = async (req: Request, res: Response) => {
 
 export const sendMessage = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params; // target student ID (if admin) or ignored/used for verify
-        const { text } = req.body;
+        const { id } = req.params; // target student ID (if admin) or ignored
+        const { text, staffId } = req.body;
         const userId = req.currentUser?.id;
         const role = req.currentUser?.role;
 
@@ -193,9 +223,12 @@ export const sendMessage = async (req: Request, res: Response) => {
         }
 
         let targetStudentId: number;
+        const staffIdRaw = req.body.staffId;
+        let targetStaffId: number | null = (staffIdRaw && staffIdRaw !== 'undefined' && staffIdRaw !== 'null') ? parseInt(staffIdRaw) : null;
 
-        if (role === 'admin') {
+        if (isStaff(role)) {
             targetStudentId = parseInt(id);
+            if (!targetStaffId) targetStaffId = userId ?? null;
         } else {
             const sRes = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
             if (sRes.rows.length === 0) {
@@ -205,7 +238,7 @@ export const sendMessage = async (req: Request, res: Response) => {
             targetStudentId = sRes.rows[0].id;
         }
 
-        const conversationId = await getConversationId(targetStudentId);
+        const conversationId = await getConversationId(targetStudentId, targetStaffId);
 
         // Insert Message
         const insertRes = await query(
@@ -214,14 +247,14 @@ export const sendMessage = async (req: Request, res: Response) => {
         );
 
         // Update Conversation (Last message + Increment Unread)
-        if (role === 'admin') {
+        if (isStaff(role)) {
             await query(
-                'UPDATE conversations SET last_message = $1, last_message_time = NOW(), updated_at = NOW(), student_unread = student_unread + 1 WHERE id = $2',
+                'UPDATE conversations SET last_message = $1, last_message_time = NOW(), updated_at = NOW(), student_unread = COALESCE(student_unread, 0) + 1 WHERE id = $2',
                 [text, conversationId]
             );
         } else {
             await query(
-                'UPDATE conversations SET last_message = $1, last_message_time = NOW(), updated_at = NOW(), admin_unread = admin_unread + 1 WHERE id = $2',
+                'UPDATE conversations SET last_message = $1, last_message_time = NOW(), updated_at = NOW(), admin_unread = COALESCE(admin_unread, 0) + 1 WHERE id = $2',
                 [text, conversationId]
             );
         }
@@ -230,13 +263,17 @@ export const sendMessage = async (req: Request, res: Response) => {
             _id: insertRes.rows[0].id.toString(),
             text,
             createdAt: insertRes.rows[0].created_at,
-            user: { _id: role === 'admin' ? 'admin' : 'student' }
+            user: { _id: isStaff(role) ? 'admin' : 'student' }
         };
 
         // --- Broadcast via WebSockets ---
         getIO().to(conversationId.toString()).emit('newMessage', newMessage);
 
-        // Also notify admins to refresh their conversation list
+        // Notify the specific staff member to refresh their conversation list
+        if (targetStaffId) {
+            getIO().to(`staff:${targetStaffId}:conversations`).emit('updateChatList');
+        }
+        // Also notify admins to refresh their conversation list (for general support)
         getIO().to('admin:conversations').emit('updateChatList');
 
         res.json({
@@ -246,7 +283,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
         // --- Push Notification ---
         try {
-            if (role === 'admin') {
+            if (isStaff(role)) {
                 // Notify Student
                 const studentUserRes = await query(
                     'SELECT u.id, u.full_name FROM users u JOIN students s ON s.user_id = u.id WHERE s.id = $1',
@@ -284,22 +321,29 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
 };
 
-// Admin: Get All Conversations
+// Admin/Warden: Get All Conversations relevant to them
 export const getConversations = async (req: Request, res: Response) => {
     try {
-        // Assume Admin only for now, or secure via route
+        const userId = req.currentUser?.id;
+        const role = req.currentUser?.role;
+
+        // Each staff member only sees conversations addressed to THEM (staff_id = their user id)
+        // Admin/owner additionally sees general support (staff_id IS NULL)
         const result = await query(`
             SELECT c.*, s.roll_no, u.full_name, u.email, s.profile_photo, s.id as student_id
             FROM conversations c
             JOIN students s ON c.student_id = s.id
             JOIN users u ON s.user_id = u.id
-            WHERE c.last_message IS NOT NULL AND c.last_message != ''
+            WHERE (c.staff_id = $1 OR (c.staff_id IS NULL AND $2 = ANY($3)))
+            AND c.last_message IS NOT NULL AND c.last_message != ''
             ORDER BY c.updated_at DESC
-        `);
+        `, [userId, role, ['admin', 'owner']]);
+        console.log(`[DEBUG] getConversations: found ${result.rows.length} conversations for user ${userId} (role: ${role})`);
 
         const conversations = result.rows.map(row => ({
             id: row.id,
             studentId: row.student_id, // Important for navigation
+            staffId: row.staff_id,     // Pass staffId so frontend can route correctly
             studentName: row.full_name,
             lastMessage: row.last_message,
             time: row.last_message_time,

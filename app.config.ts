@@ -16,6 +16,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: "f1006218-c5cf-44a9-8903-6a11f940d10f"
     }
   },
+  updates: {
+    url: "https://u.expo.dev/f1006218-c5cf-44a9-8903-6a11f940d10f"
+  },
+  runtimeVersion: {
+    policy: "appVersion"
+  },
   ios: {
     supportsTablet: true
   },
@@ -52,7 +58,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-web-browser",
     "@react-native-google-signin/google-signin",
     "expo-secure-store",
-    "expo-local-authentication"
+    "expo-local-authentication",
+    [
+      "expo-camera",
+      {
+        "cameraPermission": "Allow SmartStay to access your camera to scan student leave QR codes."
+      }
+    ],
+    "./plugins/withSafeOnUserLeaveHint.js"
   ],
   experiments: {
     typedRoutes: true,

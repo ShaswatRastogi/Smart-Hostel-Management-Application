@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 export default function AdminCard({
   title,
@@ -53,9 +54,9 @@ export default function AdminCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{title}</Text>
-      {value !== undefined && <Text style={styles.value}>{value}</Text>}
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      <AppText style={styles.title}>{title}</AppText>
+      {value !== undefined && <AppText style={styles.value}>{value}</AppText>}
+      {subtitle && <AppText style={styles.subtitle}>{subtitle}</AppText>}
       <View style={styles.body}>{children}</View>
     </View>
   );

@@ -2,9 +2,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { getMyMessAttendance, markMessAttendance, MessAttendance } from '../utils/messAttendanceUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner'] as const;
 
@@ -85,14 +86,14 @@ const MessAttendanceCard = () => {
     const renderDay = (date: Date, title: string) => {
         return (
             <View style={styles.dayContainer}>
-                <Text style={[styles.dayTitle, { color: colors.text }]}>{title} ({date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})</Text>
+                <AppText style={[styles.dayTitle, { color: colors.text }]}>{title} ({date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})</AppText>
                 {MEALS.map((meal) => {
                     const status = getStatus(date, meal);
                     const isMarking = marking === `${date.toISOString().split('T')[0]}-${meal}`;
 
                     return (
                         <View key={meal} style={[styles.mealRow, { borderBottomColor: colors.border }]}>
-                            <Text style={[styles.mealName, { color: colors.text }]}>{meal.charAt(0).toUpperCase() + meal.slice(1)}</Text>
+                            <AppText style={[styles.mealName, { color: colors.text }]}>{meal.charAt(0).toUpperCase() + meal.slice(1)}</AppText>
 
                             <View style={styles.buttons}>
                                 <TouchableOpacity
@@ -109,12 +110,12 @@ const MessAttendanceCard = () => {
                                     {isMarking && marking === `${getLocalDateStr(date)}-${meal}-going` ? (
                                         <ActivityIndicator size="small" color={status === 'going' ? '#fff' : colors.text} />
                                     ) : (
-                                        <Text style={[
+                                        <AppText style={[
                                             styles.btnText,
                                             { color: status === 'going' ? '#fff' : (theme === 'dark' ? '#aaa' : '#666') }
                                         ]}>
                                             Eating
-                                        </Text>
+                                        </AppText>
                                     )}
                                 </TouchableOpacity>
 
@@ -132,12 +133,12 @@ const MessAttendanceCard = () => {
                                     {isMarking && marking === `${getLocalDateStr(date)}-${meal}-skipping` ? (
                                         <ActivityIndicator size="small" color={status === 'skipping' ? '#fff' : colors.text} />
                                     ) : (
-                                        <Text style={[
+                                        <AppText style={[
                                             styles.btnText,
                                             { color: status === 'skipping' ? '#fff' : (theme === 'dark' ? '#aaa' : '#666') }
                                         ]}>
                                             Skip
-                                        </Text>
+                                        </AppText>
                                     )}
                                 </TouchableOpacity>
                             </View>
@@ -156,7 +157,7 @@ const MessAttendanceCard = () => {
         <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
             <View style={styles.header}>
                 <Ionicons name="fast-food-outline" size={20} color={colors.primary} />
-                <Text style={[styles.title, { color: colors.text }]}>Mark Attendance</Text>
+                <AppText style={[styles.title, { color: colors.text }]}>Mark Attendance</AppText>
             </View>
 
             {loading && attendance.length === 0 ? (

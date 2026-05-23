@@ -1,23 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AppText from '../components/AppText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    SectionList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import VisitorPassModal from '../components/VisitorPassModal';
@@ -470,36 +457,36 @@ export default function MyVisitors() {
         <View style={styles.visitorCard}>
             <View style={styles.visitorHeader}>
                 <View style={styles.visitorInfo}>
-                    <Text style={styles.visitorName}>{visitor.visitor_name}</Text>
-                    <Text style={styles.visitorPhone}>📞 {visitor.visitor_phone}</Text>
+                    <AppText style={styles.visitorName}>{visitor.visitor_name}</AppText>
+                    <AppText style={styles.visitorPhone}>📞 {visitor.visitor_phone}</AppText>
                     {visitor.visitor_relation && (
-                        <Text style={[styles.detailText, { fontSize: 13, fontStyle: 'italic', marginTop: 2 }]}>{visitor.visitor_relation}</Text>
+                        <AppText style={[styles.detailText, { fontSize: 13, fontStyle: 'italic', marginTop: 2 }]}>{visitor.visitor_relation}</AppText>
                     )}
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(visitor.status) + '20' }]}>
                     <MaterialCommunityIcons name={getStatusIcon(visitor.status) as any} size={14} color={getStatusColor(visitor.status)} />
-                    <Text style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>{getStatusLabel(visitor.status)}</Text>
+                    <AppText style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>{getStatusLabel(visitor.status)}</AppText>
                 </View>
             </View>
 
             <View style={styles.detailsRow}>
                 <MaterialCommunityIcons name="calendar" size={16} color={colors.textSecondary} />
-                <Text style={styles.detailText}>{formatDate(visitor.expected_date)}</Text>
+                <AppText style={styles.detailText}>{formatDate(visitor.expected_date)}</AppText>
             </View>
 
             <View style={styles.detailsRow}>
                 <MaterialCommunityIcons name="clock-outline" size={16} color={colors.textSecondary} />
-                <Text style={styles.detailText}>
+                <AppText style={styles.detailText}>
                     {visitor.expected_time_in ? formatTime(visitor.expected_time_in) : 'N/A'} - {visitor.expected_time_out ? formatTime(visitor.expected_time_out) : 'N/A'}
-                </Text>
+                </AppText>
             </View>
 
-            <Text style={styles.purpose}>{visitor.purpose}</Text>
+            <AppText style={styles.purpose}>{visitor.purpose}</AppText>
 
             {visitor.admin_remarks && (
                 <View style={{ marginTop: 8, padding: 12, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', borderRadius: 12 }}>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4, fontWeight: '600' }}>Admin Remarks:</Text>
-                    <Text style={{ fontSize: 13, color: colors.text }}>{visitor.admin_remarks}</Text>
+                    <AppText style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4, fontWeight: '600' }}>Admin Remarks:</AppText>
+                    <AppText style={{ fontSize: 13, color: colors.text }}>{visitor.admin_remarks}</AppText>
                 </View>
             )}
 
@@ -508,11 +495,11 @@ export default function MyVisitors() {
                 <View style={styles.actionsRow}>
                     <TouchableOpacity style={[styles.actionButton, styles.viewPassButton]} onPress={() => handleViewPass(visitor)}>
                         <MaterialCommunityIcons name="qrcode" size={18} color="#fff" />
-                        <Text style={[styles.actionButtonText, { color: '#fff' }]}>View Pass</Text>
+                        <AppText style={[styles.actionButtonText, { color: '#fff' }]}>View Pass</AppText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={() => handleCancelVisitor(visitor)}>
                         <MaterialCommunityIcons name="close-circle-outline" size={18} color="#EF4444" />
-                        <Text style={[styles.actionButtonText, { color: '#EF4444' }]}>Cancel</Text>
+                        <AppText style={[styles.actionButtonText, { color: '#EF4444' }]}>Cancel</AppText>
                     </TouchableOpacity>
                 </View>
             )}
@@ -521,7 +508,7 @@ export default function MyVisitors() {
                 <View style={styles.actionsRow}>
                     <TouchableOpacity style={[styles.actionButton, styles.cancelButton, { flex: 1 }]} onPress={() => handleCancelVisitor(visitor)}>
                         <MaterialCommunityIcons name="close-circle-outline" size={18} color="#EF4444" />
-                        <Text style={[styles.actionButtonText, { color: '#EF4444' }]}>Cancel Request</Text>
+                        <AppText style={[styles.actionButtonText, { color: '#EF4444' }]}>Cancel Request</AppText>
                     </TouchableOpacity>
                 </View>
             )}
@@ -546,8 +533,8 @@ export default function MyVisitors() {
                                 <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
                             </TouchableOpacity>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.headerTitle}>Visitor Management</Text>
-                                <Text style={styles.headerSubtitle}>Manage visits and passes</Text>
+                                <AppText style={styles.headerTitle}>Visitor Management</AppText>
+                                <AppText style={styles.headerSubtitle}>Manage visits and passes</AppText>
                             </View>
                         </View>
                     </View>
@@ -561,7 +548,7 @@ export default function MyVisitors() {
                     onPress={() => handleTabChange(0)}
                 >
                     <MaterialCommunityIcons name="plus-circle-outline" size={20} color={activeTab === 0 ? colors.primary : colors.textSecondary} />
-                    <Text style={[styles.navItemLabel, activeTab === 0 && styles.navItemLabelActive]}>New Request</Text>
+                    <AppText style={[styles.navItemLabel, activeTab === 0 && styles.navItemLabelActive]}>New Request</AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -569,7 +556,7 @@ export default function MyVisitors() {
                     onPress={() => handleTabChange(1)}
                 >
                     <MaterialCommunityIcons name="history" size={20} color={activeTab === 1 ? colors.primary : colors.textSecondary} />
-                    <Text style={[styles.navItemLabel, activeTab === 1 && styles.navItemLabelActive]}>My Visitors</Text>
+                    <AppText style={[styles.navItemLabel, activeTab === 1 && styles.navItemLabelActive]}>My Visitors</AppText>
                 </TouchableOpacity>
             </View>
 
@@ -586,7 +573,7 @@ export default function MyVisitors() {
                         <ScrollView contentContainerStyle={styles.formContainer} showsVerticalScrollIndicator={false}>
                             {/* Visitor Name */}
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Visitor Name <Text style={styles.required}>*</Text></Text>
+                                <AppText style={styles.label}>Visitor Name <AppText style={styles.required}>*</AppText></AppText>
                                 <TextInput
                                     style={styles.input}
                                     value={visitorName}
@@ -598,7 +585,7 @@ export default function MyVisitors() {
 
                             {/* Visitor Phone */}
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Visitor Phone <Text style={styles.required}>*</Text></Text>
+                                <AppText style={styles.label}>Visitor Phone <AppText style={styles.required}>*</AppText></AppText>
                                 <TextInput
                                     style={styles.input}
                                     value={visitorPhone}
@@ -612,7 +599,7 @@ export default function MyVisitors() {
 
                             {/* Relation */}
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Relation (Optional)</Text>
+                                <AppText style={styles.label}>Relation (Optional)</AppText>
                                 <TextInput
                                     style={styles.input}
                                     value={visitorRelation}
@@ -624,7 +611,7 @@ export default function MyVisitors() {
 
                             {/* Purpose */}
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Purpose of Visit <Text style={styles.required}>*</Text></Text>
+                                <AppText style={styles.label}>Purpose of Visit <AppText style={styles.required}>*</AppText></AppText>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
                                     value={purpose}
@@ -638,9 +625,9 @@ export default function MyVisitors() {
 
                             {/* Expected Date */}
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Expected Date <Text style={styles.required}>*</Text></Text>
+                                <AppText style={styles.label}>Expected Date <AppText style={styles.required}>*</AppText></AppText>
                                 <Pressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-                                    <Text style={styles.dateButtonText}>{formatDate(expectedDate)}</Text>
+                                    <AppText style={styles.dateButtonText}>{formatDate(expectedDate)}</AppText>
                                     <MaterialCommunityIcons name="calendar" size={20} color={colors.primary} />
                                 </Pressable>
                                 {showDatePicker && (
@@ -660,9 +647,9 @@ export default function MyVisitors() {
                             {/* Expected Time */}
                             <View style={styles.timeRow}>
                                 <View style={styles.timeGroup}>
-                                    <Text style={styles.label}>Time In</Text>
+                                    <AppText style={styles.label}>Time In</AppText>
                                     <Pressable style={styles.dateButton} onPress={() => setShowTimeInPicker(true)}>
-                                        <Text style={styles.dateButtonText}>{formatTime(expectedTimeIn)}</Text>
+                                        <AppText style={styles.dateButtonText}>{formatTime(expectedTimeIn)}</AppText>
                                         <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
                                     </Pressable>
                                     {showTimeInPicker && (
@@ -679,9 +666,9 @@ export default function MyVisitors() {
                                 </View>
 
                                 <View style={styles.timeGroup}>
-                                    <Text style={styles.label}>Time Out</Text>
+                                    <AppText style={styles.label}>Time Out</AppText>
                                     <Pressable style={styles.dateButton} onPress={() => setShowTimeOutPicker(true)}>
-                                        <Text style={styles.dateButtonText}>{formatTime(expectedTimeOut)}</Text>
+                                        <AppText style={styles.dateButtonText}>{formatTime(expectedTimeOut)}</AppText>
                                         <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
                                     </Pressable>
                                     {showTimeOutPicker && (
@@ -716,7 +703,7 @@ export default function MyVisitors() {
                                     ) : (
                                         <>
                                             <MaterialCommunityIcons name="send" size={20} color="#fff" />
-                                            <Text style={styles.submitButtonText}>Submit Request</Text>
+                                            <AppText style={styles.submitButtonText}>Submit Request</AppText>
                                         </>
                                     )}
                                 </LinearGradient>
@@ -734,9 +721,9 @@ export default function MyVisitors() {
                     ) : visitors.length === 0 ? (
                         <View style={styles.emptyState}>
                             <MaterialCommunityIcons name="account-group-outline" size={64} color={colors.textSecondary} />
-                            <Text style={styles.emptyText}>No visitor requests found</Text>
+                            <AppText style={styles.emptyText}>No visitor requests found</AppText>
                             <TouchableOpacity style={{ marginTop: 16 }} onPress={() => handleTabChange(0)}>
-                                <Text style={{ color: colors.primary, fontWeight: '700' }}>Create New Request</Text>
+                                <AppText style={{ color: colors.primary, fontWeight: '700' }}>Create New Request</AppText>
                             </TouchableOpacity>
                         </View>
                     ) : (
@@ -745,7 +732,7 @@ export default function MyVisitors() {
                             keyExtractor={(item) => item.id.toString()}
                             renderItem={renderVisitorCard}
                             renderSectionHeader={({ section: { title } }) => (
-                                <Text style={styles.sectionHeader}>{title}</Text>
+                                <AppText style={styles.sectionHeader}>{title}</AppText>
                             )}
                             contentContainerStyle={styles.visitorsList}
                             refreshControl={

@@ -2,13 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../utils/ThemeContext';
 import { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { subscribeToStudents } from '../../utils/studentUtils';
+import AppText from '../../components/AppText';
 
 export default function ContactsPage() {
     const { colors, theme } = useTheme();
@@ -219,27 +220,27 @@ export default function ContactsPage() {
                 <View style={styles.reqProfile}>
                     {item.profilePhoto ? (
                         <Image
-                            source={{ uri: `${API_BASE_URL}${item.profilePhoto}` }}
+                            source={{ uri: item.profilePhoto.startsWith('http') ? item.profilePhoto : `${API_BASE_URL}${item.profilePhoto}` }}
                             style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
                         />
                     ) : (
                         <View style={styles.reqAvatar}>
-                            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.primary }}>
+                            <AppText style={{ fontSize: 18, fontWeight: '700', color: colors.primary }}>
                                 {item.name?.charAt(0).toUpperCase()}
-                            </Text>
+                            </AppText>
                         </View>
                     )}
                     <View style={styles.reqNameBlock}>
-                        <Text style={styles.reqName}>{item.name}</Text>
+                        <AppText style={styles.reqName}>{item.name}</AppText>
                         <View style={styles.reqRoomBadge}>
-                            <Text style={styles.reqRoomText}>Room {item.room}</Text>
+                            <AppText style={styles.reqRoomText}>Room {item.room}</AppText>
                         </View>
                         {/* Phone Number moved here for better visibility */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                             <MaterialCommunityIcons name="phone" size={14} color={colors.textSecondary} />
-                            <Text style={{ fontSize: 13, color: colors.textSecondary, fontWeight: '500' }}>
+                            <AppText style={{ fontSize: 13, color: colors.textSecondary, fontWeight: '500' }}>
                                 {item.phone || 'No Phone Link'}
-                            </Text>
+                            </AppText>
                         </View>
                     </View>
                 </View>
@@ -254,7 +255,7 @@ export default function ContactsPage() {
                             onPress={() => handleCall(item.phone)}
                         >
                             <MaterialCommunityIcons name="phone" size={20} color="#16A34A" />
-                            <Text style={[styles.actionBtnText, { color: '#16A34A' }]}>Call</Text>
+                            <AppText style={[styles.actionBtnText, { color: '#16A34A' }]}>Call</AppText>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -263,7 +264,7 @@ export default function ContactsPage() {
                             onPress={() => router.push({ pathname: `/chat/${item.id}`, params: { name: item.name } })}
                         >
                             <MaterialCommunityIcons name="message-text" size={20} color="#0284C7" />
-                            <Text style={[styles.actionBtnText, { color: '#0284C7' }]}>Message</Text>
+                            <AppText style={[styles.actionBtnText, { color: '#0284C7' }]}>Message</AppText>
                         </TouchableOpacity>
                     </View>
                 </>
@@ -280,7 +281,7 @@ export default function ContactsPage() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Student Contacts</Text>
+                    <AppText style={styles.headerTitle}>Student Contacts</AppText>
                 </View>
 
             </LinearGradient>
@@ -313,7 +314,7 @@ export default function ContactsPage() {
                     !loading ? (
                         <View style={styles.emptyState}>
                             <MaterialCommunityIcons name="account-search-outline" size={48} color={theme === 'dark' ? '#334155' : '#CBD5E1'} />
-                            <Text style={styles.emptyText}>No contacts found</Text>
+                            <AppText style={styles.emptyText}>No contacts found</AppText>
                         </View>
                     ) : null
                 }

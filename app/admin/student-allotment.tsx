@@ -4,22 +4,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
+import AppText from '../../components/AppText';
 
 const InputField = React.memo(({ label, icon, value, onChangeText, placeholder, keyboardType = 'default', required = false, hasSubmitted }: any) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={styles.inputContainer}>
-      <Text style={[
+      <AppText style={[
         styles.label,
         isFocused && { color: '#004e92' } // Removed fontWeight change
       ]}>
-        {label} {required && <Text style={{ color: '#EF4444' }}>*</Text>}
-      </Text>
+        {label} {required && <AppText style={{ color: '#EF4444' }}>*</AppText>}
+      </AppText>
       <View style={[
         styles.inputWrapper,
         isFocused && styles.inputWrapperFocused,
@@ -44,7 +45,7 @@ const InputField = React.memo(({ label, icon, value, onChangeText, placeholder, 
         />
       </View>
       {hasSubmitted && required && !value && (
-        <Text style={styles.errorText}>{label} is required</Text>
+        <AppText style={styles.errorText}>{label} is required</AppText>
       )}
     </View>
   );
@@ -176,7 +177,7 @@ export default function StudentAllotmentPage() {
   if (!isAdmin(user))
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Access denied.</Text>
+        <AppText>Access denied.</AppText>
       </View>
     );
 
@@ -195,7 +196,7 @@ export default function StudentAllotmentPage() {
           <TouchableOpacity onPress={() => router.replace('/admin/students')} style={styles.backButton}>
             <MaterialIcons name="arrow-left" size={28} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Allotment</Text>
+          <AppText style={styles.headerTitle}>New Allotment</AppText>
           <View style={{ width: 40 }} />
         </View>
 
@@ -207,11 +208,11 @@ export default function StudentAllotmentPage() {
               onPress={() => router.replace('/admin/students')}
             >
               <MaterialIcons name="account-group" size={20} color="#64748B" />
-              <Text style={styles.navItemLabel}>Students</Text>
+              <AppText style={styles.navItemLabel}>Students</AppText>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
               <MaterialIcons name="account-plus" size={20} color="#004e92" />
-              <Text style={[styles.navItemLabel, styles.navItemLabelActive]}>Allotment</Text>
+              <AppText style={[styles.navItemLabel, styles.navItemLabelActive]}>Allotment</AppText>
             </TouchableOpacity>
           </View>
 
@@ -222,19 +223,19 @@ export default function StudentAllotmentPage() {
                 <MaterialIcons name="key-variant" size={20} color="#16A34A" />
               </View>
               <View>
-                <Text style={styles.generatorTitle}>Login Credentials</Text>
-                <Text style={styles.generatorSubtitle}>Share this with the student</Text>
+                <AppText style={styles.generatorTitle}>Login Credentials</AppText>
+                <AppText style={styles.generatorSubtitle}>Share this with the student</AppText>
               </View>
             </View>
             <View style={styles.passwordBox}>
-              <Text style={styles.passwordLabel}>Generated Password</Text>
-              <Text style={styles.passwordValue}>{generatedPassword}</Text>
+              <AppText style={styles.passwordLabel}>Generated Password</AppText>
+              <AppText style={styles.passwordValue}>{generatedPassword}</AppText>
             </View>
           </View>
 
           {/* Form Card */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Student Details</Text>
+            <AppText style={styles.sectionTitle}>Student Details</AppText>
 
             <InputField
               label="Full Name"
@@ -322,7 +323,7 @@ export default function StudentAllotmentPage() {
               </View>
               <View style={{ flex: 1, marginLeft: 8 }}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Status</Text>
+                  <AppText style={styles.label}>Status</AppText>
                   <View style={styles.inputWrapper}>
                     <MaterialIcons name="toggle-switch" size={20} color={status === 'active' ? '#16A34A' : '#64748B'} style={styles.inputIcon} />
                     <Picker
@@ -341,7 +342,7 @@ export default function StudentAllotmentPage() {
 
           {/* Room Configuration Card */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Room Configuration</Text>
+            <AppText style={styles.sectionTitle}>Room Configuration</AppText>
 
             <View style={styles.row}>
               <View style={{ flex: 1, marginRight: 8 }}>
@@ -353,7 +354,7 @@ export default function StudentAllotmentPage() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { fontSize: 13, marginBottom: 8 }]}>Sharing Options</Text>
+              <AppText style={[styles.label, { fontSize: 13, marginBottom: 8 }]}>Sharing Options</AppText>
               <View style={[styles.typeContainer, { marginBottom: 12 }]}>
                 {['Single Sharing', 'Double Sharing', 'Triple Sharing'].map((type) => (
                   <TouchableOpacity
@@ -361,12 +362,12 @@ export default function StudentAllotmentPage() {
                     style={[styles.typeChip, sharingType === type && styles.typeChipActive]}
                     onPress={() => setSharingType(type)}
                   >
-                    <Text style={[styles.typeChipText, sharingType === type && styles.typeChipTextActive, { fontSize: 12 }]}>{type}</Text>
+                    <AppText style={[styles.typeChipText, sharingType === type && styles.typeChipTextActive, { fontSize: 12 }]}>{type}</AppText>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={[styles.label, { fontSize: 13, marginBottom: 8 }]}>BHK / Studio Options (Optional)</Text>
+              <AppText style={[styles.label, { fontSize: 13, marginBottom: 8 }]}>BHK / Studio Options (Optional)</AppText>
               <View style={styles.typeContainer}>
                 {['1BHK', '2BHK', '3BHK', 'Studio'].map((type) => (
                   <TouchableOpacity
@@ -374,13 +375,13 @@ export default function StudentAllotmentPage() {
                     style={[styles.typeChip, apartmentType === type && styles.typeChipActive]}
                     onPress={() => setApartmentType(apartmentType === type ? null : type)}
                   >
-                    <Text style={[styles.typeChipText, apartmentType === type && styles.typeChipTextActive, { fontSize: 12 }]}>{type}</Text>
+                    <AppText style={[styles.typeChipText, apartmentType === type && styles.typeChipTextActive, { fontSize: 12 }]}>{type}</AppText>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
-            <Text style={[styles.label, { marginTop: 8 }]}>Facilities & Amenities</Text>
+            <AppText style={[styles.label, { marginTop: 8 }]}>Facilities & Amenities</AppText>
             <View style={{ marginTop: 8 }}>
               {facilities.map((facility, index) => (
                 <View key={facility.name} style={{
@@ -393,7 +394,7 @@ export default function StudentAllotmentPage() {
                 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <MaterialIcons name={facility.icon} size={20} color="#004e92" />
-                    <Text style={{ fontSize: 15, fontWeight: '500', color: '#1E293B' }}>{facility.name}</Text>
+                    <AppText style={{ fontSize: 15, fontWeight: '500', color: '#1E293B' }}>{facility.name}</AppText>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     <TouchableOpacity
@@ -411,7 +412,7 @@ export default function StudentAllotmentPage() {
                         setFacilities(newFac);
                       }}
                     >
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: facility.status === 'Included' ? '#fff' : '#64748B' }}>Included</Text>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: facility.status === 'Included' ? '#fff' : '#64748B' }}>Included</AppText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={{
@@ -428,7 +429,7 @@ export default function StudentAllotmentPage() {
                         setFacilities(newFac);
                       }}
                     >
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: facility.status === 'Not Included' ? '#fff' : '#64748B' }}>Not Included</Text>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: facility.status === 'Not Included' ? '#fff' : '#64748B' }}>Not Included</AppText>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -439,7 +440,7 @@ export default function StudentAllotmentPage() {
 
           {/* Details & Fees Card */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>College & Fees</Text>
+            <AppText style={styles.sectionTitle}>College & Fees</AppText>
 
             <InputField
               label="College Name"
@@ -463,7 +464,7 @@ export default function StudentAllotmentPage() {
 
             <View style={styles.divider} />
 
-            <Text style={styles.sectionTitle}>Fee Structure</Text>
+            <AppText style={styles.sectionTitle}>Fee Structure</AppText>
 
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
@@ -480,7 +481,7 @@ export default function StudentAllotmentPage() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Payment Frequency</Text>
+              <AppText style={styles.label}>Payment Frequency</AppText>
               <View style={styles.inputWrapper}>
                 <MaterialIcons name="calendar-clock" size={20} color={feeFrequency ? '#004e92' : '#64748B'} style={styles.inputIcon} />
                 <Picker
@@ -503,7 +504,7 @@ export default function StudentAllotmentPage() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.submitButtonText}>Confirm Allotment</Text>
+              <AppText style={styles.submitButtonText}>Confirm Allotment</AppText>
               <MaterialIcons name="check-circle-outline" size={20} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>

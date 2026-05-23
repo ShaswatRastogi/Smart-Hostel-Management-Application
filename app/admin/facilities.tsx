@@ -2,19 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import EditFooterModal from '../../components/EditFooterModal';
@@ -31,6 +19,7 @@ import {
     updateFacility,
 } from '../../utils/facilityUtils';
 import { getHostelInfo, HostelInfo } from '../../utils/hostelUtils';
+import AppText from '../../components/AppText';
 
 const MemoizedFacilityItem = React.memo(({ item, drag, isActive, handleEdit, handleDelete, colors, isDark, styles }: any) => {
     return (
@@ -81,7 +70,7 @@ const MemoizedFacilityItem = React.memo(({ item, drag, isActive, handleEdit, han
                 )}
                 <View style={styles.cardContent}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Text style={styles.cardTitle}>{item.title}</Text>
+                        <AppText style={styles.cardTitle}>{item.title}</AppText>
                         <TouchableOpacity
                             onLongPress={drag}
                             disabled={isActive}
@@ -89,12 +78,12 @@ const MemoizedFacilityItem = React.memo(({ item, drag, isActive, handleEdit, han
                             style={{ backgroundColor: colors.background, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
                         >
                             <MaterialCommunityIcons name="drag" size={24} color={colors.primary} />
-                            <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: '600' }}>Drag</Text>
+                            <AppText style={{ fontSize: 10, color: colors.textSecondary, fontWeight: '600' }}>Drag</AppText>
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.cardDesc} numberOfLines={3}>
+                    <AppText style={styles.cardDesc} numberOfLines={3}>
                         {item.description}
-                    </Text>
+                    </AppText>
                 </View>
                 <View style={styles.cardActions}>
                     <TouchableOpacity onPress={() => handleEdit(item)}>
@@ -515,9 +504,9 @@ export default function ManageFacilities() {
                 title="Manage Facilities"
             />
             <View style={{ paddingHorizontal: 20, paddingVertical: 8, alignItems: 'center' }}>
-                <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                <AppText style={{ fontSize: 12, color: colors.textSecondary }}>
                     <MaterialCommunityIcons name="gesture-tap-hold" size={12} /> Long press "Drag" to reorder
-                </Text>
+                </AppText>
             </View>
 
             {loading ? (
@@ -540,37 +529,37 @@ export default function ManageFacilities() {
                     ListHeaderComponent={
                         <View style={styles.hostelInfoCard}>
                             <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoTitle}>{hostelInfo?.name || 'Smart Hostel'}</Text>
+                                <AppText style={styles.infoTitle}>{hostelInfo?.name || 'Smart Hostel'}</AppText>
                                 {hostelInfo?.location && (
                                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                                         <MaterialCommunityIcons name="map-marker" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                                        <Text style={{ fontSize: 13, color: colors.textSecondary }}>{hostelInfo.location}</Text>
+                                        <AppText style={{ fontSize: 13, color: colors.textSecondary }}>{hostelInfo.location}</AppText>
                                     </View>
                                 )}
-                                <Text style={styles.infoSubtitle} numberOfLines={2}>{hostelInfo?.description || 'No description set'}</Text>
+                                <AppText style={styles.infoSubtitle} numberOfLines={2}>{hostelInfo?.description || 'No description set'}</AppText>
                             </View>
                             <TouchableOpacity style={styles.editInfoBtn} onPress={handleEditInfo}>
-                                <Text style={styles.editInfoText}>Edit</Text>
+                                <AppText style={styles.editInfoText}>Edit</AppText>
                             </TouchableOpacity>
                         </View>
                     }
                     renderItem={renderItem}
                     ListEmptyComponent={
                         <View style={{ alignItems: 'center', marginTop: 50 }}>
-                            <Text style={{ color: colors.textSecondary }}>No facilities added yet.</Text>
+                            <AppText style={{ color: colors.textSecondary }}>No facilities added yet.</AppText>
                         </View>
                     }
                     ListFooterComponent={
                         <View style={{ padding: 20, paddingBottom: 40 }}>
                             <View style={styles.hostelInfoCard}>
                                 <View style={styles.infoTextContainer}>
-                                    <Text style={styles.infoTitle}>Footer Note</Text>
-                                    <Text style={styles.infoSubtitle} numberOfLines={2}>
+                                    <AppText style={styles.infoTitle}>Footer Note</AppText>
+                                    <AppText style={styles.infoSubtitle} numberOfLines={2}>
                                         {hostelInfo?.footer_text || 'No footer note added.'}
-                                    </Text>
+                                    </AppText>
                                 </View>
                                 <TouchableOpacity style={styles.editInfoBtn} onPress={() => setFooterModalVisible(true)}>
-                                    <Text style={styles.editInfoText}>Edit</Text>
+                                    <AppText style={styles.editInfoText}>Edit</AppText>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -587,7 +576,7 @@ export default function ManageFacilities() {
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{editingFacility ? 'Edit Facility' : 'Add Facility'}</Text>
+                            <AppText style={styles.modalTitle}>{editingFacility ? 'Edit Facility' : 'Add Facility'}</AppText>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
@@ -599,7 +588,7 @@ export default function ManageFacilities() {
                                     <TouchableOpacity style={[styles.imagePicker, { width: 120, height: 120, marginBottom: 0 }]} onPress={pickImage}>
                                         <View style={styles.imagePlaceholder}>
                                             <MaterialCommunityIcons name="camera-plus" size={32} color={colors.textSecondary} />
-                                            <Text style={[styles.imagePlaceholderText, { fontSize: 12 }]}>Add Photo</Text>
+                                            <AppText style={[styles.imagePlaceholderText, { fontSize: 12 }]}>Add Photo</AppText>
                                         </View>
                                     </TouchableOpacity>
                                     {images.map((img, index) => (
@@ -616,7 +605,7 @@ export default function ManageFacilities() {
                                 </ScrollView>
                             </View>
 
-                            <Text style={[styles.label, { marginTop: 0 }]}>Title</Text>
+                            <AppText style={[styles.label, { marginTop: 0 }]}>Title</AppText>
                             <InputField
                                 placeholder="e.g. Modern Gym"
                                 value={title}
@@ -624,7 +613,7 @@ export default function ManageFacilities() {
                                 icon="format-title"
                             />
 
-                            <Text style={styles.label}>Description</Text>
+                            <AppText style={styles.label}>Description</AppText>
                             <InputField
                                 placeholder="Describe the facility..."
                                 value={description}
@@ -642,7 +631,7 @@ export default function ManageFacilities() {
                                 {saving ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.submitBtnText}>{editingFacility ? 'Update' : 'Save'}</Text>
+                                    <AppText style={styles.submitBtnText}>{editingFacility ? 'Update' : 'Save'}</AppText>
                                 )}
                             </TouchableOpacity>
                             <View style={{ height: 20 }} />
@@ -672,10 +661,10 @@ export default function ManageFacilities() {
                             <MaterialCommunityIcons name="delete-alert" size={40} color="#EF4444" />
                         </View>
 
-                        <Text style={[styles.deleteModalTitle, { color: colors.text }]}>Delete Facility?</Text>
-                        <Text style={[styles.deleteModalMessage, { color: colors.textSecondary }]}>
+                        <AppText style={[styles.deleteModalTitle, { color: colors.text }]}>Delete Facility?</AppText>
+                        <AppText style={[styles.deleteModalMessage, { color: colors.textSecondary }]}>
                             This action cannot be undone. The facility will be permanently removed from the list.
-                        </Text>
+                        </AppText>
 
                         <View style={styles.deleteModalButtons}>
                             <TouchableOpacity
@@ -685,7 +674,7 @@ export default function ManageFacilities() {
                                     setFacilityToDelete(null);
                                 }}
                             >
-                                <Text style={[styles.cancelBtnText, { color: colors.text }]}>Cancel</Text>
+                                <AppText style={[styles.cancelBtnText, { color: colors.text }]}>Cancel</AppText>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -693,7 +682,7 @@ export default function ManageFacilities() {
                                 onPress={confirmDelete}
                             >
                                 <MaterialCommunityIcons name="delete" size={18} color="#fff" />
-                                <Text style={styles.deleteBtnText}>Delete</Text>
+                                <AppText style={styles.deleteBtnText}>Delete</AppText>
                             </TouchableOpacity>
                         </View>
                     </View>

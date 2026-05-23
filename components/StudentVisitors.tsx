@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import { formatDate, getStatusColor, getStatusLabel, getVisitorsByStudentEmail, Visitor } from '../utils/visitorUtils';
+import AppText from './AppText';
 
 interface StudentVisitorsProps {
     studentEmail: string;
@@ -103,27 +104,27 @@ export default function StudentVisitors({ studentEmail }: StudentVisitorsProps) 
         <View style={styles.container}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <MaterialCommunityIcons name="account-group" size={18} color={colors.text} />
-                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                <AppText style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
                     Recent Visitors ({visitors.length})
-                </Text>
+                </AppText>
             </View>
 
             {visitors.length === 0 ? (
-                <Text style={styles.emptyText}>No visitor requests yet</Text>
+                <AppText style={styles.emptyText}>No visitor requests yet</AppText>
             ) : (
                 visitors.map((visitor) => (
                     <View key={visitor.id} style={styles.visitorCard}>
                         <View style={styles.visitorHeader}>
-                            <Text style={styles.visitorName}>{visitor.visitor_name}</Text>
+                            <AppText style={styles.visitorName}>{visitor.visitor_name}</AppText>
                             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(visitor.status) + '20' }]}>
-                                <Text style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>
+                                <AppText style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>
                                     {getStatusLabel(visitor.status)}
-                                </Text>
+                                </AppText>
                             </View>
                         </View>
-                        <Text style={styles.visitorDetail}>📞 {visitor.visitor_phone}</Text>
-                        <Text style={styles.visitorDetail}>📅 {formatDate(visitor.expected_date)}</Text>
-                        <Text style={styles.visitorDetail} numberOfLines={1}>💬 {visitor.purpose}</Text>
+                        <AppText style={styles.visitorDetail}>📞 {visitor.visitor_phone}</AppText>
+                        <AppText style={styles.visitorDetail}>📅 {formatDate(visitor.expected_date)}</AppText>
+                        <AppText style={styles.visitorDetail} numberOfLines={1}>💬 {visitor.purpose}</AppText>
                     </View>
                 ))
             )}

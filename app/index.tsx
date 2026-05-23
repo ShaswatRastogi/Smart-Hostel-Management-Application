@@ -2,8 +2,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AppText from '../components/AppText';
 
 const { width, height } = Dimensions.get('window');
 
@@ -70,16 +71,16 @@ export default function Index() {
 
           {/* Text Container */}
           <View style={styles.textContainer}>
-            <Text style={styles.title}>SMARTSTAY</Text>
+            <AppText style={styles.title}>SMARTSTAY</AppText>
             <View style={styles.divider} />
-            <Text style={styles.subtitle}>The Future of Hostel Living</Text>
+            <AppText style={styles.subtitle}>The Future of Hostel Living</AppText>
           </View>
         </View>
 
       </SafeAreaView>
 
       <View style={styles.footer}>
-        <Text style={styles.version}>v2.0 Universal</Text>
+        <AppText style={styles.version}>v2.0 Universal</AppText>
       </View>
     </View>
   );

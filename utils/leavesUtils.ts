@@ -8,10 +8,12 @@ export interface LeaveRequest {
     studentProfilePhoto?: string;
     startDate: string; // ISO String YYYY-MM-DD
     endDate: string;   // ISO String YYYY-MM-DD
+    category: string;
     reason: string;
     status: 'pending' | 'approved' | 'rejected';
     createdAt: any;
     days: number;
+    qrCode?: string;
 }
 
 // Create a new leave request

@@ -19,6 +19,7 @@ import {
     getAllComplaints,
     getAllLaundryRequests,
     getAllLeaves,
+    getAllMovements,
     getAllPayments,
     getAllServiceRequests,
     getLaundryRequests,
@@ -88,5 +89,8 @@ router.get('/leaves', requireAuth, getLeaveRequests);
 router.post('/leaves', requireAuth, createLeaveRequest);
 router.get('/leaves/all', requireAuth, getAllLeaves); // Admin
 router.put('/leaves/:id', requireAuth, updateLeaveStatus); // Admin
+
+// Movements
+router.get('/movements/all', requireAuth, getAllMovements); // Admin
 
 export default router;

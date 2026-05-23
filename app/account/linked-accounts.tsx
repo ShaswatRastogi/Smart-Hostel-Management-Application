@@ -2,15 +2,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import api from '../../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { fetchUserData, StudentData } from '../../utils/nameUtils';
+import AppText from '../../components/AppText';
 
 interface LinkedService { id: string; name: string; icon: any; color: string; bgColor: string; linked: boolean; email?: string; linkedDate?: string; }
 
@@ -29,10 +29,8 @@ export default function LinkedAccounts() {
     try {
       const data = await fetchUserData();
       setStudent(data);
-      const biometricEnabled = await AsyncStorage.getItem('biometric_enabled');
       setServices([
         { id: 'google', name: 'Google', icon: 'google', color: '#EA4335', bgColor: 'rgba(234,67,53,0.1)', linked: !!data?.googleEmail, email: data?.googleEmail || undefined, linkedDate: data?.googleEmail ? 'Connected' : undefined },
-        { id: 'biometric', name: 'Biometric Login', icon: 'fingerprint', color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.1)', linked: biometricEnabled === 'true', linkedDate: biometricEnabled === 'true' ? 'Connected' : undefined },
       ]);
     } catch (e) { console.error('Failed to load linked accounts:', e); } finally { setLoading(false); }
   };
@@ -44,26 +42,11 @@ export default function LinkedAccounts() {
         { text: 'Unlink', style: 'destructive', onPress: async () => {
           if (service.id === 'google') {
             try { setLoading(true); await api.post('/auth/unlink-google'); try { await GoogleSignin.signOut(); } catch (err) {} setServices(prev => prev.map(s => s.id === service.id ? { ...s, linked: false, email: undefined, linkedDate: undefined } : s)); showAlert('Unlinked', `${service.name} has been unlinked.`, [], 'success'); } catch (e) { showAlert('Error', 'Failed to unlink Google account.'); } finally { setLoading(false); }
-          } else if (service.id === 'biometric') {
-            await AsyncStorage.removeItem('biometric_enabled');
-            setServices(prev => prev.map(s => s.id === service.id ? { ...s, linked: false } : s));
-            showAlert('Unlinked', 'Biometric login has been disabled.', [], 'success');
           }
         }}
       ]);
     } else {
-      if (service.id === 'biometric') {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) { showAlert('Error', 'No biometric hardware or enrolled fingerprint found.', [], 'error'); return; }
-        showAlert('Enable Biometric', 'Use fingerprint or face recognition for quick sign-in.', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Enable', onPress: async () => {
-            const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Verify your identity', fallbackLabel: 'Use passcode' });
-            if (result.success) { await AsyncStorage.setItem('biometric_enabled', 'true'); setServices(prev => prev.map(s => s.id === 'biometric' ? { ...s, linked: true, linkedDate: 'Just now' } : s)); showAlert('Enabled!', 'Biometric login activated.', [], 'success'); } else { showAlert('Error', 'Authentication failed or cancelled.', [], 'error'); }
-          }}
-        ]);
-      } else if (service.id === 'google') {
+      if (service.id === 'google') {
         try {
           setLoading(true); await GoogleSignin.hasPlayServices();
           try { await GoogleSignin.signOut(); } catch (err) {}
@@ -81,7 +64,7 @@ export default function LinkedAccounts() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Linked Accounts</Text>
+          <AppText style={styles.headerTitle}>Linked Accounts</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -95,36 +78,36 @@ export default function LinkedAccounts() {
                 <MaterialCommunityIcons name="link-variant" size={32} color="#fff" />
               </LinearGradient>
             </View>
-            <Text style={[styles.heroTitle, { color: colors.text }]}>Connected Services</Text>
-            <Text style={[styles.heroSub, { color: colors.textSecondary }]}>Manage external accounts linked to your SmartStay profile for alternative sign-in methods.</Text>
+            <AppText style={[styles.heroTitle, { color: colors.text }]}>Connected Services</AppText>
+            <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>Manage external accounts linked to your SmartStay profile for alternative sign-in methods.</AppText>
           </View>
 
           {/* Primary Login */}
-          <Text style={[styles.secTitle, { color: colors.textSecondary }]}>PRIMARY LOGIN</Text>
+          <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>PRIMARY LOGIN</AppText>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.serviceRow}>
               <View style={[styles.serviceIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><MaterialCommunityIcons name="email-lock" size={24} color="#10B981" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.serviceName, { color: colors.text }]}>Email & Password</Text><Text style={[styles.serviceEmail, { color: colors.textSecondary }]}>{student?.email || 'Not set'}</Text></View>
-              <View style={[styles.statusBadge, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><Text style={[styles.statusText, { color: '#10B981' }]}>Primary</Text></View>
+              <View style={{ flex: 1 }}><AppText style={[styles.serviceName, { color: colors.text }]}>Email & Password</AppText><AppText style={[styles.serviceEmail, { color: colors.textSecondary }]}>{student?.email || 'Not set'}</AppText></View>
+              <View style={[styles.statusBadge, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><AppText style={[styles.statusText, { color: '#10B981' }]}>Primary</AppText></View>
             </View>
           </View>
 
           {/* Linked Services */}
-          <Text style={[styles.secTitle, { color: colors.textSecondary, marginTop: 20 }]}>LINKED SERVICES</Text>
+          <AppText style={[styles.secTitle, { color: colors.textSecondary, marginTop: 20 }]}>LINKED SERVICES</AppText>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {services.map((service, i) => (
               <View key={service.id}>
                 <View style={styles.serviceRow}>
                   <View style={[styles.serviceIcon, { backgroundColor: service.bgColor }]}><MaterialCommunityIcons name={service.icon} size={24} color={service.color} /></View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.serviceName, { color: colors.text }]}>{service.name}</Text>
+                    <AppText style={[styles.serviceName, { color: colors.text }]}>{service.name}</AppText>
                     {service.linked ? (<>
-                      {service.email && <Text style={[styles.serviceEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">{service.email}</Text>}
-                      {service.linkedDate && <Text style={[styles.serviceDate, { color: colors.textSecondary }]}>{service.linkedDate}</Text>}
-                    </>) : <Text style={[styles.serviceEmail, { color: colors.textSecondary }]}>Not connected</Text>}
+                      {service.email && <AppText style={[styles.serviceEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">{service.email}</AppText>}
+                      {service.linkedDate && <AppText style={[styles.serviceDate, { color: colors.textSecondary }]}>{service.linkedDate}</AppText>}
+                    </>) : <AppText style={[styles.serviceEmail, { color: colors.textSecondary }]}>Not connected</AppText>}
                   </View>
                   <TouchableOpacity style={[styles.linkBtn, { backgroundColor: service.linked ? (isDark ? '#1e293b' : '#F1F5F9') : '#004e92', borderColor: service.linked ? colors.border : '#004e92' }]} onPress={() => handleToggleLink(service)}>
-                    <Text style={[styles.linkBtnText, { color: service.linked ? colors.text : '#fff' }]}>{service.linked ? 'Unlink' : 'Link'}</Text>
+                    <AppText style={[styles.linkBtnText, { color: service.linked ? colors.text : '#fff' }]}>{service.linked ? 'Unlink' : 'Link'}</AppText>
                   </TouchableOpacity>
                 </View>
                 {i < services.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
@@ -135,7 +118,7 @@ export default function LinkedAccounts() {
           {/* Security Note */}
           <View style={[styles.noteCard, { backgroundColor: isDark ? '#0c2d48' : '#EFF6FF', borderColor: isDark ? '#1e3a5f' : '#BFDBFE' }]}>
             <MaterialCommunityIcons name="shield-check" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-            <Text style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>Linked accounts use industry-standard OAuth 2.0 for secure authentication. We never store passwords from linked services.</Text>
+            <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>Linked accounts use industry-standard OAuth 2.0 for secure authentication. We never store passwords from linked services.</AppText>
           </View>
         </ScrollView>
       )}

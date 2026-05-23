@@ -4,10 +4,11 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import InputField from '../../../components/InputField';
 import { createStudent, updateStudent } from '../../../utils/studentUtils';
+import AppText from '../../../components/AppText';
 
 interface AddStudentFormProps {
     colors: any;
@@ -221,8 +222,8 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.textSecondary }]}>
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Student Details</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Enter the information below to allot a room.</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.text }]}>Student Details</AppText>
+                    <AppText style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Enter the information below to allot a room.</AppText>
                 </View>
 
                 <View style={[styles.profilePhotoContainer, { marginBottom: 24 }]}>
@@ -234,9 +235,9 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                         )}
                     </TouchableOpacity>
                     <TouchableOpacity onPress={pickImage}>
-                        <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13, marginTop: 10 }}>
+                        <AppText style={{ color: colors.primary, fontWeight: '600', fontSize: 13, marginTop: 10 }}>
                             {image ? 'Change Photo' : 'Upload Profile Photo'}
-                        </Text>
+                        </AppText>
                     </TouchableOpacity>
                 </View>
 
@@ -250,18 +251,18 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                         required
                         hasSubmitted={hasSubmitted}
                     />
-                    <Text style={{ fontSize: 12, color: '#64748B', marginLeft: 4, marginTop: -8, marginBottom: 12 }}>
+                    <AppText style={{ fontSize: 12, color: '#64748B', marginLeft: 4, marginTop: -8, marginBottom: 12 }}>
                         Auto-generated (8 characters max). You can edit if needed.
-                    </Text>
+                    </AppText>
                 </View>
 
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Room Configuration</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.text }]}>Room Configuration</AppText>
 
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.label, { color: colors.textSecondary }]}>Sharing Options</Text>
+                        <AppText style={[styles.label, { color: colors.textSecondary }]}>Sharing Options</AppText>
                         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
                             {['Single Sharing', 'Double Sharing', 'Triple Sharing'].map((type) => (
                                 <TouchableOpacity
@@ -276,16 +277,16 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                                     }}
                                     onPress={() => setSharingType(type)}
                                 >
-                                    <Text style={{
+                                    <AppText style={{
                                         color: sharingType === type ? '#fff' : colors.textSecondary,
                                         fontWeight: '600',
                                         fontSize: 12
-                                    }}>{type}</Text>
+                                    }}>{type}</AppText>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
-                        <Text style={[styles.label, { color: colors.textSecondary }]}>BHK / Studio Options (Optional)</Text>
+                        <AppText style={[styles.label, { color: colors.textSecondary }]}>BHK / Studio Options (Optional)</AppText>
                         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                             {['1BHK', '2BHK', '3BHK', 'Studio'].map((type) => (
                                 <TouchableOpacity
@@ -300,23 +301,23 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                                     }}
                                     onPress={() => setApartmentType(apartmentType === type ? null : type)}
                                 >
-                                    <Text style={{
+                                    <AppText style={{
                                         color: apartmentType === type ? '#fff' : colors.textSecondary,
                                         fontWeight: '600',
                                         fontSize: 12
-                                    }}>{type}</Text>
+                                    }}>{type}</AppText>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     </View>
 
-                    <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>Facilities & Amenities</Text>
+                    <AppText style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>Facilities & Amenities</AppText>
                     <View style={{ marginTop: 8 }}>
                         {facilities.map((fac, idx) => (
                             <View key={fac.name} style={[styles.facilityRow, { borderBottomColor: colors.border, borderBottomWidth: idx === facilities.length - 1 ? 0 : 1 }]}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                     <MaterialIcons name={fac.icon} size={20} color={colors.primary} />
-                                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{fac.name}</Text>
+                                    <AppText style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{fac.name}</AppText>
                                 </View>
                                 <View style={{ flexDirection: 'row', gap: 6 }}>
                                     {['Included', 'Not Included'].map((s) => (
@@ -335,7 +336,7 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                                                 borderWidth: 1,
                                                 borderColor: fac.status === s ? colors.primary : colors.border
                                             }}>
-                                            <Text style={{ fontSize: 11, fontWeight: '700', color: fac.status === s ? '#fff' : colors.textSecondary }}>{s}</Text>
+                                            <AppText style={{ fontSize: 11, fontWeight: '700', color: fac.status === s ? '#fff' : colors.textSecondary }}>{s}</AppText>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -362,7 +363,7 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                 <InputField label="Total Fee (Record Only)" icon="cash-multiple" value={totalFee} onChangeText={setTotalFee} placeholder="e.g. 15000" keyboardType="numeric" required hasSubmitted={hasSubmitted} />
 
                 <View style={styles.inputContainer}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Fee Frequency</Text>
+                    <AppText style={[styles.label, { color: colors.textSecondary }]}>Fee Frequency</AppText>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                         {['Monthly', 'Semester', 'Yearly'].map((type) => (
                             <TouchableOpacity
@@ -382,11 +383,11 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                                     borderColor: feeFrequency === type ? colors.primary : colors.border
                                 }}
                             >
-                                <Text style={{
+                                <AppText style={{
                                     color: feeFrequency === type ? colors.primary : colors.textSecondary,
                                     fontWeight: feeFrequency === type ? '700' : '500',
                                     fontSize: 13
-                                }}>{type}</Text>
+                                }}>{type}</AppText>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -395,15 +396,15 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={{ flex: 1 }}>
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Date of Birth <Text style={{ color: '#EF4444' }}>*</Text></Text>
+                            <AppText style={[styles.label, { color: colors.textSecondary }]}>Date of Birth <AppText style={{ color: '#EF4444' }}>*</AppText></AppText>
                             <TouchableOpacity
                                 onPress={() => setShowDatePicker(true)}
                                 style={[styles.inputWrapper, { backgroundColor: theme === 'dark' ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}
                             >
                                 <MaterialIcons name="calendar-account" size={20} color={colors.textSecondary} style={{ marginRight: 10 }} />
-                                <Text style={{ color: dob ? colors.text : colors.textSecondary, fontSize: 16 }}>
+                                <AppText style={{ color: dob ? colors.text : colors.textSecondary, fontSize: 16 }}>
                                     {dob || 'Select Date'}
-                                </Text>
+                                </AppText>
                             </TouchableOpacity>
                             {showDatePicker && (
                                 <DateTimePicker
@@ -418,7 +419,7 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                     </View>
                     <View style={{ flex: 1 }}>
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Status</Text>
+                            <AppText style={[styles.label, { color: colors.textSecondary }]}>Status</AppText>
                             <View style={[styles.inputWrapper, { backgroundColor: theme === 'dark' ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
                                 <Switch
                                     trackColor={{ false: "#FEE2E2", true: "#DCFCE7" }}
@@ -426,12 +427,12 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                                     onValueChange={(val) => setStatus(val ? 'active' : 'inactive')}
                                     value={status === 'active'}
                                 />
-                                <Text style={{
+                                <AppText style={{
                                     marginLeft: 12,
                                     fontSize: 14,
                                     fontWeight: '600',
                                     color: status === 'active' ? '#16A34A' : '#EF4444'
-                                }}>{status === 'active' ? 'Active' : 'Inactive'}</Text>
+                                }}>{status === 'active' ? 'Active' : 'Inactive'}</AppText>
                             </View>
                         </View>
                     </View>
@@ -439,14 +440,14 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
 
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                <Text style={[styles.sectionTitle, { color: colors.primary }]}>Medical Information (Optional)</Text>
+                <AppText style={[styles.sectionTitle, { color: colors.primary }]}>Medical Information (Optional)</AppText>
                 <InputField label="Blood Group" icon="water" value={bloodGroup} onChangeText={setBloodGroup} placeholder="e.g. O+, A+, B+, AB+" hasSubmitted={hasSubmitted} />
                 <InputField label="Emergency Contact Name" icon="account-alert" value={emergencyContactName} onChangeText={setEmergencyContactName} placeholder="Emergency Contact Name" hasSubmitted={hasSubmitted} />
                 <InputField label="Emergency Phone" icon="phone-alert" value={emergencyContactPhone} onChangeText={setEmergencyContactPhone} placeholder="10-digit emergency contact number" keyboardType="phone-pad" hasSubmitted={hasSubmitted} />
                 <InputField label="Medical History / Allergies" icon="medical-bag" value={medicalHistory} onChangeText={setMedicalHistory} placeholder="Any known allergies, medical conditions, or medications" hasSubmitted={hasSubmitted} />
 
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>College Info</Text>
+                <AppText style={[styles.sectionTitle, { color: colors.text }]}>College Info</AppText>
                 <InputField label="WiFi SSID" icon="wifi" value={wifiSSID} onChangeText={setWifiSSID} placeholder="e.g. Hostel_Wifi_101" hasSubmitted={hasSubmitted} />
                 <InputField label="WiFi Password" icon="lock" value={wifiPassword} onChangeText={setWifiPassword} placeholder="Enter WiFi Password" hasSubmitted={hasSubmitted} />
                 <InputField label="College Name" icon="school" value={collegeName} onChangeText={setCollegeName} placeholder="e.g. XYZ Institute" required hasSubmitted={hasSubmitted} />
@@ -455,7 +456,7 @@ export default function AddStudentForm({ colors, theme, showAlert, handleTabChan
                 <TouchableOpacity style={styles.submitButton} onPress={handleAllotmentSubmit}>
                     <LinearGradient colors={['#004e92', '#000428']} style={styles.gradientButton} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                         <MaterialIcons name="account-plus" size={20} color="#fff" />
-                        <Text style={styles.submitButtonText}>Allot Student</Text>
+                        <AppText style={styles.submitButtonText}>Allot Student</AppText>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>

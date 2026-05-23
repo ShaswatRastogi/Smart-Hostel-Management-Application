@@ -3,7 +3,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -12,6 +12,7 @@ import { isAdmin, useUser } from '../../utils/authUtils';
 import { useRefresh } from '../../hooks/useRefresh';
 import { useTheme } from '../../utils/ThemeContext';
 import { deleteRoom, subscribeToRooms } from '../../utils/roomUtils';
+import AppText from '../../components/AppText';
 
 export default function RoomsPage() {
   const { colors, theme } = useTheme();
@@ -436,7 +437,7 @@ export default function RoomsPage() {
   if (!isAdmin(user))
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Access denied.</Text>
+        <AppText>Access denied.</AppText>
       </View>
     );
 
@@ -448,7 +449,7 @@ export default function RoomsPage() {
             <MaterialIcons name="chevron-left" size={32} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Manage Rooms</Text>
+            <AppText style={styles.headerTitle}>Manage Rooms</AppText>
           </View>
         </LinearGradient>
 
@@ -461,8 +462,8 @@ export default function RoomsPage() {
             style={styles.heroCard}
           >
             <View>
-              <Text style={styles.heroLabel}>Total Rooms</Text>
-              <Text style={styles.heroValue}>{rooms.length}</Text>
+              <AppText style={styles.heroLabel}>Total Rooms</AppText>
+              <AppText style={styles.heroValue}>{rooms.length}</AppText>
             </View>
             <MaterialIcons name="door-closed" size={48} color="rgba(255,255,255,0.9)" />
             <View style={styles.cardWatermark}>
@@ -480,9 +481,9 @@ export default function RoomsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="check-circle" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>Occupied</Text>
+                <AppText style={styles.miniLabel}>Occupied</AppText>
               </View>
-              <Text style={styles.miniValue}>{occupiedRooms}</Text>
+              <AppText style={styles.miniValue}>{occupiedRooms}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="check-circle" size={80} color="#fff" />
               </View>
@@ -497,9 +498,9 @@ export default function RoomsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="home-outline" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>Vacant</Text>
+                <AppText style={styles.miniLabel}>Vacant</AppText>
               </View>
-              <Text style={styles.miniValue}>{vacantRooms}</Text>
+              <AppText style={styles.miniValue}>{vacantRooms}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="home-outline" size={80} color="#fff" />
               </View>
@@ -550,17 +551,17 @@ export default function RoomsPage() {
 
                 <View style={styles.roomHeader}>
                   <View style={[styles.roomNumber, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9' }]}>
-                    <Text style={[styles.roomNumberText, { color: isDark ? '#FFF' : '#1E293B' }]}>#{item.number}</Text>
+                    <AppText style={[styles.roomNumberText, { color: isDark ? '#FFF' : '#1E293B' }]}>#{item.number}</AppText>
                   </View>
                   <View style={styles.roomInfo}>
-                    <Text style={[styles.roomTitle, { color: colors.text }]} numberOfLines={1}>
+                    <AppText style={[styles.roomTitle, { color: colors.text }]} numberOfLines={1}>
                       {getOccupantNames(item)}
-                    </Text>
+                    </AppText>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialIcons name={"account-group-outline" as any} size={14} color={colors.textSecondary} />
-                      <Text style={[styles.roomCapacity, { color: colors.textSecondary }]}>
+                      <AppText style={[styles.roomCapacity, { color: colors.textSecondary }]}>
                         {item.occupants?.length || 0}/{item.capacity || 2}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
@@ -588,7 +589,7 @@ export default function RoomsPage() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
           ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>No rooms found. Allot students to create rooms.</Text>
+            <AppText style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>No rooms found. Allot students to create rooms.</AppText>
           }
         />
       </ScrollView>
@@ -625,11 +626,11 @@ export default function RoomsPage() {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                         <View style={[styles.roomNumber, { width: 44, height: 44, backgroundColor: colors.primary + '20' }]}>
-                          <Text style={[styles.roomNumberText, { color: colors.primary }]}>{room.number}</Text>
+                          <AppText style={[styles.roomNumberText, { color: colors.primary }]}>{room.number}</AppText>
                         </View>
                         <View>
-                          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Room Details</Text>
-                          <Text style={{ fontSize: 13, color: colors.textSecondary }}>#{room.number}</Text>
+                          <AppText style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Room Details</AppText>
+                          <AppText style={{ fontSize: 13, color: colors.textSecondary }}>#{room.number}</AppText>
                         </View>
                       </View>
                       <TouchableOpacity onPress={() => setSelectedRoom(null)} style={{ padding: 4 }}>
@@ -638,23 +639,23 @@ export default function RoomsPage() {
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Occupants:</Text>
-                      <Text style={styles.detailValue}>{getOccupantNames(room)}</Text>
+                      <AppText style={styles.detailLabel}>Occupants:</AppText>
+                      <AppText style={styles.detailValue}>{getOccupantNames(room)}</AppText>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Availability:</Text>
-                      <Text style={styles.detailValue}>
+                      <AppText style={styles.detailLabel}>Availability:</AppText>
+                      <AppText style={styles.detailValue}>
                         {(room.capacity || 2) - (room.occupants?.length || 0)} spots left
-                      </Text>
+                      </AppText>
                     </View>
 
                     {room.roomType && (
                       <>
                         <View style={styles.divider} />
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Room Type:</Text>
-                          <Text style={[styles.detailValue, { color: '#004e92' }]}>{room.roomType}</Text>
+                          <AppText style={styles.detailLabel}>Room Type:</AppText>
+                          <AppText style={[styles.detailValue, { color: '#004e92' }]}>{room.roomType}</AppText>
                         </View>
 
                         {room.facilities && Array.isArray(JSON.parse(typeof room.facilities === 'string' ? room.facilities : JSON.stringify(room.facilities))) && (
@@ -662,9 +663,9 @@ export default function RoomsPage() {
                             {JSON.parse(typeof room.facilities === 'string' ? room.facilities : JSON.stringify(room.facilities)).map((f: any) => (
                               <View key={f.name} style={styles.facilityItem}>
                                 <MaterialIcons name={f.icon} size={14} color="#64748B" />
-                                <Text style={styles.facilityItemText}>{f.name}</Text>
+                                <AppText style={styles.facilityItemText}>{f.name}</AppText>
                                 <View style={[styles.miniStatusBadge, { backgroundColor: f.status === 'Included' ? '#DCFCE7' : '#FEE2E2' }]}>
-                                  <Text style={[styles.miniStatusText, { color: f.status === 'Included' ? '#166534' : '#991B1B' }]}>{f.status}</Text>
+                                  <AppText style={[styles.miniStatusText, { color: f.status === 'Included' ? '#166534' : '#991B1B' }]}>{f.status}</AppText>
                                 </View>
                               </View>
                             ))}
@@ -679,14 +680,14 @@ export default function RoomsPage() {
                         onPress={() => handleDeleteRoom(room)}
                       >
                         <MaterialIcons name="delete" size={20} color={theme === 'dark' ? '#EF4444' : '#fff'} />
-                        <Text style={styles.actionBtnText}>Delete Room</Text>
+                        <AppText style={styles.actionBtnText}>Delete Room</AppText>
                       </TouchableOpacity>
                     )}
                   </>
                 );
               })()
             ) : (
-              <Text style={{ color: colors.textSecondary }}>Room not found.</Text>
+              <AppText style={{ color: colors.textSecondary }}>Room not found.</AppText>
             )}
           </View>
         </View>

@@ -23,9 +23,9 @@ const socket = io(socketUrl, {
     transports: ['websocket'],
 });
 
-export const sendMessage = async (conversationId: string, text: string, user: { _id: string, name: string }) => {
+export const sendMessage = async (conversationId: string, text: string, user: { _id: string, name: string }, staffId?: string) => {
     try {
-        await api.post(`/chats/${conversationId}/messages`, { text });
+        await api.post(`/chats/${conversationId}/messages`, { text, staffId });
     } catch (error) {
         console.error("Error sending message:", error);
     }
@@ -43,7 +43,8 @@ export const subscribeToMessages = (
     conversationId: string,
     callback: (messages: ChatMessage[], partnerStatus?: { online: boolean, lastSeen: string | null }, partnerDetails?: any, realConvId?: string) => void,
     onNewMessage?: (msg: ChatMessage) => void,
-    onTypingStatus?: (isTyping: boolean, user?: any) => void
+    onTypingStatus?: (isTyping: boolean, user?: any) => void,
+    staffId?: string
 ) => {
     let currentMessages: ChatMessage[] = [];
     let cleanupEvents: (() => void) | null = null;
@@ -88,7 +89,9 @@ export const subscribeToMessages = (
 
     const fetchInitial = async () => {
         try {
-            const response = await api.get(`/chats/${conversationId}/messages`);
+            const response = await api.get(`/chats/${conversationId}/messages`, {
+                params: { staffId }
+            });
             let messagesData = [];
             let statusData = { online: false, lastSeen: null };
             let detailsData = null;
@@ -122,8 +125,12 @@ export const subscribeToMessages = (
     };
 };
 
-export const subscribeToChatList = (callback: () => void) => {
+export const subscribeToChatList = (callback: () => void, staffUserId?: string) => {
     socket.emit('joinAdminChatList');
+    // Also join staff-specific room for 1-on-1 DM updates
+    if (staffUserId) {
+        socket.emit('joinStaffChatList', staffUserId);
+    }
     socket.on('updateChatList', callback);
     return () => {
         socket.off('updateChatList', callback);

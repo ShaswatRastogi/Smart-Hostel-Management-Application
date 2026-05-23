@@ -3,24 +3,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InputField from '../../components/InputField';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { addBusRoute, BusRoute, deleteBusRoute, subscribeToBusTimings, updateBusRoute } from '../../utils/busTimingsSyncUtils';
+import AppText from '../../components/AppText';
 
 export default function ManageBusTimingsPage() {
     const { colors, theme } = useTheme();
@@ -454,7 +444,7 @@ export default function ManageBusTimingsPage() {
                     <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>Manage Bus Timings</Text>
+                    <AppText style={styles.headerTitle}>Manage Bus Timings</AppText>
                 </View>
             </LinearGradient>
 
@@ -469,7 +459,7 @@ export default function ManageBusTimingsPage() {
                     ListHeaderComponent={
                         <TouchableOpacity style={styles.createBtn} onPress={openCreateModal}>
                             <MaterialCommunityIcons name="plus" size={24} color="#fff" />
-                            <Text style={styles.createBtnText}>Add New Route</Text>
+                            <AppText style={styles.createBtnText}>Add New Route</AppText>
                         </TouchableOpacity>
                     }
                     renderItem={({ item }) => (
@@ -479,7 +469,7 @@ export default function ManageBusTimingsPage() {
                             </View>
                             <View style={styles.cardContent}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    <Text style={styles.routeTitle}>{item.route}</Text>
+                                    <AppText style={styles.routeTitle}>{item.route}</AppText>
                                     <View style={[styles.modernBadge, {
                                         backgroundColor: item.schedule_type === 'everyday' ? (theme === 'dark' ? 'rgba(59,130,246,0.15)' : '#EFF6FF') :
                                             item.schedule_type === 'once' ? (theme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2') :
@@ -488,7 +478,7 @@ export default function ManageBusTimingsPage() {
                                         paddingVertical: 3,
                                         borderRadius: 6
                                     }]}>
-                                        <Text style={{
+                                        <AppText style={{
                                             fontSize: 9,
                                             fontWeight: '800',
                                             color: item.schedule_type === 'everyday' ? '#2563EB' :
@@ -498,13 +488,13 @@ export default function ManageBusTimingsPage() {
                                             {item.schedule_type === 'everyday' ? 'EVERYDAY' :
                                                 item.schedule_type === 'once' ? (item.valid_date ? `ONCE: ${new Date(item.valid_date).toLocaleDateString()}` : 'ONCE') :
                                                     item.schedule_type?.toUpperCase() || 'BUS'}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                 </View>
                                 <View style={styles.timesContainer}>
                                     {item.times.map((time, idx) => (
                                         <View key={idx} style={styles.timeBadge}>
-                                            <Text style={styles.timeText}>{time}</Text>
+                                            <AppText style={styles.timeText}>{time}</AppText>
                                         </View>
                                     ))}
                                 </View>
@@ -520,9 +510,9 @@ export default function ManageBusTimingsPage() {
                         </View>
                     )}
                     ListEmptyComponent={
-                        <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
+                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 40 }}>
                             No bus routes found. Add one above.
-                        </Text>
+                        </AppText>
                     }
                 />
             )}
@@ -537,7 +527,7 @@ export default function ManageBusTimingsPage() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{editingId ? 'Edit Bus Route' : 'Add Bus Route'}</Text>
+                            <AppText style={styles.modalTitle}>{editingId ? 'Edit Bus Route' : 'Add Bus Route'}</AppText>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
@@ -545,7 +535,7 @@ export default function ManageBusTimingsPage() {
 
                         <ScrollView style={styles.modalScroll}>
                             <View style={{ marginBottom: 20 }}>
-                                <Text style={styles.label}>Route Path</Text>
+                                <AppText style={styles.label}>Route Path</AppText>
 
                                 <View style={{ flexDirection: 'row', gap: 12 }}>
                                     {/* Timeline Visuals */}
@@ -564,7 +554,7 @@ export default function ManageBusTimingsPage() {
                                     <View style={{ flex: 1, gap: 12 }}>
                                         {/* Start Input */}
                                         <View>
-                                            <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600', marginBottom: 4, marginLeft: 4 }}>START POINT</Text>
+                                            <AppText style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600', marginBottom: 4, marginLeft: 4 }}>START POINT</AppText>
                                             <TextInput
                                                 style={[styles.timeInput, { height: 44 }]}
                                                 placeholder="e.g. Hostel"
@@ -595,12 +585,12 @@ export default function ManageBusTimingsPage() {
                                             onPress={handleAddStop}
                                             style={{ alignSelf: 'flex-start', marginLeft: 4, paddingVertical: 4 }}
                                         >
-                                            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>+ ADD STOP</Text>
+                                            <AppText style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>+ ADD STOP</AppText>
                                         </TouchableOpacity>
 
                                         {/* Destination Input */}
                                         <View>
-                                            <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600', marginBottom: 4, marginLeft: 4 }}>DESTINATION</Text>
+                                            <AppText style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600', marginBottom: 4, marginLeft: 4 }}>DESTINATION</AppText>
                                             <TextInput
                                                 style={[styles.timeInput, { height: 44 }]}
                                                 placeholder="e.g. College"
@@ -632,7 +622,7 @@ export default function ManageBusTimingsPage() {
                                 </View>
                             </View>
 
-                            <Text style={styles.label}>Note / Message (Optional)</Text>
+                            <AppText style={styles.label}>Note / Message (Optional)</AppText>
                             <InputField
                                 icon="message-text-outline"
                                 placeholder="E.g. Route via Main Market"
@@ -642,30 +632,30 @@ export default function ManageBusTimingsPage() {
                             <View style={{ height: 12 }} />
 
                             <View style={{ backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.05)' : '#F8FAFC', padding: 16, borderRadius: 16, marginBottom: 20, borderWidth: 1, borderColor: colors.border }}>
-                                <Text style={[styles.label, { marginBottom: 12, marginTop: 0 }]}>Schedule Frequency</Text>
+                                <AppText style={[styles.label, { marginBottom: 12, marginTop: 0 }]}>Schedule Frequency</AppText>
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
                                     <TouchableOpacity
                                         style={[styles.periodOption, { flex: 1, height: 44, backgroundColor: scheduleType === 'everyday' ? colors.primary : colors.background, borderWidth: 1, borderColor: scheduleType === 'everyday' ? colors.primary : colors.border }]}
                                         onPress={() => setScheduleType('everyday')}
                                     >
-                                        <Text style={{ color: scheduleType === 'everyday' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Everyday</Text>
+                                        <AppText style={{ color: scheduleType === 'everyday' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Everyday</AppText>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.periodOption, { flex: 1, height: 44, backgroundColor: scheduleType === 'today' ? colors.primary : colors.background, borderWidth: 1, borderColor: scheduleType === 'today' ? colors.primary : colors.border }]}
                                         onPress={() => setScheduleType('today')}
                                     >
-                                        <Text style={{ color: scheduleType === 'today' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Today</Text>
+                                        <AppText style={{ color: scheduleType === 'today' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Today</AppText>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.periodOption, { flex: 1, height: 44, backgroundColor: scheduleType === 'tomorrow' ? colors.primary : colors.background, borderWidth: 1, borderColor: scheduleType === 'tomorrow' ? colors.primary : colors.border }]}
                                         onPress={() => setScheduleType('tomorrow')}
                                     >
-                                        <Text style={{ color: scheduleType === 'tomorrow' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Tomorrow</Text>
+                                        <AppText style={{ color: scheduleType === 'tomorrow' ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>Tomorrow</AppText>
                                     </TouchableOpacity>
                                 </View>
                             </View>
 
-                            <Text style={styles.label}>Timings</Text>
+                            <AppText style={styles.label}>Timings</AppText>
                             {newTimes.map((item, index) => (
                                 <View key={index} style={styles.timeInputRow}>
                                     <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
@@ -682,13 +672,13 @@ export default function ManageBusTimingsPage() {
                                                 style={[styles.periodOption, item.period === 'AM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setPeriod(index, 'AM')}
                                             >
-                                                <Text style={[styles.periodText, { color: item.period === 'AM' ? '#fff' : colors.textSecondary }]}>AM</Text>
+                                                <AppText style={[styles.periodText, { color: item.period === 'AM' ? '#fff' : colors.textSecondary }]}>AM</AppText>
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={[styles.periodOption, item.period === 'PM' && { backgroundColor: colors.primary }]}
                                                 onPress={() => setPeriod(index, 'PM')}
                                             >
-                                                <Text style={[styles.periodText, { color: item.period === 'PM' ? '#fff' : colors.textSecondary }]}>PM</Text>
+                                                <AppText style={[styles.periodText, { color: item.period === 'PM' ? '#fff' : colors.textSecondary }]}>PM</AppText>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -703,12 +693,12 @@ export default function ManageBusTimingsPage() {
 
                             <TouchableOpacity onPress={handleAddTimeSlot} style={styles.addTimeBtn}>
                                 <MaterialCommunityIcons name="plus" size={20} color={colors.primary} />
-                                <Text style={styles.addTimeText}>Add Another Time</Text>
+                                <AppText style={styles.addTimeText}>Add Another Time</AppText>
                             </TouchableOpacity>
                         </ScrollView>
 
                         <TouchableOpacity onPress={handleSubmit} style={styles.submitBtn}>
-                            <Text style={styles.submitBtnText}>{editingId ? 'Update Route' : 'Create Route'}</Text>
+                            <AppText style={styles.submitBtnText}>{editingId ? 'Update Route' : 'Create Route'}</AppText>
                         </TouchableOpacity>
                     </View>
                 </View>

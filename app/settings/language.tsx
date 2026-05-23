@@ -3,10 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
 import { useAlert } from '../../context/AlertContext';
+import AppText from '../../components/AppText';
 
 const LANGUAGES = [
   { id: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
@@ -48,7 +49,7 @@ export default function AppLanguage() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>App Language</Text>
+          <AppText style={styles.headerTitle}>App Language</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -61,10 +62,10 @@ export default function AppLanguage() {
               <MaterialCommunityIcons name="translate" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Choose Language</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Choose Language</AppText>
+          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
             Select your preferred language for the application interface.
-          </Text>
+          </AppText>
         </View>
 
         {/* Language List */}
@@ -82,10 +83,10 @@ export default function AppLanguage() {
                 onPress={() => handleSelect(lang.id)}
                 activeOpacity={0.6}
               >
-                <Text style={styles.flag}>{lang.flag}</Text>
+                <AppText style={styles.flag}>{lang.flag}</AppText>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.langName, { color: colors.text }]}>{lang.name}</Text>
-                  <Text style={[styles.langNative, { color: colors.textSecondary }]}>{lang.nativeName}</Text>
+                  <AppText style={[styles.langName, { color: colors.text }]}>{lang.name}</AppText>
+                  <AppText style={[styles.langNative, { color: colors.textSecondary }]}>{lang.nativeName}</AppText>
                 </View>
                 <View style={[styles.radioOuter, {
                   borderColor: isSelected ? '#004e92' : colors.border,
@@ -104,9 +105,9 @@ export default function AppLanguage() {
           borderColor: isDark ? '#1e3a5f' : '#BFDBFE',
         }]}>
           <MaterialCommunityIcons name="information-outline" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-          <Text style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
+          <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
             Language changes will take full effect after restarting the application.
-          </Text>
+          </AppText>
         </View>
       </ScrollView>
     </View>

@@ -2,13 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MessAttendanceCard from '../components/MessAttendanceCard';
 import MessMenu from '../components/MessMenu';
 
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function Mess() {
   const { colors, theme } = useTheme();
@@ -139,8 +140,8 @@ export default function Mess() {
         <SafeAreaView edges={['top', 'left', 'right']}>
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.headerTitle}>Mess Hall</Text>
-              <Text style={styles.headerSubtitle}>Attendance & Menu</Text>
+              <AppText style={styles.headerTitle}>Mess Hall</AppText>
+              <AppText style={styles.headerSubtitle}>Attendance & Menu</AppText>
             </View>
             <View style={styles.headerIcon}>
               <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#fff" />
@@ -160,7 +161,7 @@ export default function Mess() {
             size={20}
             color={activeTab === 0 ? colors.primary : colors.textSecondary}
           />
-          <Text style={[styles.navItemLabel, activeTab === 0 && styles.navItemLabelActive]}>Attendance</Text>
+          <AppText style={[styles.navItemLabel, activeTab === 0 && styles.navItemLabelActive]}>Attendance</AppText>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -172,7 +173,7 @@ export default function Mess() {
             size={20}
             color={activeTab === 1 ? colors.primary : colors.textSecondary}
           />
-          <Text style={[styles.navItemLabel, activeTab === 1 && styles.navItemLabelActive]}>Menu Schedule</Text>
+          <AppText style={[styles.navItemLabel, activeTab === 1 && styles.navItemLabelActive]}>Menu Schedule</AppText>
         </TouchableOpacity>
       </View>
 
@@ -190,10 +191,10 @@ export default function Mess() {
             <MessAttendanceCard />
             {/* We can add more helpful info here like "Don't forget to mark before 5PM" */}
             <View style={{ padding: 20 }}>
-              <Text style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, fontStyle: 'italic' }}>
+              <AppText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, fontStyle: 'italic' }}>
                 <MaterialCommunityIcons name="information-outline" size={14} />
                 {" "}Please mark your attendance in advance to help us reduce food waste.
-              </Text>
+              </AppText>
             </View>
           </ScrollView>
         </View>

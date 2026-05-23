@@ -4,8 +4,9 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
 import { updateStudent } from '../../../utils/studentUtils';
+import AppText from '../../../components/AppText';
 
 interface EditStudentModalProps {
     visible: boolean;
@@ -250,7 +251,7 @@ export default function EditStudentModal({
             <View style={styles.keyboardAvoidingView}>
                 <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                     <View style={[styles.modalHeader, { paddingTop: insets.top, borderBottomColor: colors.border }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Student</Text>
+                        <AppText style={[styles.modalTitle, { color: colors.text }]}>Edit Student</AppText>
                         <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: colors.background }]}>
                             <MaterialIcons name="close" size={24} color="#64748B" />
                         </TouchableOpacity>
@@ -267,7 +268,7 @@ export default function EditStudentModal({
                             </View>
                             <TouchableOpacity style={[styles.changePhotoBtn, { backgroundColor: theme === 'dark' ? '#1E293B' : '#F1F5F9' }]} onPress={pickEditImage}>
                                 <MaterialIcons name="camera" size={16} color={colors.primary} />
-                                <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</Text>
+                                <AppText style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</AppText>
                             </TouchableOpacity>
                         </View>
 
@@ -285,7 +286,7 @@ export default function EditStudentModal({
                             { label: 'Hostel Name', value: editHostelName, setter: setEditHostelName, icon: 'office-building' },
                         ].map((field, idx) => (
                             <View key={idx} style={styles.formSection}>
-                                <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>{field.label}</Text>
+                                <AppText style={[styles.modalLabel, { color: colors.textSecondary }]}>{field.label}</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     {/* @ts-ignore */}
                                     <MaterialIcons name={field.icon} size={20} color="#64748B" style={styles.inputIcon} />
@@ -303,9 +304,9 @@ export default function EditStudentModal({
                         ))}
 
                         <View style={styles.formSection}>
-                            <Text style={[styles.modalLabel, { color: colors.primary, marginBottom: 12 }]}>Room Configuration</Text>
+                            <AppText style={[styles.modalLabel, { color: colors.primary, marginBottom: 12 }]}>Room Configuration</AppText>
                             <View style={{ marginBottom: 16 }}>
-                                <Text style={[styles.modalLabel, { fontSize: 13, marginBottom: 8 }]}>Sharing Options</Text>
+                                <AppText style={[styles.modalLabel, { fontSize: 13, marginBottom: 8 }]}>Sharing Options</AppText>
                                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
                                     {['Single Sharing', 'Double Sharing', 'Triple Sharing'].map((type) => (
                                         <TouchableOpacity
@@ -320,12 +321,12 @@ export default function EditStudentModal({
                                             }}
                                             onPress={() => setEditSharingType(type)}
                                         >
-                                            <Text style={{ color: editSharingType === type ? '#fff' : colors.textSecondary, fontWeight: '600', fontSize: 12 }}>{type}</Text>
+                                            <AppText style={{ color: editSharingType === type ? '#fff' : colors.textSecondary, fontWeight: '600', fontSize: 12 }}>{type}</AppText>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
 
-                                <Text style={[styles.modalLabel, { fontSize: 13, marginBottom: 8 }]}>BHK / Studio Options (Optional)</Text>
+                                <AppText style={[styles.modalLabel, { fontSize: 13, marginBottom: 8 }]}>BHK / Studio Options (Optional)</AppText>
                                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                                     {['1BHK', '2BHK', '3BHK', 'Studio'].map((type) => (
                                         <TouchableOpacity
@@ -340,19 +341,19 @@ export default function EditStudentModal({
                                             }}
                                             onPress={() => setEditApartmentType(editApartmentType === type ? null : type)}
                                         >
-                                            <Text style={{ color: editApartmentType === type ? '#fff' : colors.textSecondary, fontWeight: '600', fontSize: 12 }}>{type}</Text>
+                                            <AppText style={{ color: editApartmentType === type ? '#fff' : colors.textSecondary, fontWeight: '600', fontSize: 12 }}>{type}</AppText>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
                             </View>
 
-                            <Text style={[styles.modalLabel, { marginTop: 4, marginBottom: 8 }]}>Facilities & Amenities</Text>
+                            <AppText style={[styles.modalLabel, { marginTop: 4, marginBottom: 8 }]}>Facilities & Amenities</AppText>
                             <View>
                                 {editFacilities.map((fac, idx) => (
                                     <View key={fac.name} style={[styles.facilityRow, { borderBottomColor: colors.border, borderBottomWidth: idx === editFacilities.length - 1 ? 0 : 1 }]}>
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                             <MaterialIcons name={fac.icon} size={20} color={colors.primary} />
-                                            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{fac.name}</Text>
+                                            <AppText style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{fac.name}</AppText>
                                         </View>
                                         <View style={{ flexDirection: 'row', gap: 6 }}>
                                             {['Included', 'Not Included'].map((s) => (
@@ -371,7 +372,7 @@ export default function EditStudentModal({
                                                         borderWidth: 1,
                                                         borderColor: fac.status === s ? colors.primary : colors.border
                                                     }}>
-                                                    <Text style={{ fontSize: 11, fontWeight: '700', color: fac.status === s ? '#fff' : colors.textSecondary }}>{s}</Text>
+                                                    <AppText style={{ fontSize: 11, fontWeight: '700', color: fac.status === s ? '#fff' : colors.textSecondary }}>{s}</AppText>
                                                 </TouchableOpacity>
                                             ))}
                                         </View>
@@ -382,10 +383,10 @@ export default function EditStudentModal({
 
                         <View style={{ flexDirection: 'row', gap: 12 }}>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.modalLabel}>Date of Birth</Text>
+                                <AppText style={styles.modalLabel}>Date of Birth</AppText>
                                 <TouchableOpacity onPress={() => setShowEditDatePicker(true)} style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     <MaterialIcons name="calendar-account" size={20} color="#64748B" style={styles.inputIcon} />
-                                    <Text style={[styles.modalInput, { color: editDob ? colors.text : '#94A3B8', paddingVertical: 14 }]}>{editDob || 'DD/MM/YYYY'}</Text>
+                                    <AppText style={[styles.modalInput, { color: editDob ? colors.text : '#94A3B8', paddingVertical: 14 }]}>{editDob || 'DD/MM/YYYY'}</AppText>
                                 </TouchableOpacity>
                                 {showEditDatePicker && (
                                     <DateTimePicker
@@ -398,7 +399,7 @@ export default function EditStudentModal({
                                 )}
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.modalLabel}>Phone</Text>
+                                <AppText style={styles.modalLabel}>Phone</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     <MaterialIcons name="phone" size={20} color="#64748B" style={styles.inputIcon} />
                                     <TextInput style={[styles.modalInput, { color: colors.text }]} value={editPhone} onChangeText={setEditPhone} keyboardType="phone-pad" placeholder="Phone" />
@@ -407,7 +408,7 @@ export default function EditStudentModal({
                         </View>
 
                         <View style={styles.formSection}>
-                            <Text style={styles.modalLabel}>Address</Text>
+                            <AppText style={styles.modalLabel}>Address</AppText>
                             <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0', height: 'auto', minHeight: 56 }]}>
                                 <MaterialIcons name="map-marker" size={20} color="#64748B" style={styles.inputIcon} />
                                 <TextInput style={[styles.modalInput, { color: colors.text }]} value={editAddress} onChangeText={setEditAddress} placeholder="Permanent Address" multiline />
@@ -423,7 +424,7 @@ export default function EditStudentModal({
                             { label: 'Current Dues', value: editDues, setter: setEditDues, icon: 'cash-register', type: 'numeric' },
                         ].map((field, idx) => (
                             <View key={idx} style={{ marginTop: 12 }}>
-                                <Text style={styles.modalLabel}>{field.label}</Text>
+                                <AppText style={styles.modalLabel}>{field.label}</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     {/* @ts-ignore */}
                                     <MaterialIcons name={field.icon} size={20} color="#64748B" style={styles.inputIcon} />
@@ -440,7 +441,7 @@ export default function EditStudentModal({
                         ))}
 
                         <View style={[styles.formSection, { marginTop: 12 }]}>
-                            <Text style={styles.modalLabel}>Fee Frequency</Text>
+                            <AppText style={styles.modalLabel}>Fee Frequency</AppText>
                             <View style={{ flexDirection: 'row', gap: 8 }}>
                                 {(['Monthly', 'Semester', 'Yearly'] as const).map((freq) => (
                                     <TouchableOpacity
@@ -456,37 +457,37 @@ export default function EditStudentModal({
                                         }}
                                         onPress={() => setEditFeeFrequency(freq)}
                                     >
-                                        <Text style={{ fontSize: 12, fontWeight: '600', color: editFeeFrequency === freq ? '#fff' : colors.textSecondary }}>{freq}</Text>
+                                        <AppText style={{ fontSize: 12, fontWeight: '600', color: editFeeFrequency === freq ? '#fff' : colors.textSecondary }}>{freq}</AppText>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
                         <View style={styles.formSection}>
-                            <Text style={[styles.modalLabel, { color: colors.primary, marginTop: 12 }]}>Medical Info (Optional)</Text>
+                            <AppText style={[styles.modalLabel, { color: colors.primary, marginTop: 12 }]}>Medical Info (Optional)</AppText>
                             <View>
-                                <Text style={styles.modalLabel}>Blood Group</Text>
+                                <AppText style={styles.modalLabel}>Blood Group</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     <MaterialIcons name="water" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                     <TextInput style={[styles.modalInput, { color: colors.text }]} value={editBloodGroup} onChangeText={setEditBloodGroup} placeholder="e.g. O+" />
                                 </View>
                             </View>
                             <View style={{ marginTop: 12 }}>
-                                <Text style={styles.modalLabel}>Emergency Contact Name</Text>
+                                <AppText style={styles.modalLabel}>Emergency Contact Name</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     <MaterialIcons name="account-alert" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                     <TextInput style={[styles.modalInput, { color: colors.text }]} value={editEmergencyContactName} onChangeText={setEditEmergencyContactName} placeholder="Contact Name" />
                                 </View>
                             </View>
                             <View style={{ marginTop: 12 }}>
-                                <Text style={styles.modalLabel}>Emergency Phone</Text>
+                                <AppText style={styles.modalLabel}>Emergency Phone</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0' }]}>
                                     <MaterialIcons name="phone-alert" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                     <TextInput style={[styles.modalInput, { color: colors.text }]} value={editEmergencyContactPhone} onChangeText={setEditEmergencyContactPhone} placeholder="Phone" keyboardType="phone-pad" />
                                 </View>
                             </View>
                             <View style={{ marginTop: 12 }}>
-                                <Text style={styles.modalLabel}>Medical History / Allergies</Text>
+                                <AppText style={styles.modalLabel}>Medical History / Allergies</AppText>
                                 <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0', height: 'auto', minHeight: 80, paddingVertical: 8, alignItems: 'flex-start' }]}>
                                     <MaterialIcons name="medical-bag" size={20} color={colors.textSecondary} style={[styles.inputIcon, { marginTop: 4 }]} />
                                     <TextInput
@@ -502,9 +503,9 @@ export default function EditStudentModal({
                         </View>
 
                         <View style={styles.formSection}>
-                            <Text style={styles.modalLabel}>Status</Text>
+                            <AppText style={styles.modalLabel}>Status</AppText>
                             <View style={[styles.modalInputWrapper, { backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', borderColor: theme === 'dark' ? '#334155' : '#E2E8F0', justifyContent: 'space-between', paddingRight: 8 }]}>
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: editStatus === 'active' ? '#16A34A' : '#EF4444' }}>{editStatus === 'active' ? 'Active' : 'Inactive'}</Text>
+                                <AppText style={{ fontSize: 14, fontWeight: '600', color: editStatus === 'active' ? '#16A34A' : '#EF4444' }}>{editStatus === 'active' ? 'Active' : 'Inactive'}</AppText>
                                 <Switch
                                     trackColor={{ false: "#FEE2E2", true: "#DCFCE7" }}
                                     thumbColor={editStatus === 'active' ? "#16A34A" : "#EF4444"}
@@ -516,11 +517,11 @@ export default function EditStudentModal({
                     </ScrollView>
                     <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
                         <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn, { backgroundColor: colors.background }]} onPress={onClose}>
-                            <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+                            <AppText style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancel</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSaveEdit} disabled={loading}>
                             <LinearGradient colors={['#004e92', '#000428']} style={styles.saveBtnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                                <Text style={styles.saveBtnText}>{loading ? 'Saving...' : 'Save Changes'}</Text>
+                                <AppText style={styles.saveBtnText}>{loading ? 'Saving...' : 'Save Changes'}</AppText>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>

@@ -2,9 +2,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { LayoutAnimation, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { LayoutAnimation, Platform, ScrollView, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -63,7 +64,7 @@ export default function TermsOfService() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Terms of Service</Text>
+          <AppText style={styles.headerTitle}>Terms of Service</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -80,10 +81,10 @@ export default function TermsOfService() {
               <MaterialCommunityIcons name="file-document-check-outline" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Terms & Conditions</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Terms & Conditions</AppText>
+          <AppText style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
             Please review the terms that govern your use of the SmartStay application and services.
-          </Text>
+          </AppText>
         </View>
 
         {/* Accordion Sections */}
@@ -103,7 +104,7 @@ export default function TermsOfService() {
                 <View style={[styles.cardIconBox, { backgroundColor: section.bg }]}>
                   <MaterialCommunityIcons name={section.icon as any} size={22} color={section.color} />
                 </View>
-                <Text style={[styles.cardTitle, { color: colors.text, flex: 1 }]}>{section.title}</Text>
+                <AppText style={[styles.cardTitle, { color: colors.text, flex: 1 }]}>{section.title}</AppText>
                 <MaterialCommunityIcons
                   name={isExpanded ? 'chevron-up' : 'chevron-down'}
                   size={22}
@@ -111,7 +112,7 @@ export default function TermsOfService() {
                 />
               </View>
               {isExpanded && (
-                <Text style={[styles.cardContent, { color: colors.textSecondary }]}>{section.content}</Text>
+                <AppText style={[styles.cardContent, { color: colors.textSecondary }]}>{section.content}</AppText>
               )}
             </TouchableOpacity>
           );
@@ -121,7 +122,7 @@ export default function TermsOfService() {
         <View style={styles.footer}>
           <View style={[styles.footerBadge, { backgroundColor: isDark ? '#1e293b' : '#F1F5F9' }]}>
             <MaterialCommunityIcons name="calendar-clock" size={14} color={colors.textSecondary} />
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Last Updated: April 2026</Text>
+            <AppText style={[styles.footerText, { color: colors.textSecondary }]}>Last Updated: April 2026</AppText>
           </View>
         </View>
       </ScrollView>

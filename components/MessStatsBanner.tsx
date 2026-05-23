@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { getMessStats, MessStats } from '../utils/messAttendanceUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 const CircularProgress = ({
     size = 50,
@@ -43,7 +44,7 @@ const CircularProgress = ({
                     />
                 </Svg>
                 <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ fontSize: 10, fontWeight: '800', color }}>{label}</Text>
+                    <AppText style={{ fontSize: 10, fontWeight: '800', color }}>{label}</AppText>
                 </View>
             </View>
         </View>
@@ -95,11 +96,11 @@ const MessStatsBanner = ({ compact = false }: { compact?: boolean }) => {
                         <View style={[styles.iconWrapper, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)' }]}>
                             <Ionicons name="restaurant" size={16} color={colors.primary} />
                         </View>
-                        <Text style={[styles.compactTitle, { color: colors.text }]}>Today's Presence</Text>
+                        <AppText style={[styles.compactTitle, { color: colors.text }]}>Today's Presence</AppText>
                     </View>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, opacity: 0.8 }}>
+                    <AppText style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, opacity: 0.8 }}>
                         {today}
-                    </Text>
+                    </AppText>
                 </View>
                 <View style={styles.circularGrid}>
                     {(['breakfast', 'lunch', 'snacks', 'dinner'] as const).map(meal => {
@@ -116,9 +117,9 @@ const MessStatsBanner = ({ compact = false }: { compact?: boolean }) => {
                                     backgroundColor={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'}
                                     strokeWidth={5}
                                 />
-                                <Text style={[styles.compactLabel, { color: colors.textSecondary, marginTop: 8 }]}>
+                                <AppText style={[styles.compactLabel, { color: colors.textSecondary, marginTop: 8 }]}>
                                     {meal.charAt(0).toUpperCase() + meal.slice(1)}
-                                </Text>
+                                </AppText>
                             </View>
                         );
                     })}
@@ -129,13 +130,13 @@ const MessStatsBanner = ({ compact = false }: { compact?: boolean }) => {
 
     const renderStat = (label: string, data: { going: number, skipping: number }) => (
         <View style={styles.statRow}>
-            <Text style={[styles.mealLabel, { color: colors.text }]}>{label}</Text>
+            <AppText style={[styles.mealLabel, { color: colors.text }]}>{label}</AppText>
             <View style={styles.counts}>
                 <View style={[styles.badge, { backgroundColor: '#E8F5E9' }]}>
-                    <Text style={[styles.countText, { color: '#2E7D32' }]}>{data.going} Going</Text>
+                    <AppText style={[styles.countText, { color: '#2E7D32' }]}>{data.going} Going</AppText>
                 </View>
                 <View style={[styles.badge, { backgroundColor: '#FFEBEE', marginLeft: 8 }]}>
-                    <Text style={[styles.countText, { color: '#C62828' }]}>{data.skipping} Skip</Text>
+                    <AppText style={[styles.countText, { color: '#C62828' }]}>{data.skipping} Skip</AppText>
                 </View>
             </View>
         </View>
@@ -145,7 +146,7 @@ const MessStatsBanner = ({ compact = false }: { compact?: boolean }) => {
         <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.header}>
                 <Ionicons name="stats-chart" size={18} color={colors.primary} />
-                <Text style={[styles.title, { color: colors.text }]}>Today's Headcount</Text>
+                <AppText style={[styles.title, { color: colors.text }]}>Today's Headcount</AppText>
             </View>
 
             <View style={styles.grid}>

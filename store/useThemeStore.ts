@@ -96,11 +96,17 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     setTheme: async (newTheme: Theme) => {
         const isDark = newTheme === 'dark';
         const { useAccessibilityStore } = require('./useAccessibilityStore');
+        const { useAuthStore } = require('./useAuthStore');
+        
         const isHighContrast = useAccessibilityStore.getState().highContrast;
+        const user = useAuthStore.getState().user;
+        
+        // High contrast only applies if user is logged in
+        const shouldApplyHighContrast = isHighContrast && user;
         
         let colors = lightColors;
-        if (isDark) colors = isHighContrast ? darkColorsHighContrast : darkColors;
-        else colors = isHighContrast ? lightColorsHighContrast : lightColors;
+        if (isDark) colors = shouldApplyHighContrast ? darkColorsHighContrast : darkColors;
+        else colors = shouldApplyHighContrast ? lightColorsHighContrast : lightColors;
 
         set({ theme: newTheme, isDark, colors });
 
@@ -126,11 +132,15 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
             const isDark = initialTheme === 'dark';
             const { useAccessibilityStore } = require('./useAccessibilityStore');
+            const { useAuthStore } = require('./useAuthStore');
+            
             const isHighContrast = useAccessibilityStore.getState().highContrast;
+            const user = useAuthStore.getState().user;
+            const shouldApplyHighContrast = isHighContrast && user;
             
             let colors = lightColors;
-            if (isDark) colors = isHighContrast ? darkColorsHighContrast : darkColors;
-            else colors = isHighContrast ? lightColorsHighContrast : lightColors;
+            if (isDark) colors = shouldApplyHighContrast ? darkColorsHighContrast : darkColors;
+            else colors = shouldApplyHighContrast ? lightColorsHighContrast : lightColors;
 
             set({ theme: initialTheme, isDark, colors, isLoaded: true });
 
@@ -153,8 +163,16 @@ useThemeStore.getState().initTheme();
 // Listen to accessibility store changes to refresh colors dynamically
 setTimeout(() => {
     const { useAccessibilityStore } = require('./useAccessibilityStore');
+    const { useAuthStore } = require('./useAuthStore');
+
     useAccessibilityStore.subscribe((state: any, prevState: any) => {
         if (state.highContrast !== prevState.highContrast) {
+            useThemeStore.getState().refreshColors();
+        }
+    });
+
+    useAuthStore.subscribe((state: any, prevState: any) => {
+        if (state.user?.id !== prevState.user?.id) {
             useThemeStore.getState().refreshColors();
         }
     });

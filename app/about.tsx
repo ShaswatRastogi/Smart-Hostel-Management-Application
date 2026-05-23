@@ -2,20 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../utils/ThemeContext';
 import { Facility, getAllFacilities } from '../utils/facilityUtils';
 import { HostelInfo, getHostelInfo as fetchHostelInfo } from '../utils/hostelUtils';
+import AppText from '../components/AppText';
 
 export default function AboutPage() {
     const { colors, theme } = useTheme();
@@ -153,12 +145,12 @@ export default function AboutPage() {
                         colors={['transparent', 'rgba(0,0,0,0.8)']}
                         style={styles.heroOverlay}
                     >
-                        <Text style={styles.heroTitle}>
+                        <AppText style={styles.heroTitle}>
                             {loading ? 'Loading...' : (hostelInfo?.name || 'Smart Hostel')}
-                        </Text>
-                        <Text style={styles.heroSubtitle}>
+                        </AppText>
+                        <AppText style={styles.heroSubtitle}>
                             {loading ? 'Please wait' : (hostelInfo?.subtitle || 'no detail added right now')}
-                        </Text>
+                        </AppText>
                     </LinearGradient>
 
                     {/* Back Button Overlay */}
@@ -174,17 +166,17 @@ export default function AboutPage() {
                     {!loading && hostelInfo?.location && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, padding: 12, backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
                             <MaterialCommunityIcons name="map-marker" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '500', flex: 1 }}>
+                            <AppText style={{ color: colors.text, fontSize: 14, fontWeight: '500', flex: 1 }}>
                                 {hostelInfo.location}
-                            </Text>
+                            </AppText>
                         </View>
                     )}
 
-                    <Text style={styles.introText}>
+                    <AppText style={styles.introText}>
                         {loading ? 'Loading description...' : (hostelInfo?.description || 'no detail added right now')}
-                    </Text>
+                    </AppText>
 
-                    <Text style={styles.sectionTitle}>Our Facilities</Text>
+                    <AppText style={styles.sectionTitle}>Our Facilities</AppText>
 
                     {loading ? (
                         <ActivityIndicator color={colors.primary} size="large" />
@@ -220,24 +212,24 @@ export default function AboutPage() {
                                     <Image source={{ uri: item.image_url }} style={styles.facilityImage} resizeMode="cover" />
                                 ) : null}
                                 <View style={styles.facilityContent}>
-                                    <Text style={styles.facilityTitle}>{item.title}</Text>
-                                    <Text style={styles.facilityDesc}>{item.description}</Text>
+                                    <AppText style={styles.facilityTitle}>{item.title}</AppText>
+                                    <AppText style={styles.facilityDesc}>{item.description}</AppText>
                                 </View>
                             </View>
                         ))
                     )}
 
                     {!loading && facilities.length === 0 && (
-                        <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 20 }}>
+                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 20 }}>
                             no detail added right now
-                        </Text>
+                        </AppText>
                     )}
 
                     {!loading && hostelInfo?.footer_text && (
                         <View style={{ marginTop: 24, marginBottom: 40 }}>
-                            <Text style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 15, lineHeight: 24 }}>
+                            <AppText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 15, lineHeight: 24 }}>
                                 {hostelInfo.footer_text}
-                            </Text>
+                            </AppText>
                         </View>
                     )}
                 </View>

@@ -1,22 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import { HostelInfo, updateHostelInfo } from '../utils/hostelUtils';
 import InputField from './InputField';
+import AppText from './AppText';
 
 interface EditHostelInfoModalProps {
     visible: boolean;
@@ -160,7 +149,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Edit Hostel Info</Text>
+                        <AppText style={styles.modalTitle}>Edit Hostel Info</AppText>
                         <TouchableOpacity onPress={onClose}>
                             <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
@@ -173,12 +162,12 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                             ) : (
                                 <View style={styles.imagePlaceholder}>
                                     <MaterialCommunityIcons name="camera-plus" size={32} color={colors.textSecondary} />
-                                    <Text style={styles.imagePlaceholderText}>Update Cover Photo</Text>
+                                    <AppText style={styles.imagePlaceholderText}>Update Cover Photo</AppText>
                                 </View>
                             )}
                         </TouchableOpacity>
 
-                        <Text style={[styles.label, { marginTop: 0 }]}>Hostel Name</Text>
+                        <AppText style={[styles.label, { marginTop: 0 }]}>Hostel Name</AppText>
                         <InputField
                             placeholder="e.g. Smart Hostel"
                             value={name}
@@ -186,7 +175,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                             icon="home-city"
                         />
 
-                        <Text style={styles.label}>Subtitle</Text>
+                        <AppText style={styles.label}>Subtitle</AppText>
                         <InputField
                             placeholder="e.g. Home Away From Home"
                             value={subtitle}
@@ -194,7 +183,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                             icon="subtitles"
                         />
 
-                        <Text style={styles.label}>Location</Text>
+                        <AppText style={styles.label}>Location</AppText>
                         <InputField
                             placeholder="e.g. 123, Hostel Lane, City"
                             value={location}
@@ -202,7 +191,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                             icon="map-marker"
                         />
 
-                        <Text style={styles.label}>About Description</Text>
+                        <AppText style={styles.label}>About Description</AppText>
                         <InputField
                             placeholder="Write something about the hostel..."
                             value={description}
@@ -220,7 +209,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                             {saving ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <Text style={styles.submitBtnText}>Update Info</Text>
+                                <AppText style={styles.submitBtnText}>Update Info</AppText>
                             )}
                         </TouchableOpacity>
                         <View style={{ height: 20 }} />

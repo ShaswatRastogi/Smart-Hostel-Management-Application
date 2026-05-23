@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 export type User = {
   id?: string;
   name?: string;
-  role?: 'admin' | 'student' | string;
+  role?: 'owner' | 'warden' | 'staff' | 'admin' | 'student' | string;
 };
 
 // In-memory fallback for environments without AsyncStorage registered.
@@ -78,7 +78,21 @@ export function useUser() {
   return user;
 }
 
+const staffRoles = ['owner', 'warden', 'staff', 'admin', 'cleaning_staff', 'mess_staff', 'laundry_staff', 'guard', 'maintenance_staff'];
+
 export function isAdmin(user: User | null | undefined) {
-  return !!user && user.role === 'admin';
+  // Legacy support for 'admin' string
+  return !!user && staffRoles.includes(user.role || '');
 }
 
+export function isOwner(user: User | null | undefined) {
+  return !!user && ['owner', 'admin'].includes(user.role || '');
+}
+
+export function isWardenOrOwner(user: User | null | undefined) {
+  return !!user && ['owner', 'warden', 'admin'].includes(user.role || '');
+}
+
+export function isStaffOrHigher(user: User | null | undefined) {
+  return !!user && staffRoles.includes(user.role || '');
+}

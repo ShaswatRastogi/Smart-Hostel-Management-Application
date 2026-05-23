@@ -3,12 +3,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { subscribeToStudents } from '../../utils/studentUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function NewChatScreen() {
     const { colors, theme, isDark } = useTheme();
@@ -57,20 +58,20 @@ export default function NewChatScreen() {
             <View style={styles.reqProfile}>
                 {item.profilePhoto ? (
                     <Image
-                        source={{ uri: `${API_BASE_URL}${item.profilePhoto}` }}
+                        source={{ uri: item.profilePhoto.startsWith('http') ? item.profilePhoto : `${API_BASE_URL}${item.profilePhoto}` }}
                         style={styles.avatar}
                     />
                 ) : (
                     <View style={styles.reqAvatar}>
-                        <Text style={styles.avatarText}>
+                        <AppText style={styles.avatarText}>
                             {item.name?.charAt(0).toUpperCase()}
-                        </Text>
+                        </AppText>
                     </View>
                 )}
                 <View style={styles.reqNameBlock}>
-                    <Text style={[styles.reqName, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>{item.name}</Text>
+                    <AppText style={[styles.reqName, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>{item.name}</AppText>
                     <View style={styles.reqRoomBadge}>
-                        <Text style={styles.reqRoomText}>Room {item.room}</Text>
+                        <AppText style={styles.reqRoomText}>Room {item.room}</AppText>
                     </View>
                 </View>
             </View>
@@ -85,7 +86,7 @@ export default function NewChatScreen() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialIcons name="chevron-left" size={32} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>New Message</Text>
+                    <AppText style={styles.headerTitle}>New Message</AppText>
                     <View style={{ width: 44 }} />
                 </View>
                 {/* Search Bar */}
@@ -117,7 +118,7 @@ export default function NewChatScreen() {
                     !loading ? (
                         <View style={styles.emptyState}>
                             <MaterialCommunityIcons name="account-search-outline" size={48} color={theme === 'dark' ? '#334155' : '#CBD5E1'} />
-                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No students found</Text>
+                            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No students found</AppText>
                         </View>
                     ) : null
                 }

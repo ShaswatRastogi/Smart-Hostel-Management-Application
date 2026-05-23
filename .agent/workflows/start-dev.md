@@ -4,7 +4,7 @@ description: Start development environment with automatic ADB setup
 
 # Start Development Environment
 
-This workflow automatically sets up ADB reverse port forwarding and starts both backend and frontend servers.
+This workflow automatically sets up ADB reverse port forwarding and starts the backend and AI service. You will start the frontend manually.
 
 ## Steps
 
@@ -17,7 +17,12 @@ powershell -ExecutionPolicy Bypass -File .agent/scripts/dev-start.ps1
 This will:
 - ✅ Configure ADB reverse for all connected devices
 - ✅ Start the backend server (http://localhost:5000)
-- ✅ Start the Expo dev server
+- ✅ Start the AI Service (http://localhost:8000)
+
+2. Start the Frontend Application:
+```powershell
+npx expo run:android
+```
 
 ## Manual ADB Setup (if needed)
 
@@ -36,7 +41,7 @@ npm run dev
 
 ### Frontend Only  
 ```powershell
-npx expo start
+npx expo run:android
 ```
 
 ### ADB Setup Only

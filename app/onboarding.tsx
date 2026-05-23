@@ -3,19 +3,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import {
-    Dimensions,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    View
-} from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Switch, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/useAuthStore';
 import { Language, useSettingsStore } from '../store/useSettingsStore';
 import { useThemeStore } from '../store/useThemeStore';
+import AppText from '../components/AppText';
+import { isAdmin } from '../utils/authUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -45,7 +40,7 @@ export default function Onboarding() {
 
             // Navigate based on role
             const user = useAuthStore.getState().user;
-            if (user?.role === 'admin') {
+            if (isAdmin(user)) {
                 router.replace('/admin');
             } else {
                 router.replace('/(tabs)');
@@ -74,9 +69,9 @@ export default function Onboarding() {
                                 style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: language === lang ? colors.primary : colors.border }]}
                                 onPress={() => setLanguage(lang)}
                             >
-                                <Text style={[styles.choiceText, { color: language === lang ? colors.primary : colors.text }]}>
+                                <AppText style={[styles.choiceText, { color: language === lang ? colors.primary : colors.text }]}>
                                     {lang === 'en' ? 'English' : 'हिन्दी (Hindi)'}
-                                </Text>
+                                </AppText>
                                 {language === lang && <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />}
                             </Pressable>
                         ))}
@@ -92,9 +87,9 @@ export default function Onboarding() {
                                 onPress={() => setTheme(t)}
                             >
                                 <MaterialCommunityIcons name={t === 'dark' ? 'weather-night' : 'weather-sunny'} size={24} color={theme === t ? colors.primary : colors.textSecondary} />
-                                <Text style={[styles.choiceText, { color: theme === t ? colors.primary : colors.text }]}>
+                                <AppText style={[styles.choiceText, { color: theme === t ? colors.primary : colors.text }]}>
                                     {t.charAt(0).toUpperCase() + t.slice(1)} Mode
-                                </Text>
+                                </AppText>
                                 {theme === t && <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />}
                             </Pressable>
                         ))}
@@ -106,7 +101,7 @@ export default function Onboarding() {
                         <View style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: notificationsEnabled ? colors.primary : colors.border, width: '100%' }]}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                 <MaterialCommunityIcons name="bell-outline" size={24} color={notificationsEnabled ? colors.primary : colors.textSecondary} />
-                                <Text style={[styles.choiceText, { color: colors.text }]}>Enable Notifications</Text>
+                                <AppText style={[styles.choiceText, { color: colors.text }]}>Enable Notifications</AppText>
                             </View>
                             <Switch
                                 value={notificationsEnabled}
@@ -115,9 +110,9 @@ export default function Onboarding() {
                                 thumbColor={notificationsEnabled ? colors.primary : '#f4f3f4'}
                             />
                         </View>
-                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                        <AppText style={[styles.infoText, { color: colors.textSecondary }]}>
                             You can always change this later in settings.
-                        </Text>
+                        </AppText>
                     </View>
                 );
             default:
@@ -147,8 +142,8 @@ export default function Onboarding() {
                 {SLIDES.map((slide, index) => (
                     <View key={index} style={styles.slide}>
                         <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
-                            <Text style={[styles.title, { color: colors.text }]}>{slide.title}</Text>
-                            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{slide.subtitle}</Text>
+                            <AppText style={[styles.title, { color: colors.text }]}>{slide.title}</AppText>
+                            <AppText style={[styles.subtitle, { color: colors.textSecondary }]}>{slide.subtitle}</AppText>
                             {renderSlideContent(slide)}
                         </View>
                     </View>
@@ -167,9 +162,9 @@ export default function Onboarding() {
                     style={[styles.nextButton, { backgroundColor: colors.primary }]}
                     onPress={handleNext}
                 >
-                    <Text style={styles.nextButtonText}>
+                    <AppText style={styles.nextButtonText}>
                         {currentPage === SLIDES.length - 1 ? 'Get Started' : 'Next Step'}
-                    </Text>
+                    </AppText>
                     <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
                 </Pressable>
             </View>

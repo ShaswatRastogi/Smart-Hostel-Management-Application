@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -12,6 +12,7 @@ import { isAdmin, useUser } from '../../utils/authUtils';
 import { Complaint, getAllComplaints, updateComplaintStatus } from '../../utils/complaintsSyncUtils';
 import { useTheme } from '../../utils/ThemeContext';
 import { formatUniversalTime } from '../../utils/timeUtils';
+import AppText from '../../components/AppText';
 
 export default function ComplaintsPage() {
   const { colors, theme } = useTheme();
@@ -166,7 +167,7 @@ export default function ComplaintsPage() {
             <MaterialIcons name="chevron-left" size={32} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Manage Complaints</Text>
+            <AppText style={styles.headerTitle}>Manage Complaints</AppText>
           </View>
         </LinearGradient>
 
@@ -179,8 +180,8 @@ export default function ComplaintsPage() {
             style={styles.heroCard}
           >
             <View>
-              <Text style={styles.heroLabel}>Open Issues</Text>
-              <Text style={styles.heroValue}>{openCount}</Text>
+              <AppText style={styles.heroLabel}>Open Issues</AppText>
+              <AppText style={styles.heroValue}>{openCount}</AppText>
             </View>
             <MaterialIcons name="alert-circle-outline" size={48} color="rgba(255,255,255,0.9)" />
             <View style={styles.cardWatermark}>
@@ -198,9 +199,9 @@ export default function ComplaintsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="clock-outline" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>In Progress</Text>
+                <AppText style={styles.miniLabel}>In Progress</AppText>
               </View>
-              <Text style={styles.miniValue}>{inProgressCount}</Text>
+              <AppText style={styles.miniValue}>{inProgressCount}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="clock-outline" size={80} color="#fff" />
               </View>
@@ -215,9 +216,9 @@ export default function ComplaintsPage() {
             >
               <View style={styles.miniHeader}>
                 <MaterialIcons name="check-circle-outline" size={18} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.miniLabel}>Resolved</Text>
+                <AppText style={styles.miniLabel}>Resolved</AppText>
               </View>
-              <Text style={styles.miniValue}>{resolvedCount}</Text>
+              <AppText style={styles.miniValue}>{resolvedCount}</AppText>
               <View style={styles.cardWatermark}>
                 <MaterialIcons name="check-circle-outline" size={80} color="#fff" />
               </View>
@@ -237,7 +238,7 @@ export default function ComplaintsPage() {
                 style={[styles.filterBtn, activeTab === index && styles.filterBtnActive]}
                 onPress={() => setActiveTab(index)}
               >
-                <Text style={[styles.filterBtnText, activeTab === index && styles.filterBtnTextActive]}>{item.label}</Text>
+                <AppText style={[styles.filterBtnText, activeTab === index && styles.filterBtnTextActive]}>{item.label}</AppText>
               </TouchableOpacity>
             )}
           />
@@ -303,20 +304,20 @@ export default function ComplaintsPage() {
               >
                 {item.studentProfilePhoto ? (
                   <Image
-                    source={{ uri: `${API_BASE_URL}${item.studentProfilePhoto}` }}
+                    source={{ uri: item.studentProfilePhoto.startsWith('http') ? item.studentProfilePhoto : `${API_BASE_URL}${item.studentProfilePhoto}` }}
                     style={{ width: '100%', height: '100%' }}
                   />
                 ) : (
-                  <Text style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
+                  <AppText style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
                     {item.studentName?.charAt(0).toUpperCase() || '?'}
-                  </Text>
+                  </AppText>
                 )}
               </LinearGradient>
               <View style={styles.textInfo}>
-                <Text style={[styles.studentName, { color: colors.text }]}>{item.studentName || 'Unknown Student'}</Text>
-                <Text style={[styles.complaintPreview, { color: colors.textSecondary }]} numberOfLines={1}>
+                <AppText style={[styles.studentName, { color: colors.text }]}>{item.studentName || 'Unknown Student'}</AppText>
+                <AppText style={[styles.complaintPreview, { color: colors.textSecondary }]} numberOfLines={1}>
                   {item.title}
-                </Text>
+                </AppText>
               </View>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
@@ -327,27 +328,27 @@ export default function ComplaintsPage() {
           {selectedId === item.id && (
             <View style={[styles.expandedContent, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#F8FAFC' }]}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Email:</Text>
-                <Text style={styles.detailValue}>{item.studentEmail}</Text>
+                <AppText style={styles.detailLabel}>Email:</AppText>
+                <AppText style={styles.detailValue}>{item.studentEmail}</AppText>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Date:</Text>
-                <Text style={styles.detailValue}>
+                <AppText style={styles.detailLabel}>Date:</AppText>
+                <AppText style={styles.detailValue}>
                   {item.createdAt instanceof Date
                     ? formatUniversalTime(item.createdAt)
                     : 'N/A'}
-                </Text>
+                </AppText>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Priority:</Text>
-                <Text style={[styles.detailValue, { color: statusColor, fontWeight: '800' }]}>
+                <AppText style={styles.detailLabel}>Priority:</AppText>
+                <AppText style={[styles.detailValue, { color: statusColor, fontWeight: '800' }]}>
                   {item.status.toUpperCase()}
-                </Text>
+                </AppText>
               </View>
 
               <View style={[styles.complaintText, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#FFF' }]}>
-                <Text style={[styles.complaintTextLabel, { color: colors.text }]}>Complaint Details:</Text>
-                <Text style={[styles.complaintTextContent, { color: colors.text }]}>{item.description}</Text>
+                <AppText style={[styles.complaintTextLabel, { color: colors.text }]}>Complaint Details:</AppText>
+                <AppText style={[styles.complaintTextContent, { color: colors.text }]}>{item.description}</AppText>
               </View>
 
               {item.status !== 'resolved' && item.status !== 'closed' && (
@@ -358,7 +359,7 @@ export default function ComplaintsPage() {
                       onPress={() => handleUpdateStatus(item.id, 'inProgress')}
                     >
                       <MaterialIcons name="clock-outline" size={16} color="#fff" />
-                      <Text style={styles.actionBtnText}>Mark In Progress</Text>
+                      <AppText style={styles.actionBtnText}>Mark In Progress</AppText>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
@@ -366,7 +367,7 @@ export default function ComplaintsPage() {
                     onPress={() => handleUpdateStatus(item.id, 'resolved')}
                   >
                     <MaterialIcons name="check" size={16} color="#fff" />
-                    <Text style={styles.actionBtnText}>Resolve</Text>
+                    <AppText style={styles.actionBtnText}>Resolve</AppText>
                   </TouchableOpacity>
                 </View>
               )}
@@ -374,9 +375,9 @@ export default function ComplaintsPage() {
               {(item.status === 'resolved' || item.status === 'closed') && (
                 <View style={styles.resolvedMessage}>
                   <MaterialIcons name="check-circle" size={20} color={item.status === 'resolved' ? '#10B981' : '#64748B'} />
-                  <Text style={styles.resolvedMessageText}>
+                  <AppText style={styles.resolvedMessageText}>
                     This complaint has been {item.status === 'resolved' ? 'resolved' : 'closed'}
-                  </Text>
+                  </AppText>
                 </View>
               )}
             </View>
@@ -404,10 +405,10 @@ export default function ComplaintsPage() {
     return (
       <View style={{ alignItems: 'center', padding: 40 }}>
         <Image
-          source={require('../../assets/images/empty-complaints.png')}
+          source={require('../../assets/images/empty-complaints.jpg')}
           style={{ width: 220, height: 220, resizeMode: 'contain', marginBottom: 16 }}
         />
-        <Text style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No complaints found</Text>
+        <AppText style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No complaints found</AppText>
       </View>
     );
   }
@@ -749,7 +750,7 @@ export default function ComplaintsPage() {
   if (!isAdmin(user))
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Access denied.</Text>
+        <AppText>Access denied.</AppText>
       </View>
     );
 

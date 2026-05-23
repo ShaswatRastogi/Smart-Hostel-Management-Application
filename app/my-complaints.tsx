@@ -2,11 +2,12 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StudentComplaintListSkeleton } from '../components/SkeletonLists';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function MyComplaints() {
   interface Complaint {
@@ -120,32 +121,32 @@ export default function MyComplaints() {
             />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
-            <Text style={[styles.cardDate, { color: colors.textSecondary }]}>
+            <AppText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</AppText>
+            <AppText style={[styles.cardDate, { color: colors.textSecondary }]}>
               {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
+            </AppText>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <View style={[
               styles.statusBadgeContainer,
               { backgroundColor: getStatusColor(item.status) + '20' }
             ]}>
-              <Text style={[
+              <AppText style={[
                 styles.statusBadge,
                 { color: getStatusColor(item.status) }
               ]}>
                 {item.status.replace(/([A-Z])/g, ' $1').toUpperCase()}
-              </Text>
+              </AppText>
             </View>
-            <Text style={[styles.priorityText, { color: getPriorityColor(item.priority), marginTop: 4 }]}>
+            <AppText style={[styles.priorityText, { color: getPriorityColor(item.priority), marginTop: 4 }]}>
               {item.priority.toUpperCase()} PRIORITY
-            </Text>
+            </AppText>
           </View>
         </View>
 
-        <Text style={[styles.description, { backgroundColor: isDark ? colors.background : '#F8FAFC', color: colors.textSecondary }]}>
+        <AppText style={[styles.description, { backgroundColor: isDark ? colors.background : '#F8FAFC', color: colors.textSecondary }]}>
           {item.description}
-        </Text>
+        </AppText>
       </View>
     );
   };
@@ -160,9 +161,9 @@ export default function MyComplaints() {
       ListEmptyComponent={
         <View style={styles.emptyContainer}>
           <MaterialCommunityIcons name={icon} size={64} color={isDark ? colors.secondary : "#CBD5E1"} />
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>
             {emptyText}
-          </Text>
+          </AppText>
         </View>
       }
     />
@@ -185,15 +186,15 @@ export default function MyComplaints() {
               <Pressable onPress={() => router.back()} style={styles.backBtn}>
                 <MaterialIcons name="arrow-back" size={24} color="#fff" />
               </Pressable>
-              <Text style={styles.headerTitle}>My Complaints</Text>
+              <AppText style={styles.headerTitle}>My Complaints</AppText>
             </View>
 
             <View style={styles.summaryBox}>
               <View>
-                <Text style={styles.summaryLabel}>ACTIVE</Text>
-                <Text style={styles.summaryValue}>
+                <AppText style={styles.summaryLabel}>ACTIVE</AppText>
+                <AppText style={styles.summaryValue}>
                   {activeComplaints.length}
-                </Text>
+                </AppText>
               </View>
             </View>
           </View>
@@ -207,13 +208,13 @@ export default function MyComplaints() {
             style={[styles.tab, activeTab === 'active' && { backgroundColor: isDark ? '#1e3a8a' : '#EFF6FF' }]}
             onPress={() => handleTabPress('active')}
           >
-            <Text style={[styles.tabText, activeTab === 'active' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'active' && { color: colors.textSecondary }]}>Active</Text>
+            <AppText style={[styles.tabText, activeTab === 'active' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'active' && { color: colors.textSecondary }]}>Active</AppText>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'resolved' && { backgroundColor: isDark ? '#1e3a8a' : '#EFF6FF' }]}
             onPress={() => handleTabPress('resolved')}
           >
-            <Text style={[styles.tabText, activeTab === 'resolved' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'resolved' && { color: colors.textSecondary }]}>Resolved</Text>
+            <AppText style={[styles.tabText, activeTab === 'resolved' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'resolved' && { color: colors.textSecondary }]}>Resolved</AppText>
           </TouchableOpacity>
         </View>
 

@@ -2,10 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as Print from 'expo-print';
+import AppText from '../../components/AppText';
 
 const DATA_CATEGORIES = [
   { id: 'profile', icon: 'account-circle', label: 'Profile Information', desc: 'Name, email, phone, address', color: '#3B82F6' },
@@ -35,11 +39,90 @@ export default function DownloadData() {
     setLoading(true);
     try {
       const api = (await import('../../utils/api')).default;
+
       const categories = Object.entries(selectedCategories).filter(([, v]) => v).map(([k]) => k);
-      await api.post('/students/export-data', { categories });
-      showAlert('Request Submitted!', 'Your data export has been requested. You will receive a download link via email within 24 hours.', [], 'success');
+      const response = await api.post('/students/export-data', { categories });
+      
+      if (response.data?.success && response.data?.data) {
+        const exportData = response.data.data;
+        const fileName = `SmartStay_Data_Export_${new Date().getTime()}.pdf`;
+        
+        let html = `<html><body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h1 style="color: #004e92;">Smart Hostel Data Export</h1>
+            <p>Generated on: ${new Date().toLocaleString()}</p>
+            <hr/>
+        `;
+        
+        for (const [key, val] of Object.entries(exportData)) {
+            html += `<h2 style="text-transform: capitalize; color: #2563EB;">${key}</h2>`;
+            if (Array.isArray(val)) {
+                if (val.length === 0) {
+                    html += `<p>No records found.</p>`;
+                } else {
+                    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">`;
+                    html += `<tr style="background-color: #f1f5f9;">`;
+                    Object.keys(val[0] as any).forEach(k => {
+                        html += `<th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">${k}</th>`;
+                    });
+                    html += `</tr>`;
+                    val.forEach(row => {
+                        html += `<tr>`;
+                        Object.values(row as any).forEach(v => {
+                            html += `<td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td>`;
+                        });
+                        html += `</tr>`;
+                    });
+                    html += `</table>`;
+                }
+            } else if (typeof val === 'object' && val !== null) {
+                html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">`;
+                for (const [k, v] of Object.entries(val)) {
+                    if (k === 'profilePhoto' || k === 'profile_photo') continue;
+                    html += `<tr><td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; width: 30%; background-color: #f8fafc;">${k}</td>`;
+                    html += `<td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td></tr>`;
+                }
+                html += `</table>`;
+            } else {
+                html += `<p>${val}</p>`;
+            }
+        }
+        
+        html += `</body></html>`;
+
+        const { uri: pdfUri } = await Print.printToFileAsync({ html });
+        
+        if (Platform.OS === 'android') {
+          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (permissions.granted) {
+            const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/pdf');
+            // Read PDF as base64 and write it using SAF
+            const base64Data = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
+            await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+              encoding: FileSystem.EncodingType.Base64
+            });
+            showAlert('Download Complete', 'Your PDF export has been saved successfully.', [], 'success');
+          } else {
+            showAlert('Permission Denied', 'Storage permission is required to save the file.', [], 'error');
+          }
+        } else {
+          // iOS Fallback
+          const isAvailable = await Sharing.isAvailableAsync();
+          if (isAvailable) {
+            await Sharing.shareAsync(pdfUri, {
+              mimeType: 'application/pdf',
+              dialogTitle: 'Save your data export',
+              UTI: 'com.adobe.pdf'
+            });
+          } else {
+            showAlert('Download Complete', `Your PDF export has been generated.`, [], 'success');
+          }
+        }
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error: any) {
-      showAlert('Export Requested', 'Your data export request has been noted. The admin will email you the exported data within 48 hours.', [], 'success');
+      console.error('Export error:', error);
+      showAlert('Export Failed', 'There was an error generating your data export. Please try again.', [], 'error');
     } finally { setLoading(false); }
   };
 
@@ -49,7 +132,7 @@ export default function DownloadData() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Download My Data</Text>
+          <AppText style={styles.headerTitle}>Download My Data</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -62,15 +145,15 @@ export default function DownloadData() {
               <MaterialCommunityIcons name="download-circle-outline" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Your Data, Your Rights</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>Select the categories below and we'll prepare a downloadable copy of your data via email.</Text>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Your Data, Your Rights</AppText>
+          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>Select the categories below and we'll generate a downloadable copy of your data directly to your device.</AppText>
         </View>
 
         {/* Select All */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={[styles.secTitle, { color: colors.textSecondary, marginBottom: 0, marginTop: 0 }]}>SELECT DATA CATEGORIES</Text>
+          <AppText style={[styles.secTitle, { color: colors.textSecondary, marginBottom: 0, marginTop: 0 }]}>SELECT DATA CATEGORIES</AppText>
           <TouchableOpacity onPress={() => { const allSelected = selectedCount === DATA_CATEGORIES.length; setSelectedCategories(Object.fromEntries(DATA_CATEGORIES.map(c => [c.id, !allSelected]))); }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#004e92' }}>{selectedCount === DATA_CATEGORIES.length ? 'Deselect All' : 'Select All'}</Text>
+            <AppText style={{ fontSize: 14, fontWeight: '600', color: '#004e92' }}>{selectedCount === DATA_CATEGORIES.length ? 'Deselect All' : 'Select All'}</AppText>
           </TouchableOpacity>
         </View>
 
@@ -79,7 +162,7 @@ export default function DownloadData() {
           {DATA_CATEGORIES.map((cat, i) => (
             <View key={cat.id} style={[styles.catRow, i < DATA_CATEGORIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
               <View style={[styles.catIcon, { backgroundColor: cat.color + '15' }]}><MaterialCommunityIcons name={cat.icon as any} size={22} color={cat.color} /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.catLabel, { color: colors.text }]}>{cat.label}</Text><Text style={[styles.catDesc, { color: colors.textSecondary }]}>{cat.desc}</Text></View>
+              <View style={{ flex: 1 }}><AppText style={[styles.catLabel, { color: colors.text }]}>{cat.label}</AppText><AppText style={[styles.catDesc, { color: colors.textSecondary }]}>{cat.desc}</AppText></View>
               <Switch value={selectedCategories[cat.id]} onValueChange={() => toggleCategory(cat.id)} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={selectedCategories[cat.id] ? '#004e92' : '#f4f3f4'} />
             </View>
           ))}
@@ -89,11 +172,11 @@ export default function DownloadData() {
         <TouchableOpacity style={[styles.downloadBtn, selectedCount === 0 && { opacity: 0.4 }]} onPress={handleDownload} disabled={loading || selectedCount === 0}>
           {loading ? <ActivityIndicator color="#fff" /> : (<>
             <MaterialCommunityIcons name="download" size={22} color="#fff" />
-            <Text style={styles.downloadText}>Request Download ({selectedCount} {selectedCount === 1 ? 'category' : 'categories'})</Text>
+            <AppText style={styles.downloadText}>Request Download ({selectedCount} {selectedCount === 1 ? 'category' : 'categories'})</AppText>
           </>)}
         </TouchableOpacity>
 
-        <Text style={[styles.footerNote, { color: colors.textSecondary }]}>Data will be delivered in JSON/CSV format to your registered email address. Processing may take up to 48 hours.</Text>
+        <AppText style={[styles.footerNote, { color: colors.textSecondary }]}>Data will be generated and saved securely to your device in JSON format.</AppText>
       </ScrollView>
     </View>
   );

@@ -3,10 +3,11 @@ import * as Application from 'expo-application';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Linking, Platform, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, Platform, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 const LICENSES = [
   { name: 'React Native', license: 'MIT', url: 'https://github.com/facebook/react-native' },
@@ -42,7 +43,7 @@ export default function AboutApp() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>About App</Text>
+          <AppText style={styles.headerTitle}>About App</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -55,32 +56,32 @@ export default function AboutApp() {
               <MaterialCommunityIcons name="home-city" size={40} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.appName, { color: colors.text }]}>SmartStay Hostels</Text>
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>Premium Hostel Management</Text>
+          <AppText style={[styles.appName, { color: colors.text }]}>SmartStay Hostels</AppText>
+          <AppText style={{ fontSize: 14, color: colors.textSecondary }}>Premium Hostel Management</AppText>
           <View style={[styles.badge, { backgroundColor: isDark ? '#1e293b' : '#eff6ff', borderColor: isDark ? '#334155' : '#dbeafe' }]}>
-            <Text style={[styles.badgeText, { color: isDark ? '#60A5FA' : '#004e92' }]}>v{appVersion} ({buildNumber})</Text>
+            <AppText style={[styles.badgeText, { color: isDark ? '#60A5FA' : '#004e92' }]}>v{appVersion} ({buildNumber})</AppText>
           </View>
         </View>
 
         {/* App Info */}
-        <Text style={[styles.secTitle, { color: colors.textSecondary }]}>APP INFORMATION</Text>
+        <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>APP INFORMATION</AppText>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[['Version', `v${appVersion}`], ['Build', buildNumber], ['Platform', Platform.OS === 'ios' ? 'iOS' : 'Android'], ['OS Version', `${Platform.Version}`], ['Package', Application.applicationId || 'com.smarthostel.app']].map(([label, value], i, arr) => (
             <View key={label as string} style={[styles.infoRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+              <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</AppText>
+              <AppText style={[styles.infoValue, { color: colors.text }]}>{value}</AppText>
             </View>
           ))}
         </View>
 
         {/* Actions */}
-        <Text style={[styles.secTitle, { color: colors.textSecondary }]}>ACTIONS</Text>
+        <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>ACTIONS</AppText>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {ACTIONS.map((item, i) => (
             <React.Fragment key={item.label}>
               <TouchableOpacity style={styles.actionRow} onPress={item.onPress}>
                 <View style={[styles.actionIcon, { backgroundColor: item.bg }]}><MaterialCommunityIcons name={item.icon as any} size={22} color={item.color} /></View>
-                <View style={{ flex: 1 }}><Text style={[{ fontSize: 15, fontWeight: '600', color: colors.text }]}>{item.label}</Text><Text style={[{ fontSize: 12, marginTop: 2, color: colors.textSecondary }]}>{item.desc}</Text></View>
+                <View style={{ flex: 1 }}><AppText style={[{ fontSize: 15, fontWeight: '600', color: colors.text }]}>{item.label}</AppText><AppText style={[{ fontSize: 12, marginTop: 2, color: colors.textSecondary }]}>{item.desc}</AppText></View>
                 <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
               {i < ACTIONS.length - 1 && <View style={[styles.div, { backgroundColor: colors.border }]} />}
@@ -89,19 +90,19 @@ export default function AboutApp() {
         </View>
 
         {/* Open Source */}
-        <Text style={[styles.secTitle, { color: colors.textSecondary }]}>OPEN SOURCE LIBRARIES</Text>
+        <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>OPEN SOURCE LIBRARIES</AppText>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {LICENSES.map((lib, i) => (
             <TouchableOpacity key={lib.name} style={[styles.licRow, i < LICENSES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]} onPress={() => Linking.openURL(lib.url).catch(() => {})}>
-              <View style={{ flex: 1 }}><Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{lib.name}</Text><Text style={{ fontSize: 12, color: colors.textSecondary }}>{lib.license} License</Text></View>
+              <View style={{ flex: 1 }}><AppText style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{lib.name}</AppText><AppText style={{ fontSize: 12, color: colors.textSecondary }}>{lib.license} License</AppText></View>
               <MaterialCommunityIcons name="open-in-new" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={{ alignItems: 'center', paddingVertical: 32, gap: 6 }}>
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>Made with ❤️ for hostel students</Text>
-          <Text style={{ fontSize: 12, color: colors.textSecondary }}>© 2026 SmartStay Hostels</Text>
+          <AppText style={{ fontSize: 14, color: colors.textSecondary }}>Made with ❤️ for hostel students</AppText>
+          <AppText style={{ fontSize: 12, color: colors.textSecondary }}>© 2026 SmartStay Hostels</AppText>
         </View>
       </ScrollView>
     </View>

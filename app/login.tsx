@@ -3,15 +3,15 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Modal } from 'react-native';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import * as SecureStore from 'expo-secure-store';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomAlert, { AlertType } from '../components/CustomAlert';
 import { useAuth } from '../context/AuthContext';
-import { setStoredUser } from '../utils/authUtils';
+import { setStoredUser, isAdmin } from '../utils/authUtils';
+import AppText from '../components/AppText';
 
 
 
@@ -41,58 +41,26 @@ export default function Login() {
     setAlertVisible(true);
   };
 
-  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
-
   useEffect(() => {
     console.log('📡 Google Sign-In Config:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? 'Loaded' : 'MISSING');
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
     });
-    checkBiometric();
   }, []);
-
-  const checkBiometric = async () => {
-    try {
-      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-      const enabled = await AsyncStorage.getItem('biometric_enabled');
-      if (enabled === 'true') {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (hasHardware && isEnrolled) {
-          setIsBiometricSupported(true);
-        }
-      }
-    } catch (e) {
-      console.log('Biometric check failed', e);
-    }
-  };
-
-  const handleBiometricLogin = async () => {
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Login with Biometrics',
-      });
-      if (result.success) {
-        const savedEmail = await SecureStore.getItemAsync('saved_email');
-        const savedPassword = await SecureStore.getItemAsync('saved_password');
-        if (savedEmail && savedPassword) {
-          setEmail(savedEmail);
-          setPassword(savedPassword);
-          handleLogin(savedEmail, savedPassword);
-        } else {
-          showAlert('Error', 'No saved credentials found. Please login with password first.', 'warning');
-        }
-      }
-    } catch (e) {
-      console.log('Biometric login error', e);
-    }
-  };
 
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       await GoogleSignin.hasPlayServices();
+      
+      // Force account picker by signing out first
+      try {
+        await GoogleSignin.signOut();
+      } catch (e) {
+        // Ignore errors if the user wasn't previously signed in
+      }
+
       const userInfo: any = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken || userInfo.idToken;
 
@@ -142,7 +110,7 @@ export default function Login() {
         }
 
         // Navigate based on role
-        if (user.role === 'admin') {
+        if (isAdmin({ role: user.role })) {
           router.replace('/admin');
         } else {
           router.replace('/(tabs)');
@@ -162,8 +130,8 @@ export default function Login() {
         // play services not available or outdated
         showAlert('Error', 'Google Play Services not available', 'error');
       } else {
-        console.error('Login Error:', e);
-        const message = e.response?.data?.error || e.message || 'Login failed';
+        console.log('Google Login Failed:', e.message);
+        const message = e.response?.data?.error || 'Google Sign-In failed. Please try again.';
         showAlert('Error', message, 'error');
       }
     } finally {
@@ -206,16 +174,11 @@ export default function Login() {
       await AsyncStorage.setItem('userToken', token);
       if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
 
-      // Store User
       await setStoredUser({
         id: user.id.toString(),
         name: user.fullName || user.email,
         role: user.role
       });
-
-      // Save credentials for Biometrics
-      await SecureStore.setItemAsync('saved_email', loginEmail.trim().toLowerCase());
-      await SecureStore.setItemAsync('saved_password', loginPassword.trim());
 
       await refreshUser();
 
@@ -230,15 +193,15 @@ export default function Login() {
       }
 
       // Navigate
-      if (user.role === 'admin') {
+      if (isAdmin({ role: user.role })) {
         router.replace('/admin');
       } else {
         router.replace('/(tabs)');
       }
 
     } catch (e: any) {
-      console.error('Login Error:', e);
-      const message = e.response?.data?.error || e.message || 'Login failed';
+      console.log('Login Failed:', e.message);
+      const message = (e.response?.status === 401 || e.response?.status === 400) ? 'Invalid email or password' : (e.response?.data?.error || 'Login failed. Please check your internet connection.');
       showAlert('Error', message, 'error');
     } finally {
       setIsLoading(false);
@@ -272,10 +235,6 @@ export default function Login() {
         name: user.fullName || user.email,
         role: user.role
       });
-      
-      // Save credentials for Biometrics
-      await SecureStore.setItemAsync('saved_email', email.trim().toLowerCase());
-      await SecureStore.setItemAsync('saved_password', password.trim());
 
       await refreshUser();
 
@@ -290,7 +249,7 @@ export default function Login() {
         return;
       }
 
-      if (user.role === 'admin') {
+      if (isAdmin({ role: user.role })) {
         router.replace('/admin');
       } else {
         router.replace('/(tabs)');
@@ -347,20 +306,20 @@ export default function Login() {
               <MaterialCommunityIcons name="domain" size={32} color="#fff" />
             </View>
             <View style={styles.logoTextRow}>
-              <Text style={styles.logoTextWhite}>Smart </Text>
-              <Text style={styles.logoTextCyan}>Hostel</Text>
+              <AppText style={styles.logoTextWhite}>Smart </AppText>
+              <AppText style={styles.logoTextCyan}>Hostel</AppText>
             </View>
-            <Text style={styles.logoSubtitle}>PREMIUM LIVING</Text>
+            <AppText style={styles.logoSubtitle}>PREMIUM LIVING</AppText>
           </View>
 
           {/* Login Card */}
           <View style={styles.glassCard}>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
-            <Text style={styles.subtitleText}>Access your premium hostel dashboard</Text>
+            <AppText style={styles.welcomeText}>Welcome Back</AppText>
+            <AppText style={styles.subtitleText}>Access your premium hostel dashboard</AppText>
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+              <AppText style={styles.inputLabel}>Email Address</AppText>
               <View style={styles.inputWrapper}>
                 <MaterialCommunityIcons name="email-outline" size={20} color="#64748B" style={styles.inputIcon} />
                 <TextInput
@@ -379,7 +338,7 @@ export default function Login() {
             {/* Password Input */}
             <View style={styles.inputGroup}>
               <View style={styles.passwordHeader}>
-                <Text style={styles.inputLabel}>Password</Text>
+                <AppText style={styles.inputLabel}>Password</AppText>
               </View>
               <View style={styles.inputWrapper}>
                 <MaterialCommunityIcons name="lock-outline" size={20} color="#64748B" style={styles.inputIcon} />
@@ -398,7 +357,7 @@ export default function Login() {
               </View>
             </View>
 
-            {/* Primary Login Button + Biometric */}
+            {/* Primary Login Button */}
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity
                 style={[styles.loginBtnContainer, { flex: 1 }]}
@@ -415,22 +374,16 @@ export default function Login() {
                   {isLoading ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.loginBtnText}>Log In</Text>
+                    <AppText style={styles.loginBtnText}>Log In</AppText>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-
-              {isBiometricSupported && (
-                <TouchableOpacity style={styles.biometricBtn} onPress={handleBiometricLogin} activeOpacity={0.7}>
-                  <MaterialCommunityIcons name="fingerprint" size={30} color="#2CB4FF" />
-                </TouchableOpacity>
-              )}
             </View>
 
             {/* Divider */}
             <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+              <AppText style={styles.dividerText}>OR CONTINUE WITH</AppText>
               <View style={styles.dividerLine} />
             </View>
 
@@ -442,7 +395,7 @@ export default function Login() {
               activeOpacity={0.8}
             >
               <MaterialCommunityIcons name="google" size={20} color="#EA4335" style={{ marginRight: 12 }} />
-              <Text style={styles.googleBtnText}>Sign in with Google</Text>
+              <AppText style={styles.googleBtnText}>Sign in with Google</AppText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -453,14 +406,14 @@ export default function Login() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <MaterialCommunityIcons name={twoFactorMethod === 'sms' ? "message-processing-outline" : "shield-lock-outline"} size={48} color="#2CB4FF" style={{ marginBottom: 16 }} />
-            <Text style={styles.modalTitle}>Two-Factor Auth</Text>
-            <Text style={styles.modalDesc}>
+            <AppText style={styles.modalTitle}>Two-Factor Auth</AppText>
+            <AppText style={styles.modalDesc}>
               {twoFactorMethod === 'sms' 
                 ? 'Enter the 6-digit code sent to your phone.' 
                 : twoFactorMethod === 'both' 
                   ? 'Enter the 6-digit code from your authenticator app or phone.' 
                   : 'Enter the 6-digit code from your authenticator app.'}
-            </Text>
+            </AppText>
 
             <TextInput
               style={styles.modalInput}
@@ -474,10 +427,10 @@ export default function Login() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShow2FA(false)}>
-                <Text style={styles.modalBtnTextCancel}>Cancel</Text>
+                <AppText style={styles.modalBtnTextCancel}>Cancel</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalBtnPrimary} onPress={handleVerify2FA} disabled={isLoading}>
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnTextPrimary}>Verify</Text>}
+                {isLoading ? <ActivityIndicator color="#fff" /> : <AppText style={styles.modalBtnTextPrimary}>Verify</AppText>}
               </TouchableOpacity>
             </View>
           </View>
@@ -664,16 +617,6 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 15,
     fontWeight: '600',
-  },
-  biometricBtn: {
-    height: 56,
-    width: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalOverlay: {
     flex: 1,

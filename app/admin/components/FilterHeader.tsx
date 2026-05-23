@@ -1,6 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
+import AppText from '../../../components/AppText';
 
 interface FilterHeaderProps {
     searchQuery: string;
@@ -24,9 +25,9 @@ export default function FilterHeader({ searchQuery, setSearchQuery, resultsCount
             </View>
 
             <View style={styles.listHeader}>
-                <Text style={[styles.listTitle, { color: colors.textSecondary }]}>
+                <AppText style={[styles.listTitle, { color: colors.textSecondary }]}>
                     {resultsCount} Student{resultsCount !== 1 ? 's' : ''} Found
-                </Text>
+                </AppText>
             </View>
         </View>
     );

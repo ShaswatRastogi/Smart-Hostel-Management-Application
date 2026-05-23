@@ -2,7 +2,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -10,6 +10,7 @@ import { roomServices } from '../utils/busTimingsUtils';
 import { fetchUserData } from '../utils/nameUtils';
 import { requestService, ServiceRequest, subscribeToStudentRequests } from '../utils/serviceUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 // ... (rest of imports)
 
@@ -96,8 +97,8 @@ export default function RoomService() {
                             <MaterialIcons name="arrow-back" size={24} color="#fff" />
                         </Pressable>
                         <View>
-                            <Text style={styles.headerTitle}>Room Services</Text>
-                            <Text style={styles.headerSubtitle}>Housekeeping & Maintenance</Text>
+                            <AppText style={styles.headerTitle}>Room Services</AppText>
+                            <AppText style={styles.headerSubtitle}>Housekeeping & Maintenance</AppText>
                         </View>
                     </View>
                 </SafeAreaView>
@@ -110,7 +111,7 @@ export default function RoomService() {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={{ padding: 20 }}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>AVAILABLE SERVICES</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>AVAILABLE SERVICES</AppText>
 
                     {submitting && !modalVisible && <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: 20 }} />}
 
@@ -142,21 +143,21 @@ export default function RoomService() {
                                 </LinearGradient>
 
                                 <View style={styles.cardContent}>
-                                    <Text style={[
+                                    <AppText style={[
                                         styles.serviceName,
                                         { color: colors.text },
                                         !service.available && [styles.serviceNameDisabled, { color: colors.textSecondary }]
                                     ]}>
                                         {service.name}
-                                    </Text>
+                                    </AppText>
 
-                                    <Text style={[styles.serviceDescription, { color: colors.textSecondary }]}>
+                                    <AppText style={[styles.serviceDescription, { color: colors.textSecondary }]}>
                                         {service.description}
-                                    </Text>
+                                    </AppText>
 
                                     {!service.available && (
                                         <View style={[styles.unavailableBadge, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]}>
-                                            <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>Coming Soon</Text>
+                                            <AppText style={[styles.unavailableText, { color: colors.textSecondary }]}>Coming Soon</AppText>
                                         </View>
                                     )}
                                 </View>
@@ -174,27 +175,27 @@ export default function RoomService() {
                         ))}
                     </View>
 
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>MY REQUESTS</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>MY REQUESTS</AppText>
                     {loading ? (
                         <ActivityIndicator size="small" color={colors.primary} />
                     ) : requests.length === 0 ? (
-                        <Text style={{ textAlign: 'center', color: colors.textSecondary, marginBottom: 20 }}>No active requests</Text>
+                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginBottom: 20 }}>No active requests</AppText>
                     ) : (
                         <View style={styles.historyList}>
                             {requests.map(req => (
                                 <View key={req.id} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     <View style={styles.historyHeader}>
-                                        <Text style={[styles.historyTitle, { color: colors.text }]}>{req.serviceType}</Text>
+                                        <AppText style={[styles.historyTitle, { color: colors.text }]}>{req.serviceType}</AppText>
                                         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(req.status) + '20' }]}>
-                                            <Text style={[styles.statusText, { color: getStatusColor(req.status) }]}>{req.status.toUpperCase()}</Text>
+                                            <AppText style={[styles.statusText, { color: getStatusColor(req.status) }]}>{req.status.toUpperCase()}</AppText>
                                         </View>
                                     </View>
                                     {req.description ? (
-                                        <Text style={[styles.historyDesc, { color: colors.textSecondary, fontStyle: 'italic', marginBottom: 4 }]}>"{req.description}"</Text>
+                                        <AppText style={[styles.historyDesc, { color: colors.textSecondary, fontStyle: 'italic', marginBottom: 4 }]}>"{req.description}"</AppText>
                                     ) : null}
-                                    <Text style={[styles.historyDate, { color: colors.textSecondary }]}>{req.createdAt instanceof Date ? req.createdAt.toLocaleDateString() : ''}</Text>
+                                    <AppText style={[styles.historyDate, { color: colors.textSecondary }]}>{req.createdAt instanceof Date ? req.createdAt.toLocaleDateString() : ''}</AppText>
                                     {req.estimatedTime && (
-                                        <Text style={[styles.etaText, { color: colors.primary }]}>ETA: {req.estimatedTime}</Text>
+                                        <AppText style={[styles.etaText, { color: colors.primary }]}>ETA: {req.estimatedTime}</AppText>
                                     )}
                                 </View>
                             ))}
@@ -209,10 +210,10 @@ export default function RoomService() {
                             <MaterialCommunityIcons name="phone-in-talk" size={20} color="#fff" />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={[styles.infoTitle, { color: isDark ? '#93c5fd' : '#1E3A8A' }]}>Urgent Assistance</Text>
-                            <Text style={[styles.infoText, { color: isDark ? '#bfdbfe' : '#1E40AF' }]}>
+                            <AppText style={[styles.infoTitle, { color: isDark ? '#93c5fd' : '#1E3A8A' }]}>Urgent Assistance</AppText>
+                            <AppText style={[styles.infoText, { color: isDark ? '#bfdbfe' : '#1E40AF' }]}>
                                 For emergencies, call hostel office directly at +91 98765 43210
-                            </Text>
+                            </AppText>
                         </View>
                     </View>
                 </View>
@@ -226,8 +227,8 @@ export default function RoomService() {
                         style={styles.modalOverlay}
                     >
                         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: colors.text }]}>Request {selectedService?.name}</Text>
-                            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Add a description (optional)</Text>
+                            <AppText style={[styles.modalTitle, { color: colors.text }]}>Request {selectedService?.name}</AppText>
+                            <AppText style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Add a description (optional)</AppText>
 
                             <TextInput
                                 style={[styles.input, { backgroundColor: isDark ? '#1e293b' : '#F1F5F9', color: colors.text, borderColor: colors.border }]}
@@ -243,7 +244,7 @@ export default function RoomService() {
 
                             <View style={styles.modalButtons}>
                                 <Pressable style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                                    <Text style={styles.cancelText}>Cancel</Text>
+                                    <AppText style={styles.cancelText}>Cancel</AppText>
                                 </Pressable>
 
                                 <Pressable
@@ -251,7 +252,7 @@ export default function RoomService() {
                                     onPress={confirmRequest}
                                     disabled={submitting}
                                 >
-                                    {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.confirmText}>Submit Request</Text>}
+                                    {submitting ? <ActivityIndicator color="#fff" size="small" /> : <AppText style={styles.confirmText}>Submit Request</AppText>}
                                 </Pressable>
                             </View>
                         </View>

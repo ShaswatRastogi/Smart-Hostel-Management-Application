@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import api from '../utils/api';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 const AttendanceHistory = ({ studentId }: { studentId: string }) => {
     const { colors } = useTheme();
@@ -77,12 +78,12 @@ const AttendanceHistory = ({ studentId }: { studentId: string }) => {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <MaterialCommunityIcons name="calendar-check" size={18} color={colors.primary} />
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>ATTENDANCE</Text>
+                    <AppText style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>ATTENDANCE</AppText>
                 </View>
                 <View style={{ backgroundColor: stats.percentage >= 75 ? '#DCFCE7' : '#FEE2E2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: stats.percentage >= 75 ? '#166534' : '#991B1B' }}>
+                    <AppText style={{ fontSize: 12, fontWeight: '800', color: stats.percentage >= 75 ? '#166534' : '#991B1B' }}>
                         {stats.percentage}%
-                    </Text>
+                    </AppText>
                 </View>
             </View>
 
@@ -106,23 +107,23 @@ const AttendanceHistory = ({ studentId }: { studentId: string }) => {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12, justifyContent: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#22C55E' }} />
-                    <Text style={{ fontSize: 10, color: colors.textSecondary }}>Present</Text>
+                    <AppText style={{ fontSize: 10, color: colors.textSecondary }}>Present</AppText>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
-                    <Text style={{ fontSize: 10, color: colors.textSecondary }}>Absent</Text>
+                    <AppText style={{ fontSize: 10, color: colors.textSecondary }}>Absent</AppText>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F59E0B' }} />
-                    <Text style={{ fontSize: 10, color: colors.textSecondary }}>Late</Text>
+                    <AppText style={{ fontSize: 10, color: colors.textSecondary }}>Late</AppText>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#6366F1' }} />
-                    <Text style={{ fontSize: 10, color: colors.textSecondary }}>Leave</Text>
+                    <AppText style={{ fontSize: 10, color: colors.textSecondary }}>Leave</AppText>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#94A3B8' }} />
-                    <Text style={{ fontSize: 10, color: colors.textSecondary }}>Not Marked</Text>
+                    <AppText style={{ fontSize: 10, color: colors.textSecondary }}>Not Marked</AppText>
                 </View>
             </View>
         </View>

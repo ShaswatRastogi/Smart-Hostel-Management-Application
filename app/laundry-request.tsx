@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -10,6 +10,7 @@ import { fetchLaundrySettings, LaundryRequestDisplay, LaundrySettings, subscribe
 import { fetchUserData, StudentData } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
 import { formatUniversalTime } from '../utils/timeUtils';
+import AppText from '../components/AppText';
 
 export default function LaundryRequest() {
     const router = useRouter();
@@ -89,7 +90,7 @@ export default function LaundryRequest() {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Profile...</Text>
+                <AppText style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Profile...</AppText>
             </View>
         );
     }
@@ -107,7 +108,7 @@ export default function LaundryRequest() {
                                 <Pressable onPress={() => router.back()} style={styles.backButton}>
                                     <Ionicons name="arrow-back" size={24} color="#fff" />
                                 </Pressable>
-                                <Text style={styles.headerTitle}>Laundry Request</Text>
+                                <AppText style={styles.headerTitle}>Laundry Request</AppText>
                                 <View style={{ width: 40 }} />
                             </View>
                         </SafeAreaView>
@@ -128,8 +129,8 @@ export default function LaundryRequest() {
                                         <MaterialCommunityIcons name="account-circle-outline" size={24} color={isDark ? '#60A5FA' : '#3B82F6'} />
                                     </View>
                                     <View>
-                                        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Student Name</Text>
-                                        <Text style={[styles.infoValue, { color: colors.text }]}>{student?.fullName || '--'}</Text>
+                                        <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Student Name</AppText>
+                                        <AppText style={[styles.infoValue, { color: colors.text }]}>{student?.fullName || '--'}</AppText>
                                     </View>
                                 </View>
                                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -138,8 +139,8 @@ export default function LaundryRequest() {
                                         <MaterialCommunityIcons name="door-open" size={24} color={isDark ? '#60A5FA' : '#3B82F6'} />
                                     </View>
                                     <View>
-                                        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Room Number</Text>
-                                        <Text style={[styles.infoValue, { color: colors.text }]}>{student?.roomNo || '--'}</Text>
+                                        <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Room Number</AppText>
+                                        <AppText style={[styles.infoValue, { color: colors.text }]}>{student?.roomNo || '--'}</AppText>
                                     </View>
                                 </View>
                             </View>
@@ -152,14 +153,14 @@ export default function LaundryRequest() {
                                             <MaterialCommunityIcons name="washing-machine" size={24} color={isDark ? '#60A5FA' : '#3B82F6'} />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Service Status</Text>
-                                            <Text style={[styles.infoValue, {
+                                            <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Service Status</AppText>
+                                            <AppText style={[styles.infoValue, {
                                                 color: settings.status === 'On Schedule' ? '#10B981' :
                                                     settings.status === 'Delayed' ? '#F59E0B' :
                                                         settings.status === 'No Service' ? '#EF4444' : '#6366F1'
                                             }]}>
                                                 {settings.status}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                     </View>
 
@@ -167,16 +168,16 @@ export default function LaundryRequest() {
 
                                     <View style={styles.infoRow}>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Next Pickup</Text>
-                                            <Text style={[styles.infoValue, { color: colors.text }]}>
+                                            <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Next Pickup</AppText>
+                                            <AppText style={[styles.infoValue, { color: colors.text }]}>
                                                 {settings.pickupDay}, {settings.pickupTime} {settings.pickupPeriod}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Next Drop-off</Text>
-                                            <Text style={[styles.infoValue, { color: colors.text }]}>
+                                            <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Next Drop-off</AppText>
+                                            <AppText style={[styles.infoValue, { color: colors.text }]}>
                                                 {settings.dropoffDay}, {settings.dropoffTime} {settings.dropoffPeriod}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                     </View>
 
@@ -184,23 +185,23 @@ export default function LaundryRequest() {
                                         <>
                                             <View style={[styles.divider, { backgroundColor: colors.border }]} />
                                             <View>
-                                                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Message from Admin</Text>
-                                                <Text style={[styles.messageText, { color: colors.text }]}>
+                                                <AppText style={[styles.infoLabel, { color: colors.textSecondary }]}>Message from Admin</AppText>
+                                                <AppText style={[styles.messageText, { color: colors.text }]}>
                                                     "{settings.message}"
-                                                </Text>
+                                                </AppText>
                                             </View>
                                         </>
                                     ) : null}
                                 </View>
                             )}
 
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Request Details</Text>
+                            <AppText style={[styles.sectionTitle, { color: colors.text }]}>Request Details</AppText>
 
                             {/* Form */}
                             <View style={styles.formContainer}>
 
                                 <View style={styles.inputGroup}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>Clothes Details</Text>
+                                    <AppText style={[styles.label, { color: colors.textSecondary }]}>Clothes Details</AppText>
                                     <TextInput
                                         style={[styles.input, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                                         placeholder="E.g., 2 Shirts, 1 Jeans, 1 Towel..."
@@ -213,7 +214,7 @@ export default function LaundryRequest() {
                                 </View>
 
                                 <View style={styles.inputGroup}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>Total Count</Text>
+                                    <AppText style={[styles.label, { color: colors.textSecondary }]}>Total Count</AppText>
                                     <TextInput
                                         style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                                         placeholder="e.g. 5"
@@ -239,24 +240,24 @@ export default function LaundryRequest() {
                                 ) : (
                                     <>
                                         <MaterialCommunityIcons name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                        <Text style={styles.buttonText}>Submit Request</Text>
+                                        <AppText style={styles.buttonText}>Submit Request</AppText>
                                     </>
                                 )}
                             </Pressable>
 
                             {/* Recent Requests History */}
-                            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>Recent Activity</Text>
+                            <AppText style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>Recent Activity</AppText>
                             {history.length === 0 ? (
                                 <View style={[styles.emptyState, { borderColor: colors.border }]}>
-                                    <Text style={{ color: colors.textSecondary }}>No recent requests found</Text>
+                                    <AppText style={{ color: colors.textSecondary }}>No recent requests found</AppText>
                                 </View>
                             ) : (
                                 history.slice(0, 3).map((req, index) => (
                                     <View key={index} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                                            <Text style={[styles.historyDate, { color: colors.text }]}>
+                                            <AppText style={[styles.historyDate, { color: colors.text }]}>
                                                 {formatUniversalTime(req.createdAt, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </Text>
+                                            </AppText>
                                             {/* Dynamic Status Badge */}
                                             {(() => {
                                                 const statusConfig = {
@@ -271,17 +272,17 @@ export default function LaundryRequest() {
 
                                                 return (
                                                     <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-                                                        <Text style={[styles.statusText, { color: config.color }]}>{config.label}</Text>
+                                                        <AppText style={[styles.statusText, { color: config.color }]}>{config.label}</AppText>
                                                     </View>
                                                 );
                                             })()}
                                         </View>
-                                        <Text style={[styles.historyDetails, { color: colors.textSecondary }]}>
+                                        <AppText style={[styles.historyDetails, { color: colors.textSecondary }]}>
                                             {req.clothesDetails}
-                                        </Text>
-                                        <Text style={[styles.historyTotal, { color: colors.textSecondary, marginTop: 4 }]}>
+                                        </AppText>
+                                        <AppText style={[styles.historyTotal, { color: colors.textSecondary, marginTop: 4 }]}>
                                             {req.totalClothes} Items
-                                        </Text>
+                                        </AppText>
                                     </View>
                                 ))
                             )}

@@ -16,12 +16,14 @@ interface StudentDetailsModalProps {
 
 import { API_BASE_URL } from '../utils/api';
 import AttendanceHistory from './AttendanceHistory';
+import { isWardenOrOwner, useUser } from '../utils/authUtils';
 
 
 export default function StudentDetailsModal({ visible, student, onClose, onEdit, onDelete, viewMode = 'full' }: StudentDetailsModalProps & { viewMode?: 'full' | 'attendance' }) {
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const user = useUser();
 
     if (!visible || !student) return null;
 
@@ -171,43 +173,45 @@ export default function StudentDetailsModal({ visible, student, onClose, onEdit,
                         <View style={{ alignItems: 'center', marginBottom: 20 }}>
                             {student.profilePhoto ? (
                                 <Image
-                                    source={{ uri: `${API_BASE_URL}${student.profilePhoto}` }}
+                                    source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                                     style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 8 }}
                                     contentFit="cover"
                                 />
                             ) : (
                                 <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
                                     <Text style={{ fontSize: 36, fontWeight: '800', color: '#fff' }}>
-                                        {student.name ? student.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '?'}
+                                        {(student.name || student.fullName) ? (student.name || student.fullName).split(' ').map((n: string) => n[0]).join('').toUpperCase() : '?'}
                                     </Text>
                                 </View>
                             )}
-                            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 4 }}>{student.name}</Text>
-                            <Text style={{ fontSize: 14, color: colors.textSecondary }}>{student.rollNo} • Room {student.room}</Text>
+                            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 4 }}>{student.name || student.fullName}</Text>
+                            <Text style={{ fontSize: 14, color: colors.textSecondary }}>{student.rollNo} • Room {student.room || student.roomNo}</Text>
 
                             {viewMode === 'full' && (
                                 <>
-                                    <View style={[styles.actionButtons, { marginTop: 16, width: '100%' }]}>
-                                        <TouchableOpacity
-                                            style={[styles.actionBtn, styles.editBtn]}
-                                            onPress={() => {
-                                                onClose();
-                                                onEdit(student);
-                                            }}
-                                        >
-                                            <MaterialCommunityIcons name="pencil" size={16} color="#fff" />
-                                            <Text style={styles.actionBtnText}>Edit</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.actionBtn, styles.deleteBtn]}
-                                            onPress={() => {
-                                                onDelete(student.id || student._id, student.name, student.room);
-                                            }}
-                                        >
-                                            <MaterialCommunityIcons name="delete" size={16} color="#fff" />
-                                            <Text style={styles.actionBtnText}>Delete</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    {isWardenOrOwner(user) && (
+                                        <View style={[styles.actionButtons, { marginTop: 16, width: '100%' }]}>
+                                            <TouchableOpacity
+                                                style={[styles.actionBtn, styles.editBtn]}
+                                                onPress={() => {
+                                                    onClose();
+                                                    onEdit(student);
+                                                }}
+                                            >
+                                                <MaterialCommunityIcons name="pencil" size={16} color="#fff" />
+                                                <Text style={styles.actionBtnText}>Edit</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.actionBtn, styles.deleteBtn]}
+                                                onPress={() => {
+                                                    onDelete(student.id || student._id, student.name, student.room);
+                                                }}
+                                            >
+                                                <MaterialCommunityIcons name="delete" size={16} color="#fff" />
+                                                <Text style={styles.actionBtnText}>Delete</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
 
                                     <TouchableOpacity
                                         style={[styles.actionBtn, { backgroundColor: '#8B5CF6', marginTop: 12, width: '100%' }]}

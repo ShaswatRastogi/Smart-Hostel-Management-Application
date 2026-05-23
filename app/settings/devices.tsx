@@ -2,10 +2,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
 import { useAlert } from '../../context/AlertContext';
+import AppText from '../../components/AppText';
 
 interface DeviceSession {
   id: string;
@@ -28,7 +29,11 @@ export default function ManageDevices() {
   const fetchSessions = async () => {
     try {
       const { default: api } = await import('../../utils/api');
-      const response = await api.get('/auth/sessions');
+      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+      const refreshToken = await AsyncStorage.getItem('refreshToken');
+      const response = await api.get('/auth/sessions', {
+        params: { refreshToken: refreshToken || undefined }
+      });
       setSessions(response.data.sessions);
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
@@ -79,7 +84,7 @@ export default function ManageDevices() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <View><Text style={styles.headerTitle}>Devices</Text><Text style={styles.headerSub}>Active sessions</Text></View>
+          <View><AppText style={styles.headerTitle}>Devices</AppText><AppText style={styles.headerSub}>Online right now</AppText></View>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -89,29 +94,33 @@ export default function ManageDevices() {
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           {currentSession && (<>
-            <Text style={[styles.secTitle, { color: colors.textSecondary }]}>CURRENT SESSION</Text>
+            <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>THIS DEVICE</AppText>
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.sessionRow}>
                 <View style={[styles.devIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><MaterialCommunityIcons name="cellphone" size={26} color="#10B981" /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.devName, { color: colors.text }]}>{currentSession.device_name}</Text>
-                  <Text style={[styles.devMeta, { color: colors.textSecondary }]}>{currentSession.location} • {currentSession.app_version}</Text>
-                  <View style={styles.activeBadge}><View style={styles.activeDot} /><Text style={styles.activeText}>Active Now</Text></View>
+                  <AppText style={[styles.devName, { color: colors.text }]}>{currentSession.device_name}</AppText>
+                  <AppText style={[styles.devMeta, { color: colors.textSecondary }]}>{currentSession.location} • {currentSession.app_version}</AppText>
+                  <View style={styles.activeBadge}><View style={styles.activeDot} /><AppText style={styles.activeText}>Online</AppText></View>
                 </View>
               </View>
             </View>
           </>)}
 
           {otherSessions.length > 0 && (<>
-            <Text style={[styles.secTitle, { color: colors.textSecondary, marginTop: 24 }]}>OTHER ACTIVE SESSIONS</Text>
+            <AppText style={[styles.secTitle, { color: colors.textSecondary, marginTop: 24 }]}>OTHER ONLINE DEVICES</AppText>
             <TouchableOpacity style={[styles.termBtn, { backgroundColor: isDark ? '#170a0a' : '#FFF5F5', borderColor: isDark ? '#451a1a' : '#FEE2E2' }]} onPress={handleLogoutAllOther}>
-              <MaterialCommunityIcons name="logout-variant" size={18} color="#EF4444" /><Text style={styles.termText}>Terminate All Other Sessions</Text>
+              <MaterialCommunityIcons name="logout-variant" size={18} color="#EF4444" /><AppText style={styles.termText}>Log Out All Other Devices</AppText>
             </TouchableOpacity>
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 12 }]}>
               {otherSessions.map((session, i) => (
                 <TouchableOpacity key={session.id} style={[styles.sessionRow, i !== otherSessions.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]} onPress={() => handleLogoutOther(session.id)} activeOpacity={0.6}>
                   <View style={[styles.devIcon, { backgroundColor: isDark ? '#1e293b' : '#F1F5F9' }]}><MaterialCommunityIcons name={session.device_name.includes('Web') ? 'laptop' : 'cellphone'} size={24} color={colors.textSecondary} /></View>
-                  <View style={{ flex: 1 }}><Text style={[styles.devName, { color: colors.text }]}>{session.device_name}</Text><Text style={[styles.devMeta, { color: colors.textSecondary }]}>{session.location} • {session.app_version}</Text></View>
+                  <View style={{ flex: 1 }}>
+                    <AppText style={[styles.devName, { color: colors.text }]}>{session.device_name}</AppText>
+                    <AppText style={[styles.devMeta, { color: colors.textSecondary }]}>{session.location} • {session.app_version}</AppText>
+                    <View style={styles.activeBadge}><View style={[styles.activeDot, { backgroundColor: '#10B981' }]} /><AppText style={[styles.activeText, { color: '#10B981' }]}>Online</AppText></View>
+                  </View>
                   <MaterialCommunityIcons name="close-circle-outline" size={22} color="#EF4444" style={{ opacity: 0.7 }} />
                 </TouchableOpacity>
               ))}
@@ -121,14 +130,14 @@ export default function ManageDevices() {
           {otherSessions.length === 0 && currentSession && (
             <View style={styles.empty}>
               <View style={[styles.emptyIcon, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF' }]}><MaterialCommunityIcons name="shield-check" size={36} color="#10B981" /></View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>All Clear!</Text>
-              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>No other active sessions. Your account is secure.</Text>
+              <AppText style={[styles.emptyTitle, { color: colors.text }]}>All Clear!</AppText>
+              <AppText style={[styles.emptySub, { color: colors.textSecondary }]}>No other devices are online. Your account is secure.</AppText>
             </View>
           )}
 
           <View style={[styles.note, { backgroundColor: isDark ? '#0c2d48' : '#EFF6FF', borderColor: isDark ? '#1e3a5f' : '#BFDBFE' }]}>
             <MaterialCommunityIcons name="shield-alert-outline" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-            <Text style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>If you don't recognize a device, terminate the session immediately and change your password.</Text>
+            <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>If you don't recognize a device, terminate the session immediately and change your password.</AppText>
           </View>
         </ScrollView>
       )}

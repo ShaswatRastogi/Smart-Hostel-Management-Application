@@ -1,7 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 const InputField = React.memo(({
     label,
@@ -64,12 +65,12 @@ const InputField = React.memo(({
     return (
         <View style={styles.inputContainer}>
             {label && (
-                <Text style={[
+                <AppText style={[
                     styles.label,
                     isFocused && { color: colors.primary }
                 ]}>
-                    {label} {required && <Text style={{ color: '#EF4444' }}>*</Text>}
-                </Text>
+                    {label} {required && <AppText style={{ color: '#EF4444' }}>*</AppText>}
+                </AppText>
             )}
             <View style={[
                 styles.inputWrapper,
@@ -96,7 +97,7 @@ const InputField = React.memo(({
                 />
             </View>
             {hasSubmitted && required && !value && (
-                <Text style={styles.errorText}>{label || 'This field'} is required</Text>
+                <AppText style={styles.errorText}>{label || 'This field'} is required</AppText>
             )}
         </View>
     );

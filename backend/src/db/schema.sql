@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS students (
     personal_email VARCHAR(255),
     college_email VARCHAR(255),
     total_fee DECIMAL(10, 2) DEFAULT 0,
+    campus_status VARCHAR(20) DEFAULT 'in_campus',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -152,8 +153,20 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     reason TEXT,
     status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
     admin_response TEXT,
+    qr_code VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Student Movements Table (Trip Tracking)
+CREATE TABLE IF NOT EXISTS student_movements (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    out_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    in_time TIMESTAMP,
+    duration_minutes INTEGER,
+    recorded_by_out INTEGER REFERENCES users(id),
+    recorded_by_in INTEGER REFERENCES users(id)
 );
 
 -- Notices Table

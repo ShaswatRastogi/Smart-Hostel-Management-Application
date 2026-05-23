@@ -1,26 +1,5 @@
-import admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
+import { firebaseAdmin as admin, firebaseInitialized } from '../config/firebase';
 import { query } from '../config/db';
-
-// ─── Firebase Admin Init ─────────────────────────────────────────────────────
-const serviceAccountPath = path.resolve(__dirname, '../../firebase-service-account.json');
-let firebaseInitialized = false;
-
-if (fs.existsSync(serviceAccountPath)) {
-    try {
-        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-        if (!admin.apps.length) {
-            admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-        }
-        firebaseInitialized = true;
-        console.log('✅ Firebase Admin SDK initialized for FCM V1 push notifications');
-    } catch (err) {
-        console.error('❌ Failed to initialize Firebase Admin SDK:', err);
-    }
-} else {
-    console.warn('⚠️  firebase-service-account.json not found — push notifications disabled.');
-}
 
 // Auto-clear a bad token from the database
 async function clearInvalidToken(token: string) {

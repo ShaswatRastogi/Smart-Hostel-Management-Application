@@ -298,7 +298,9 @@ export const getLeaveRequests = async (req: Request, res: Response) => {
                 endDate: row.end_date,
                 reason: row.reason,
                 status: row.status,
+                qrCode: row.qr_code,
                 days: days,
+                category: row.category,
                 createdAt: row.created_at
             };
         });
@@ -312,7 +314,7 @@ export const getLeaveRequests = async (req: Request, res: Response) => {
 
 export const createLeaveRequest = async (req: Request, res: Response) => {
     try {
-        const { startDate, endDate, reason } = req.body;
+        const { startDate, endDate, reason, category } = req.body;
         const studentRes = await query(`
             SELECT s.id, u.full_name 
             FROM students s 
@@ -333,8 +335,8 @@ export const createLeaveRequest = async (req: Request, res: Response) => {
         const roomNo = roomRes.rows.length > 0 ? roomRes.rows[0].room_number : 'N/A';
 
         await query(
-            'INSERT INTO leave_requests (student_id, start_date, end_date, reason, status) VALUES ($1, $2, $3, $4, $5)',
-            [sId, startDate, endDate, reason, 'pending']
+            'INSERT INTO leave_requests (student_id, start_date, end_date, reason, status, category) VALUES ($1, $2, $3, $4, $5, $6)',
+            [sId, startDate, endDate, reason, 'pending', category || 'General']
         );
 
         // Notify Admins
@@ -655,9 +657,18 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
+        let qrCodeQuery = '';
+        let queryParams = [status, id];
+        
+        if (status === 'approved') {
+            const qrString = `LEAVE_${id}_${Date.now()}`;
+            qrCodeQuery = `, qr_code = $3`;
+            queryParams.push(qrString);
+        }
+
         const result = await query(
-            'UPDATE leave_requests SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING student_id, start_date',
-            [status, id]
+            `UPDATE leave_requests SET status = $1, updated_at = NOW()${qrCodeQuery} WHERE id = $2 RETURNING student_id, start_date`,
+            queryParams
         );
         if (result.rows.length > 0) {
             const { student_id } = result.rows[0];
@@ -777,3 +788,30 @@ export const updateLaundryRequestStatus = async (req: Request, res: Response) =>
     }
 };
 
+// --- Movements (Admin) ---
+export const getAllMovements = async (req: Request, res: Response) => {
+    try {
+        const result = await query(`
+            SELECT m.*, u.full_name, r.room_number, s.profile_photo 
+            FROM student_movements m
+            JOIN students s ON m.student_id = s.id
+            JOIN users u ON s.user_id = u.id
+            LEFT JOIN room_allocations ra ON s.id = ra.student_id AND ra.is_active = true
+            LEFT JOIN rooms r ON ra.room_id = r.id
+            ORDER BY m.out_time DESC
+            LIMIT 200
+        `);
+        res.json(result.rows.map(row => ({
+            id: row.id,
+            studentName: row.full_name,
+            studentRoom: row.room_number || 'N/A',
+            studentProfilePhoto: row.profile_photo,
+            outTime: row.out_time,
+            inTime: row.in_time,
+            durationMinutes: row.duration_minutes
+        })));
+    } catch (error) {
+        console.error('Error fetching movements:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};

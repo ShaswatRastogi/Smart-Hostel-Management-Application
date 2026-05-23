@@ -2,11 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View, Modal, TextInput, Image, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Switch, TouchableOpacity, View, Modal, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
 import { useAlert } from '../../context/AlertContext';
 import api from '../../utils/api';
+import AppText from '../../components/AppText';
 
 export default function TwoFactorAuth() {
   const router = useRouter();
@@ -111,7 +112,7 @@ export default function TwoFactorAuth() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Two-Factor Auth</Text>
+          <AppText style={styles.headerTitle}>Two-Factor Auth</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -124,10 +125,10 @@ export default function TwoFactorAuth() {
               <MaterialCommunityIcons name="shield-lock" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Secure Your Account</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Secure Your Account</AppText>
+          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
             Two-factor authentication adds an extra layer of security. You'll need a code in addition to your password when logging in.
-          </Text>
+          </AppText>
         </View>
 
         {/* Status Banner */}
@@ -136,19 +137,19 @@ export default function TwoFactorAuth() {
           borderColor: appEnabled ? (isDark ? '#166534' : '#BBF7D0') : (isDark ? '#451a03' : '#FED7AA'),
         }]}>
           <MaterialCommunityIcons name={appEnabled ? 'shield-check' : 'shield-alert-outline'} size={20} color={appEnabled ? '#10B981' : '#F59E0B'} />
-          <Text style={[styles.statusText, { color: appEnabled ? (isDark ? '#4ADE80' : '#166534') : (isDark ? '#FCD34D' : '#92400E') }]}>
+          <AppText style={[styles.statusText, { color: appEnabled ? (isDark ? '#4ADE80' : '#166534') : (isDark ? '#FCD34D' : '#92400E') }]}>
             {appEnabled ? '2FA is active — your account is protected' : '2FA is disabled — enable it for better security'}
-          </Text>
+          </AppText>
         </View>
 
         {/* SMS Option */}
-        <Text style={[styles.secTitle, { color: colors.textSecondary }]}>AUTHENTICATION METHODS</Text>
+        <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>AUTHENTICATION METHODS</AppText>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.optionRow}>
             <View style={[styles.optIcon, { backgroundColor: 'rgba(59,130,246,0.1)' }]}><MaterialCommunityIcons name="message-text-lock-outline" size={22} color="#3B82F6" /></View>
             <View style={styles.optInfo}>
-              <Text style={[styles.optTitle, { color: colors.text }]}>Text Message (SMS)</Text>
-              <Text style={[styles.optDesc, { color: colors.textSecondary }]}>Receive a code via SMS to your phone</Text>
+              <AppText style={[styles.optTitle, { color: colors.text }]}>Text Message (SMS)</AppText>
+              <AppText style={[styles.optDesc, { color: colors.textSecondary }]}>Receive a code via SMS to your phone</AppText>
             </View>
             <Switch value={smsEnabled} onValueChange={handleSmsToggle} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={smsEnabled ? '#004e92' : '#f4f3f4'} />
           </View>
@@ -156,8 +157,8 @@ export default function TwoFactorAuth() {
           <View style={styles.optionRow}>
             <View style={[styles.optIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><MaterialCommunityIcons name="cellphone-key" size={22} color="#10B981" /></View>
             <View style={styles.optInfo}>
-              <Text style={[styles.optTitle, { color: colors.text }]}>Authenticator App</Text>
-              <Text style={[styles.optDesc, { color: colors.textSecondary }]}>Use Google Authenticator or Authy</Text>
+              <AppText style={[styles.optTitle, { color: colors.text }]}>Authenticator App</AppText>
+              <AppText style={[styles.optDesc, { color: colors.textSecondary }]}>Use Google Authenticator or Authy</AppText>
             </View>
             <Switch value={appEnabled} onValueChange={handleAppToggle} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={appEnabled ? '#004e92' : '#f4f3f4'} />
           </View>
@@ -165,7 +166,7 @@ export default function TwoFactorAuth() {
 
         {(smsEnabled || appEnabled) && (
           <TouchableOpacity style={[styles.backupBtn, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF', borderColor: isDark ? '#1e3a5f' : '#BFDBFE' }]}>
-            <MaterialCommunityIcons name="download-outline" size={20} color="#004e92" /><Text style={styles.backupText}>Download Backup Codes</Text>
+            <MaterialCommunityIcons name="download-outline" size={20} color="#004e92" /><AppText style={styles.backupText}>Download Backup Codes</AppText>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -174,13 +175,13 @@ export default function TwoFactorAuth() {
       <Modal visible={showSetupModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Setup Authenticator</Text>
-            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>Scan this QR code with your Authenticator App, then enter the 6-digit code below.</Text>
+            <AppText style={[styles.modalTitle, { color: colors.text }]}>Setup Authenticator</AppText>
+            <AppText style={[styles.modalDesc, { color: colors.textSecondary }]}>Scan this QR code with your Authenticator App, then enter the 6-digit code below.</AppText>
             {qrCodeUrl ? <Image source={{ uri: qrCodeUrl }} style={{ width: 200, height: 200, marginVertical: 20 }} /> : <ActivityIndicator style={{ marginVertical: 40 }} />}
             <TextInput style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]} placeholder="000000" placeholderTextColor={colors.textSecondary} keyboardType="number-pad" maxLength={6} value={setupToken} onChangeText={setSetupToken} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSetupModal(false); setAppEnabled(false); }}><Text style={styles.modalBtnTextCancel}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnPrimary} onPress={verifyAndEnable} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnTextPrimary}>Verify</Text>}</TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSetupModal(false); setAppEnabled(false); }}><AppText style={styles.modalBtnTextCancel}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnPrimary} onPress={verifyAndEnable} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <AppText style={styles.modalBtnTextPrimary}>Verify</AppText>}</TouchableOpacity>
             </View>
           </View>
         </View>
@@ -190,12 +191,12 @@ export default function TwoFactorAuth() {
       <Modal visible={showSmsSetupModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Setup SMS 2FA</Text>
-            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>Enter your phone number with country code (e.g., +1234567890).</Text>
+            <AppText style={[styles.modalTitle, { color: colors.text }]}>Setup SMS 2FA</AppText>
+            <AppText style={[styles.modalDesc, { color: colors.textSecondary }]}>Enter your phone number with country code (e.g., +1234567890).</AppText>
             <TextInput style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, marginTop: 20, letterSpacing: 1 }]} placeholder="+1234567890" placeholderTextColor={colors.textSecondary} keyboardType="phone-pad" value={phoneNumber} onChangeText={setPhoneNumber} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSmsSetupModal(false); setSmsEnabled(false); }}><Text style={styles.modalBtnTextCancel}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnPrimary} onPress={startSmsSetup} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnTextPrimary}>Next</Text>}</TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSmsSetupModal(false); setSmsEnabled(false); }}><AppText style={styles.modalBtnTextCancel}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnPrimary} onPress={startSmsSetup} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <AppText style={styles.modalBtnTextPrimary}>Next</AppText>}</TouchableOpacity>
             </View>
           </View>
         </View>
@@ -205,12 +206,12 @@ export default function TwoFactorAuth() {
       <Modal visible={showSmsVerifyModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Verify Phone</Text>
-            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>Enter the 6-digit code sent to your phone.</Text>
+            <AppText style={[styles.modalTitle, { color: colors.text }]}>Verify Phone</AppText>
+            <AppText style={[styles.modalDesc, { color: colors.textSecondary }]}>Enter the 6-digit code sent to your phone.</AppText>
             <TextInput style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, marginTop: 20 }]} placeholder="000000" placeholderTextColor={colors.textSecondary} keyboardType="number-pad" maxLength={6} value={setupToken} onChangeText={setSetupToken} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSmsVerifyModal(false); setSmsEnabled(false); }}><Text style={styles.modalBtnTextCancel}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnPrimary} onPress={verifyAndEnableSms} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnTextPrimary}>Verify</Text>}</TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => { setShowSmsVerifyModal(false); setSmsEnabled(false); }}><AppText style={styles.modalBtnTextCancel}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnPrimary} onPress={verifyAndEnableSms} disabled={setupLoading}>{setupLoading ? <ActivityIndicator color="#fff" /> : <AppText style={styles.modalBtnTextPrimary}>Verify</AppText>}</TouchableOpacity>
             </View>
           </View>
         </View>

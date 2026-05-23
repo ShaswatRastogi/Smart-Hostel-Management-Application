@@ -2,21 +2,11 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  TouchableOpacity
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function ChangePassword() {
   const router = useRouter();
@@ -83,7 +73,7 @@ export default function ChangePassword() {
     icon: any
   ) => (
     <View style={styles.inputGroup}>
-      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</AppText>
       <View style={[styles.inputContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
         <MaterialCommunityIcons name={icon} size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
         <TextInput
@@ -118,7 +108,7 @@ export default function ChangePassword() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Change Password</Text>
+          <AppText style={styles.headerTitle}>Change Password</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -135,10 +125,10 @@ export default function ChangePassword() {
               <MaterialCommunityIcons name="lock-reset" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Update Security</Text>
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Update Security</AppText>
+          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
             Ensure your account is protected by using a strong, unique password.
-          </Text>
+          </AppText>
         </View>
 
         {/* Input Card */}
@@ -185,9 +175,9 @@ export default function ChangePassword() {
           marginTop: 20
         }]}>
           <MaterialCommunityIcons name="information-outline" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-          <Text style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
+          <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
             Password must be at least 6 characters long and include a mix of letters and numbers.
-          </Text>
+          </AppText>
         </View>
 
         {/* Action Button */}
@@ -202,7 +192,7 @@ export default function ChangePassword() {
           ) : (
             <>
               <MaterialCommunityIcons name="shield-check-outline" size={22} color="#fff" />
-              <Text style={styles.saveBtnText}>Update Password</Text>
+              <AppText style={styles.saveBtnText}>Update Password</AppText>
             </>
           )}
         </TouchableOpacity>

@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { createBusTiming, deleteBusTiming, getAllBusTimings, updateBusTiming } from '../controllers/busController';
-import { requireAdmin, requireAuth } from '../middleware/auth';
+import { requireStaffOrHigher, requireAuth } from '../middleware/auth';
 
 const router = Router();
 
 router.get('/', requireAuth, getAllBusTimings);
-router.post('/', requireAuth, requireAdmin, createBusTiming);
-router.put('/:id', requireAuth, requireAdmin, updateBusTiming);
-router.delete('/:id', requireAuth, requireAdmin, deleteBusTiming);
+router.post('/', requireAuth, requireStaffOrHigher, createBusTiming);
+router.put('/:id', requireAuth, requireStaffOrHigher, updateBusTiming);
+router.delete('/:id', requireAuth, requireStaffOrHigher, deleteBusTiming);
 
 export default router;

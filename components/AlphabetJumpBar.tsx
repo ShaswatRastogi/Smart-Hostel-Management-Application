@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, GestureResponderEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, GestureResponderEvent, PanResponder, StyleSheet, View } from 'react-native';
+import AppText from './AppText';
 
 const LETTER_HEIGHT = 18; // Increased slightly for better touch target
 
@@ -62,7 +63,7 @@ const AlphabetJumpBar: React.FC<AlphabetJumpBarProps> = ({ onLetterPress, visibl
             <View style={styles.listContainer}>
                 {alphabets.map((letter) => (
                     <View key={letter} style={{ height: LETTER_HEIGHT, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-                        <Text style={styles.letter}>{letter}</Text>
+                        <AppText style={styles.letter}>{letter}</AppText>
                     </View>
                 ))}
             </View>

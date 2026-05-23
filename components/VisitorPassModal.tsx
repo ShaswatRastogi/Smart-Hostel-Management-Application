@@ -1,17 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import {
-    Modal,
-    Pressable,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { Modal, Pressable, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import { formatDate, formatTime, Visitor } from '../utils/visitorUtils';
+import AppText from './AppText';
 
 interface VisitorPassModalProps {
     visible: boolean;
@@ -193,8 +185,8 @@ Please show this pass at the gate.
                         {/* Header */}
                         <View style={styles.header}>
                             <MaterialCommunityIcons name="ticket-confirmation" size={32} color="#fff" />
-                            <Text style={styles.headerTitle}>VISITOR PASS</Text>
-                            <Text style={styles.headerSubtitle}>Smart Hostel Management</Text>
+                            <AppText style={styles.headerTitle}>VISITOR PASS</AppText>
+                            <AppText style={styles.headerSubtitle}>Smart Hostel Management</AppText>
                         </View>
 
                         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -202,62 +194,62 @@ Please show this pass at the gate.
                             {visitor.qr_code && (
                                 <View style={styles.qrContainer}>
                                     <MaterialCommunityIcons name="ticket-confirmation-outline" size={48} color="#004e92" />
-                                    <Text style={styles.passCode}>{visitor.qr_code}</Text>
-                                    <Text style={styles.qrLabel}>Show this code at gate</Text>
+                                    <AppText style={styles.passCode}>{visitor.qr_code}</AppText>
+                                    <AppText style={styles.qrLabel}>Show this code at gate</AppText>
                                 </View>
                             )}
 
                             {/* Status */}
                             <View style={styles.statusBadge}>
                                 <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-                                <Text style={styles.statusText}>✓ APPROVED</Text>
+                                <AppText style={styles.statusText}>✓ APPROVED</AppText>
                             </View>
 
                             {/* Visitor Details */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>VISITOR DETAILS</Text>
+                                <AppText style={styles.sectionTitle}>VISITOR DETAILS</AppText>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Name:</Text>
-                                    <Text style={styles.infoValue}>{visitor.visitor_name}</Text>
+                                    <AppText style={styles.infoLabel}>Name:</AppText>
+                                    <AppText style={styles.infoValue}>{visitor.visitor_name}</AppText>
                                 </View>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Phone:</Text>
-                                    <Text style={styles.infoValue}>{visitor.visitor_phone}</Text>
+                                    <AppText style={styles.infoLabel}>Phone:</AppText>
+                                    <AppText style={styles.infoValue}>{visitor.visitor_phone}</AppText>
                                 </View>
                                 {visitor.visitor_relation && (
                                     <View style={styles.infoRow}>
-                                        <Text style={styles.infoLabel}>Relation:</Text>
-                                        <Text style={styles.infoValue}>{visitor.visitor_relation}</Text>
+                                        <AppText style={styles.infoLabel}>Relation:</AppText>
+                                        <AppText style={styles.infoValue}>{visitor.visitor_relation}</AppText>
                                     </View>
                                 )}
                             </View>
 
                             {/* Visit Details */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>VISIT DETAILS</Text>
+                                <AppText style={styles.sectionTitle}>VISIT DETAILS</AppText>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Room:</Text>
-                                    <Text style={styles.infoValue}>{visitor.room_number}</Text>
+                                    <AppText style={styles.infoLabel}>Room:</AppText>
+                                    <AppText style={styles.infoValue}>{visitor.room_number}</AppText>
                                 </View>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Date:</Text>
-                                    <Text style={styles.infoValue}>{formatDate(visitor.expected_date)}</Text>
+                                    <AppText style={styles.infoLabel}>Date:</AppText>
+                                    <AppText style={styles.infoValue}>{formatDate(visitor.expected_date)}</AppText>
                                 </View>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Time In:</Text>
-                                    <Text style={styles.infoValue}>
+                                    <AppText style={styles.infoLabel}>Time In:</AppText>
+                                    <AppText style={styles.infoValue}>
                                         {visitor.expected_time_in ? formatTime(visitor.expected_time_in) : 'N/A'}
-                                    </Text>
+                                    </AppText>
                                 </View>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Time Out:</Text>
-                                    <Text style={styles.infoValue}>
+                                    <AppText style={styles.infoLabel}>Time Out:</AppText>
+                                    <AppText style={styles.infoValue}>
                                         {visitor.expected_time_out ? formatTime(visitor.expected_time_out) : 'N/A'}
-                                    </Text>
+                                    </AppText>
                                 </View>
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.infoLabel}>Purpose:</Text>
-                                    <Text style={styles.infoValue}>{visitor.purpose}</Text>
+                                    <AppText style={styles.infoLabel}>Purpose:</AppText>
+                                    <AppText style={styles.infoValue}>{visitor.purpose}</AppText>
                                 </View>
                             </View>
 
@@ -268,14 +260,14 @@ Please show this pass at the gate.
                                     onPress={handleShare}
                                 >
                                     <MaterialCommunityIcons name="share-variant" size={18} color="#fff" />
-                                    <Text style={[styles.actionButtonText, { color: '#fff' }]}>Share</Text>
+                                    <AppText style={[styles.actionButtonText, { color: '#fff' }]}>Share</AppText>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.closeButton]}
                                     onPress={onClose}
                                 >
                                     <MaterialCommunityIcons name="close" size={18} color={colors.text} />
-                                    <Text style={[styles.actionButtonText, { color: colors.text }]}>Close</Text>
+                                    <AppText style={[styles.actionButtonText, { color: colors.text }]}>Close</AppText>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>

@@ -148,12 +148,12 @@ export const getDashboardCounts = async (req: Request, res: Response) => {
 export const updateStudentProfilePhoto = async (req: Request, res: Response) => {
     const userId = req.currentUser?.id;
 
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file || !req.file.path) {
+        return res.status(400).json({ error: 'No file uploaded or processed' });
     }
 
     try {
-        const profilePhoto = `/uploads/profiles/${req.file.filename}`;
+        const profilePhoto = req.file.path;
 
         // Get student ID from user ID
         const studentRes = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
@@ -247,6 +247,75 @@ export const updateStudentSelfProfile = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Server error: ' + error.message });
     } finally {
         client.release();
+    }
+};
+
+// --- Student: Export Data ---
+export const exportStudentData = async (req: Request, res: Response) => {
+    const userId = req.currentUser?.id;
+    const { categories } = req.body;
+
+    try {
+        const studentRes = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
+        if (studentRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Student profile not found' });
+        }
+        const studentId = studentRes.rows[0].id;
+        
+        const exportData: Record<string, any> = {};
+
+        if (categories.includes('profile')) {
+            const profileRes = await query(`
+                SELECT s.*, u.email as user_email, u.full_name,
+                r.room_number, r.wifi_ssid, r.wifi_password, r.room_type, r.facilities
+                FROM students s
+                JOIN users u ON s.user_id = u.id
+                LEFT JOIN room_allocations ra ON s.id = ra.student_id AND ra.is_active = true
+                LEFT JOIN rooms r ON ra.room_id = r.id
+                WHERE u.id = $1
+            `, [userId]);
+            exportData.profile = profileRes.rows[0];
+        }
+
+        if (categories.includes('complaints')) {
+            const complaintsRes = await query('SELECT * FROM complaints WHERE student_id = $1', [studentId]);
+            exportData.complaints = complaintsRes.rows;
+        }
+
+        if (categories.includes('leaves')) {
+            const leavesRes = await query('SELECT * FROM leave_requests WHERE student_id = $1', [studentId]);
+            exportData.leaves = leavesRes.rows;
+        }
+
+        if (categories.includes('payments')) {
+            const paymentsRes = await query('SELECT * FROM payments WHERE student_id = $1', [studentId]);
+            exportData.payments = paymentsRes.rows;
+        }
+
+        if (categories.includes('visitors')) {
+            const visitorsRes = await query('SELECT * FROM visitors WHERE student_id = $1', [studentId]);
+            exportData.visitors = visitorsRes.rows;
+        }
+
+        if (categories.includes('services')) {
+            const servicesRes = await query('SELECT * FROM service_requests WHERE student_id = $1', [studentId]);
+            exportData.services = servicesRes.rows;
+        }
+
+        if (categories.includes('messages')) {
+            const messagesRes = await query(`
+                SELECT m.* FROM messages m
+                JOIN conversations c ON m.conversation_id = c.id
+                WHERE c.student_id = $1
+                ORDER BY m.created_at ASC
+            `, [studentId]);
+            exportData.messages = messagesRes.rows;
+        }
+
+        res.json({ success: true, data: exportData });
+    } catch (error: any) {
+        console.error('Error exporting student data:', error);
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 };
 
@@ -392,7 +461,7 @@ export const createStudent = async (req: Request, res: Response) => {
         // Ensure facilities is a string for DB storage
         const facilitiesStr = typeof facilities === 'object' ? JSON.stringify(facilities) : facilities;
 
-        const profilePhoto = req.file ? `/uploads/profiles/${req.file.filename}` : null;
+        const profilePhoto = req.file ? req.file.path : null;
         console.log('Profile photo path:', profilePhoto);
 
         // 1. Create User
@@ -553,7 +622,7 @@ export const updateStudent = async (req: Request, res: Response) => {
             email, password, wifiSSID, wifiPassword, feeFrequency, roomType, facilities, totalFee
         } = req.body;
 
-        const profilePhoto = req.file ? `/uploads/profiles/${req.file.filename}` : undefined;
+        const profilePhoto = req.file ? req.file.path : undefined;
         console.log('Profile photo path:', profilePhoto);
 
         // Initialize status with existing status if not provided

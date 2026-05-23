@@ -12,30 +12,25 @@ import { useThemeStore } from "../store/useThemeStore";
 import { useAccessibilityStore } from "../store/useAccessibilityStore";
 import { useNetworkStatus } from "../utils/useNetworkStatus";
 import { usePushNotifications } from "../utils/usePushNotifications";
+import { useSessionHeartbeat } from "../utils/useSessionHeartbeat";
 
-// --- GLOBAL TEXT OVERRIDE HACK ---
-// Overriding Text render to apply global accessibility settings (font size & bold)
-const oldTextRender = (Text as any).render;
-if (oldTextRender) {
-  (Text as any).render = function (...args: any[]) {
-    const origin = oldTextRender.call(this, ...args);
-    const { fontScale, boldText } = useAccessibilityStore.getState();
-    
-    if (fontScale !== 1.0 || boldText) {
-      const flatStyle = StyleSheet.flatten(origin.props.style) || {};
-      const baseFontSize = flatStyle.fontSize || 14;
-      
-      const newStyle = [
-        origin.props.style,
-        fontScale !== 1.0 && { fontSize: baseFontSize * fontScale },
-        boldText && { fontWeight: 'bold' }
-      ];
-      return React.cloneElement(origin, { style: newStyle });
-    }
-    return origin;
+// Global JS Error Handler
+if (!__DEV__) {
+  const globalHandler = (error: any, isFatal: boolean) => {
+    console.error('Global Error:', error);
+    useAlertStore.getState().showAlert(
+      'Application Error',
+      'Something went wrong. Please try again or restart the app.',
+      [{ text: 'OK', style: 'default' }],
+      'error'
+    );
   };
+  
+  if ((global as any).ErrorUtils) {
+    (global as any).ErrorUtils.setGlobalHandler(globalHandler);
+  }
 }
-// ---------------------------------
+
 
 function GlobalStateInitializer({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
@@ -61,6 +56,9 @@ function GlobalStateInitializer({ children }: { children: React.ReactNode }) {
 
   // Push Notifications
   usePushNotifications();
+
+  // Session Heartbeat (keeps device "online" for Manage Devices)
+  useSessionHeartbeat();
 
   return <>{children}</>;
 }

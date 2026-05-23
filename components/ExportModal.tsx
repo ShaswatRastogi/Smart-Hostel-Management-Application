@@ -1,19 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AppText from './AppText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { ActivityIndicator, Alert, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../utils/ThemeContext';
 import {
   exportAttendance,
@@ -272,7 +262,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+            <AppText style={styles.title}>{title}</AppText>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <MaterialCommunityIcons
                 name="close"
@@ -284,7 +274,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
           <ScrollView style={{ flexShrink: 1, width: '100%' }} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Export Format</Text>
+              <AppText style={styles.sectionTitle}>Export Format</AppText>
               <View style={styles.formatContainer}>
                 <TouchableOpacity
                   style={[
@@ -298,7 +288,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                     size={20}
                     color={format === 'excel' ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280')}
                   />
-                  <Text style={styles.formatText}>Excel</Text>
+                  <AppText style={styles.formatText}>Excel</AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -313,7 +303,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                     size={20}
                     color={format === 'pdf' ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280')}
                   />
-                  <Text style={styles.formatText}>PDF</Text>
+                  <AppText style={styles.formatText}>PDF</AppText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -322,7 +312,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
               style={styles.filterButton}
               onPress={() => setShowFilters(!showFilters)}
             >
-              <Text style={styles.filterText}>Advanced Filters</Text>
+              <AppText style={styles.filterText}>Advanced Filters</AppText>
               <MaterialCommunityIcons
                 name={showFilters ? "chevron-up" : "chevron-down"}
                 size={20}
@@ -332,11 +322,11 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
             {showFilters && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filters (Optional)</Text>
+                <AppText style={styles.sectionTitle}>Filters (Optional)</AppText>
 
                 {exportType === 'students' && (
                   <>
-                    <Text style={styles.filterLabel}>Branch / College</Text>
+                    <AppText style={styles.filterLabel}>Branch / College</AppText>
                     <View style={styles.pickerContainer}>
                       <Picker
                         selectedValue={filters.branch || ''}
@@ -351,7 +341,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                       </Picker>
                     </View>
 
-                    <Text style={styles.filterLabel}>Blood Group</Text>
+                    <AppText style={styles.filterLabel}>Blood Group</AppText>
                     <View style={styles.pickerContainer}>
                       <Picker
                         selectedValue={filters.bloodGroup || ''}
@@ -364,7 +354,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                           <Picker.Item key={bg} label={bg} value={bg} color={isDark ? '#F3F4F6' : '#111827'} />
                         ))}
                       </Picker>
-                      <Text style={styles.filterLabel}>Hostel Name</Text>
+                      <AppText style={styles.filterLabel}>Hostel Name</AppText>
                       <View style={styles.pickerContainer}>
                         <Picker
                           selectedValue={filters.hostelName || ''}
@@ -379,7 +369,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                         </Picker>
                       </View>
 
-                      <Text style={styles.filterLabel}>Room Number</Text>
+                      <AppText style={styles.filterLabel}>Room Number</AppText>
                       <TextInput
                         style={styles.input}
                         placeholder="e.g. 101"
@@ -388,7 +378,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                         onChangeText={(text) => updateFilter('roomNumber', text)}
                       />
 
-                      <Text style={styles.filterLabel}>Room Type</Text>
+                      <AppText style={styles.filterLabel}>Room Type</AppText>
                       <View style={styles.pickerContainer}>
                         <Picker
                           selectedValue={filters.roomType || ''}
@@ -403,7 +393,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                         </Picker>
                       </View>
 
-                      <Text style={styles.filterLabel}>Student Status</Text>
+                      <AppText style={styles.filterLabel}>Student Status</AppText>
                       <View style={styles.pickerContainer}>
                         <Picker
                           selectedValue={filters.status || ''}
@@ -417,7 +407,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                         </Picker>
                       </View>
 
-                      <Text style={styles.filterLabel}>Fee Frequency</Text>
+                      <AppText style={styles.filterLabel}>Fee Frequency</AppText>
                       <View style={styles.pickerContainer}>
                         <Picker
                           selectedValue={filters.feeFrequency || ''}
@@ -432,7 +422,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                         </Picker>
                       </View>
 
-                      <Text style={styles.filterLabel}>Dues Status</Text>
+                      <AppText style={styles.filterLabel}>Dues Status</AppText>
                       <View style={styles.pickerContainer}>
                         <Picker
                           selectedValue={filters.duesStatus || ''}
@@ -451,14 +441,14 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
                 {['students', 'attendance', 'complaints', 'payments', 'leave-requests'].includes(exportType) && (
                   <>
-                    <Text style={styles.filterLabel}>{exportType === 'students' ? 'Joined After Date' : 'Start Date'}</Text>
+                    <AppText style={styles.filterLabel}>{exportType === 'students' ? 'Joined After Date' : 'Start Date'}</AppText>
                     <TouchableOpacity
                       style={styles.datePickerButton}
                       onPress={() => setShowStartPicker(true)}
                     >
-                      <Text style={[styles.dateText, !filters.startDate && styles.datePlaceholder]}>
+                      <AppText style={[styles.dateText, !filters.startDate && styles.datePlaceholder]}>
                         {filters.startDate ? filters.startDate : 'Select Start Date'}
-                      </Text>
+                      </AppText>
                       <MaterialCommunityIcons name="calendar" size={20} color={isDark ? '#9CA3AF' : '#6B7280'} />
                     </TouchableOpacity>
                     {showStartPicker && (
@@ -476,14 +466,14 @@ const ExportModal: React.FC<ExportModalProps> = ({
                       />
                     )}
 
-                    <Text style={styles.filterLabel}>{exportType === 'students' ? 'Joined Before Date' : 'End Date'}</Text>
+                    <AppText style={styles.filterLabel}>{exportType === 'students' ? 'Joined Before Date' : 'End Date'}</AppText>
                     <TouchableOpacity
                       style={styles.datePickerButton}
                       onPress={() => setShowEndPicker(true)}
                     >
-                      <Text style={[styles.dateText, !filters.endDate && styles.datePlaceholder]}>
+                      <AppText style={[styles.dateText, !filters.endDate && styles.datePlaceholder]}>
                         {filters.endDate ? filters.endDate : 'Select End Date'}
-                      </Text>
+                      </AppText>
                       <MaterialCommunityIcons name="calendar" size={20} color={isDark ? '#9CA3AF' : '#6B7280'} />
                     </TouchableOpacity>
                     {showEndPicker && (
@@ -505,7 +495,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
                 {exportType === 'complaints' && (
                   <>
-                    <Text style={styles.filterLabel}>Complaint Type</Text>
+                    <AppText style={styles.filterLabel}>Complaint Type</AppText>
                     <View style={styles.pickerContainer}>
                       <Picker
                         selectedValue={filters.type || ''}
@@ -539,9 +529,9 @@ const ExportModal: React.FC<ExportModalProps> = ({
             {loading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.exportButtonText}>
+              <AppText style={styles.exportButtonText}>
                 Export {format === 'excel' ? 'Excel' : 'PDF'}
-              </Text>
+              </AppText>
             )}
           </TouchableOpacity>
         </View>

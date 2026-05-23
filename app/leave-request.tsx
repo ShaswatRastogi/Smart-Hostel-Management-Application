@@ -3,7 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -11,24 +11,31 @@ import { createLeaveRequest, getStudentLeaves, LeaveRequest } from '../utils/lea
 import { fetchUserData } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
 import { formatUniversalTime } from '../utils/timeUtils';
+import AppText from '../components/AppText';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function LeaveRequestPage() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
     const { showAlert } = useAlert();
     const [reason, setReason] = useState('');
+    const [category, setCategory] = useState('');
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [showEndPicker, setShowEndPicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<LeaveRequest[]>([]);
-    // const [refreshing, setRefreshing] = useState(false); // Managed by useRefresh
+    
+    // QR Modal State
+    const [qrModalVisible, setQrModalVisible] = useState(false);
+    const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
 
     const { refreshing, onRefresh } = useRefresh(async () => {
         await loadHistory();
     }, () => {
         setReason('');
+        setCategory('');
         setStartDate(new Date());
         setEndDate(new Date());
     });
@@ -82,12 +89,14 @@ export default function LeaveRequestPage() {
                 studentEmail: user.email || '',
                 startDate: startDate.toISOString().split('T')[0],
                 endDate: endDate.toISOString().split('T')[0],
+                category: category,
                 reason: reason,
                 days: diffDays,
             });
 
             showAlert('Success', 'Leave request submitted successfully!', [], 'success');
             setReason('');
+            setCategory('');
             loadHistory();
         } catch (error) {
             showAlert('Error', 'Failed to submit leave request. Please try again.', [], 'error');
@@ -139,8 +148,8 @@ export default function LeaveRequestPage() {
                             <MaterialIcons name="arrow-back" size={24} color="#fff" />
                         </Pressable>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.headerTitle}>Apply for Leave</Text>
-                            <Text style={styles.headerSubtitle}>Request Time Off</Text>
+                            <AppText style={styles.headerTitle}>Apply for Leave</AppText>
+                            <AppText style={styles.headerSubtitle}>Request Time Off</AppText>
                         </View>
 
                     </View>
@@ -154,14 +163,14 @@ export default function LeaveRequestPage() {
                 <View style={{ padding: 24 }}>
                     {/* Form Section */}
                     <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>NEW REQUEST</Text>
+                        <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>NEW REQUEST</AppText>
 
                         <View style={styles.dateRow}>
                             <View style={styles.dateField}>
-                                <Text style={[styles.label, { color: colors.textSecondary }]}>From Date</Text>
+                                <AppText style={[styles.label, { color: colors.textSecondary }]}>From Date</AppText>
                                 <Pressable onPress={() => setShowStartPicker(true)} style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
                                     <MaterialCommunityIcons name="calendar" size={20} color={colors.textSecondary} />
-                                    <Text style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                                    <AppText style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
                                 </Pressable>
                                 {showStartPicker && (
                                     <DateTimePicker
@@ -175,10 +184,10 @@ export default function LeaveRequestPage() {
                             </View>
 
                             <View style={styles.dateField}>
-                                <Text style={[styles.label, { color: colors.textSecondary }]}>To Date</Text>
+                                <AppText style={[styles.label, { color: colors.textSecondary }]}>To Date</AppText>
                                 <Pressable onPress={() => setShowEndPicker(true)} style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
                                     <MaterialCommunityIcons name="calendar" size={20} color={colors.textSecondary} />
-                                    <Text style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                                    <AppText style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
                                 </Pressable>
                                 {showEndPicker && (
                                     <DateTimePicker
@@ -192,7 +201,16 @@ export default function LeaveRequestPage() {
                             </View>
                         </View>
 
-                        <Text style={[styles.label, { marginTop: 16, color: colors.textSecondary }]}>Reason</Text>
+                        <AppText style={[styles.label, { marginTop: 16, color: colors.textSecondary }]}>Going to:</AppText>
+                        <TextInput
+                            style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, marginBottom: 16 }]}
+                            placeholder="e.g. Home, Market, Hospital..."
+                            placeholderTextColor={colors.textSecondary}
+                            value={category}
+                            onChangeText={setCategory}
+                        />
+
+                        <AppText style={[styles.label, { color: colors.textSecondary }]}>Reason</AppText>
                         <TextInput
                             style={[styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                             placeholder="e.g. Visiting home for festival..."
@@ -214,20 +232,20 @@ export default function LeaveRequestPage() {
                                 style={styles.btnGradient}
                             >
                                 {loading ? (
-                                    <Text style={styles.btnText}>Submitting...</Text>
+                                    <AppText style={styles.btnText}>Submitting...</AppText>
                                 ) : (
-                                    <Text style={styles.btnText}>Submit Request</Text>
+                                    <AppText style={styles.btnText}>Submit Request</AppText>
                                 )}
                             </LinearGradient>
                         </Pressable>
                     </View>
 
                     {/* History Section */}
-                    <Text style={[styles.sectionTitle, { marginTop: 24, marginLeft: 4, color: colors.textSecondary }]}>PAST REQUESTS</Text>
+                    <AppText style={[styles.sectionTitle, { marginTop: 24, marginLeft: 4, color: colors.textSecondary }]}>PAST REQUESTS</AppText>
                     {history.length === 0 ? (
                         <View style={styles.emptyState}>
                             <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textSecondary} />
-                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No leave history found</Text>
+                            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No leave history found</AppText>
                         </View>
                     ) : (
                         <View style={styles.historyList}>
@@ -235,22 +253,42 @@ export default function LeaveRequestPage() {
                                 <View key={item.id} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     <View style={styles.historyHeader}>
                                         <View style={styles.dateInfo}>
-                                            <Text style={[styles.historyDate, { color: colors.text }]}>
+                                            <AppText style={[styles.historyDate, { color: colors.text }]}>
                                                 {formatUniversalTime(item.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </Text>
+                                            </AppText>
                                             <MaterialCommunityIcons name="arrow-right" size={16} color={colors.textSecondary} />
-                                            <Text style={[styles.historyDate, { color: colors.text }]}>
+                                            <AppText style={[styles.historyDate, { color: colors.text }]}>
                                                 {formatUniversalTime(item.endDate, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                                            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+                                            <AppText style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                                                 {item.status.toUpperCase()}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                     </View>
-                                    <Text style={[styles.historyReason, { color: colors.textSecondary }]}>{item.reason}</Text>
-                                    <Text style={[styles.durationText, { color: colors.textSecondary }]}>{item.days} days</Text>
+                                    <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 6}}>
+                                        <View style={{backgroundColor: colors.primary + '15', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6}}>
+                                            <AppText style={{color: colors.primary, fontSize: 10, fontWeight: '700'}}>{item.category || 'General'}</AppText>
+                                        </View>
+                                    </View>
+                                    <AppText style={[styles.historyReason, { color: colors.textSecondary }]}>{item.reason}</AppText>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                        <AppText style={[styles.durationText, { color: colors.textSecondary }]}>{item.days} days</AppText>
+                                        
+                                        {item.status === 'approved' && item.qrCode && (
+                                            <TouchableOpacity 
+                                                style={[styles.qrBtn, { backgroundColor: colors.primary + '15', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }]} 
+                                                onPress={() => {
+                                                    setSelectedQrCode(item.qrCode || null);
+                                                    setQrModalVisible(true);
+                                                }}
+                                            >
+                                                <MaterialCommunityIcons name="qrcode-scan" size={16} color={colors.primary} />
+                                                <AppText style={{ color: colors.primary, fontSize: 12, fontWeight: '700', marginLeft: 4 }}>Show Pass</AppText>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
                                 </View>
                             ))}
                         </View>
@@ -258,6 +296,47 @@ export default function LeaveRequestPage() {
 
                 </View>
             </ScrollView>
+
+            {/* QR Code Modal */}
+            <Modal
+                visible={qrModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setQrModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: isDark ? '#1E293B' : '#fff' }]}>
+                        <View style={styles.modalHeader}>
+                            <AppText style={[styles.modalTitle, { color: colors.text }]}>Gate Pass</AppText>
+                            <TouchableOpacity onPress={() => setQrModalVisible(false)} style={styles.closeBtn}>
+                                <MaterialIcons name="close" size={24} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.qrContainer}>
+                            {selectedQrCode && (
+                                <View style={styles.qrWrapper}>
+                                    <View style={{ backgroundColor: '#fff', padding: 16, borderRadius: 24, justifyContent: 'center', alignItems: 'center' }}>
+                                        <QRCode value={selectedQrCode} size={180} />
+                                        <AppText style={{ color: '#7C3AED', fontSize: 13, fontWeight: '800', marginTop: 12, textAlign: 'center', letterSpacing: 1 }}>VERIFIED PASS</AppText>
+                                    </View>
+                                </View>
+                            )}
+                            
+                            {selectedQrCode && (
+                                <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', borderRadius: 12, padding: 14, width: '100%', marginBottom: 16 }}>
+                                    <AppText style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Pass Code (Fallback)</AppText>
+                                    <AppText style={{ color: colors.text, fontSize: 14, fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} selectable>{selectedQrCode}</AppText>
+                                </View>
+                            )}
+
+                            <AppText style={[styles.qrHint, { color: colors.textSecondary }]}>
+                                Show this QR code to the Guard at the Main Gate to log your movement.
+                            </AppText>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -421,5 +500,50 @@ const styles = StyleSheet.create({
         color: '#94A3B8',
         marginTop: 12,
         fontWeight: '500',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    modalContent: {
+        width: '100%',
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 10,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+    },
+    closeBtn: {
+        padding: 4,
+    },
+    qrContainer: {
+        alignItems: 'center',
+    },
+    qrWrapper: {
+        backgroundColor: '#fff',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 24,
+    },
+    qrHint: {
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
     }
 });

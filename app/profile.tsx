@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, DeviceEventEmitter, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StudentDetailsModal from '../components/StudentDetailsModal';
 import { useAlert } from '../context/AlertContext';
@@ -11,6 +11,7 @@ import { API_BASE_URL } from '../utils/api';
 import { setStoredUser } from '../utils/authUtils';
 import { fetchUserData, getInitial, StudentData } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
@@ -49,8 +50,14 @@ export default function ProfilePage() {
     const pickImage = async () => {
         try {
             const ImagePicker = await import('expo-image-picker');
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                showAlert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+                return;
+            }
+
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'] as any,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.5,
@@ -182,7 +189,7 @@ export default function ProfilePage() {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <Text style={{ color: colors.textSecondary }}>Loading Profile...</Text>
+                <AppText style={{ color: colors.textSecondary }}>Loading Profile...</AppText>
             </View>
         );
     }
@@ -208,7 +215,7 @@ export default function ProfilePage() {
                             <Pressable onPress={() => router.back()} style={styles.backButton}>
                                 <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
                             </Pressable>
-                            <Text style={styles.headerTitle}>My Profile</Text>
+                            <AppText style={styles.headerTitle}>My Profile</AppText>
                             <Pressable style={styles.editButton}>
                                 {/* Placeholder for Edit or Settings action */}
                                 <MaterialCommunityIcons name="dots-vertical" size={24} color="rgba(255,255,255,0.8)" />
@@ -220,13 +227,13 @@ export default function ProfilePage() {
                                 <View style={styles.avatar}>
                                     {student?.profilePhoto ? (
                                         <Image
-                                            source={{ uri: `${API_BASE_URL}${student.profilePhoto}` }}
+                                            source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                                             style={{ width: '100%', height: '100%', borderRadius: 50 }}
                                             contentFit="cover"
                                             cachePolicy="none"
                                         />
                                     ) : (
-                                        <Text style={styles.avatarText}>{getInitial(student?.fullName || 'U')}</Text>
+                                        <AppText style={styles.avatarText}>{getInitial(student?.fullName || 'U')}</AppText>
                                     )}
                                     {/* Upload Indicator Overlay */}
                                     {uploading && (
@@ -247,20 +254,20 @@ export default function ProfilePage() {
 
                             </View>
 
-                            <Text style={styles.studentName}>{student?.fullName || 'Student Name'}</Text>
-                            <Text style={styles.studentRoll}>{student?.rollNo || 'Roll No. --'}</Text>
+                            <AppText style={styles.studentName}>{student?.fullName || 'Student Name'}</AppText>
+                            <AppText style={styles.studentRoll}>{student?.rollNo || 'Roll No. --'}</AppText>
 
 
 
                             <View style={styles.tagsRow}>
                                 <View style={styles.roomTag}>
                                     <MaterialCommunityIcons name="door-open" size={16} color="#fff" />
-                                    <Text style={styles.roomText}>Room {student?.roomNo || '--'}</Text>
+                                    <AppText style={styles.roomText}>Room {student?.roomNo || '--'}</AppText>
                                 </View>
 
                                 <View style={[styles.statusBadge, { backgroundColor: student?.status === 'active' ? '#10B981' : '#EF4444' }]}>
                                     <MaterialIcons name={student?.status === 'active' ? 'check-circle' : 'cancel'} size={16} color="#fff" />
-                                    <Text style={styles.statusText}>{student?.status === 'active' ? 'Active' : 'Inactive'}</Text>
+                                    <AppText style={styles.statusText}>{student?.status === 'active' ? 'Active' : 'Inactive'}</AppText>
                                 </View>
                             </View>
                         </View>
@@ -290,8 +297,8 @@ export default function ProfilePage() {
                                 <MaterialCommunityIcons name="school" size={20} color={isDark ? '#60A5FA' : '#004e92'} />
                             </View>
                             <View style={styles.locContent}>
-                                <Text style={[styles.locLabel, { color: colors.textSecondary }]}>Studying At</Text>
-                                <Text style={[styles.locValue, { color: colors.text }]} numberOfLines={2}>{student?.collegeName || 'Not Assigned'}</Text>
+                                <AppText style={[styles.locLabel, { color: colors.textSecondary }]}>Studying At</AppText>
+                                <AppText style={[styles.locValue, { color: colors.text }]} numberOfLines={2}>{student?.collegeName || 'Not Assigned'}</AppText>
                             </View>
                         </View>
 
@@ -307,8 +314,8 @@ export default function ProfilePage() {
                                 <MaterialCommunityIcons name="office-building" size={20} color={isDark ? '#60A5FA' : '#2B6CB0'} />
                             </View>
                             <View style={styles.locContent}>
-                                <Text style={[styles.locLabel, { color: colors.textSecondary }]}>Living At</Text>
-                                <Text style={[styles.locValue, { color: colors.text }]} numberOfLines={2}>{student?.hostelName || 'Not Assigned'}</Text>
+                                <AppText style={[styles.locLabel, { color: colors.textSecondary }]}>Living At</AppText>
+                                <AppText style={[styles.locValue, { color: colors.text }]} numberOfLines={2}>{student?.hostelName || 'Not Assigned'}</AppText>
                             </View>
                         </View>
                     </View>
@@ -335,8 +342,8 @@ export default function ProfilePage() {
                             <MaterialCommunityIcons name="calendar-check" size={20} color="#fff" />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Attendance</Text>
-                            <Text style={[styles.statValue, { color: colors.text, fontSize: 13 }]}>View History</Text>
+                            <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>Attendance</AppText>
+                            <AppText style={[styles.statValue, { color: colors.text, fontSize: 13 }]}>View History</AppText>
                         </View>
 
                     </Pressable>
@@ -356,10 +363,10 @@ export default function ProfilePage() {
                             <MaterialCommunityIcons name="cash" size={20} color="#fff" />
                         </View>
                         <View>
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending Dues</Text>
-                            <Text style={[styles.statValue, { color: pendingDues > 0 ? '#EF4444' : colors.text }]}>
+                            <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>Pending Dues</AppText>
+                            <AppText style={[styles.statValue, { color: pendingDues > 0 ? '#EF4444' : colors.text }]}>
                                 {pendingDues > 0 ? `₹${pendingDues}` : 'No Dues'}
-                            </Text>
+                            </AppText>
                         </View>
                     </Pressable>
                 </View>
@@ -367,7 +374,7 @@ export default function ProfilePage() {
 
                 {/* Detailed Info Section */}
                 <View style={styles.detailsSection}>
-                    <Text style={[styles.sectionHeader, { color: colors.text }]}>Personal Details</Text>
+                    <AppText style={[styles.sectionHeader, { color: colors.text }]}>Personal Details</AppText>
 
                     <View style={[styles.infoBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <InfoRow icon="email-lock" label="Personal Email (Login ID)" value={student?.email} colors={colors} isLast={false} />
@@ -392,7 +399,7 @@ export default function ProfilePage() {
                 {/* Room Configuration Section */}
                 {(student as any)?.roomType && (
                     <View style={styles.detailsSection}>
-                        <Text style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Room Configuration</Text>
+                        <AppText style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Room Configuration</AppText>
                         <View style={[styles.infoBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <InfoRow icon="door-closed" label="Room Type" value={(student as any).roomType} colors={colors} isLast={!(student as any).facilities} />
 
@@ -402,10 +409,10 @@ export default function ProfilePage() {
                                         <View key={f.name} style={[styles.facilityItem, index === arr.length - 1 && { borderBottomWidth: 0 }]}>
                                             <View style={styles.facilityInfo}>
                                                 <MaterialCommunityIcons name={f.icon} size={20} color={colors.textSecondary} />
-                                                <Text style={[styles.facilityName, { color: colors.text }]}>{f.name}</Text>
+                                                <AppText style={[styles.facilityName, { color: colors.text }]}>{f.name}</AppText>
                                             </View>
                                             <View style={[styles.miniStatusBadge, { backgroundColor: f.status === 'Included' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }]}>
-                                                <Text style={[styles.miniStatusText, { color: f.status === 'Included' ? '#10B981' : '#EF4444' }]}>{f.status}</Text>
+                                                <AppText style={[styles.miniStatusText, { color: f.status === 'Included' ? '#10B981' : '#EF4444' }]}>{f.status}</AppText>
                                             </View>
                                         </View>
                                     ))}
@@ -417,7 +424,7 @@ export default function ProfilePage() {
 
                 {/* Financial Section */}
                 <View style={styles.detailsSection}>
-                    <Text style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Financial Information</Text>
+                    <AppText style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Financial Information</AppText>
                     <View style={[styles.infoBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <InfoRow icon="calendar-clock" label="Fee Frequency" value={student?.feeFrequency || 'Monthly'} colors={colors} isLast={false} />
                         <InfoRow icon="cash-multiple" label="Total Fees / Dues" value={`₹${student?.dues || 0}`} colors={colors} isLast={false} />
@@ -434,7 +441,7 @@ export default function ProfilePage() {
 
                 {/* Medical & Emergency Section */}
                 <View style={styles.detailsSection}>
-                    <Text style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Medical & Emergency</Text>
+                    <AppText style={[styles.sectionHeader, { color: colors.text, marginTop: 12 }]}>Medical & Emergency</AppText>
                     <View style={[styles.infoBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <InfoRow icon="water" label="Blood Group" value={student?.bloodGroup} colors={colors} isLast={false} />
                         <InfoRow icon="account-alert" label="Emergency Contact" value={student?.emergencyContactName} colors={colors} isLast={false} />
@@ -450,10 +457,10 @@ export default function ProfilePage() {
                         onPress={handleSignOut}
                     >
                         <MaterialCommunityIcons name="logout" size={20} color="#EF4444" />
-                        <Text style={styles.signOutText}>Sign Out</Text>
+                        <AppText style={styles.signOutText}>Sign Out</AppText>
                     </Pressable>
 
-                    <Text style={[styles.versionText, { color: colors.textSecondary }]}>App Version 1.0.2</Text>
+                    <AppText style={[styles.versionText, { color: colors.textSecondary }]}>App Version 1.0.2</AppText>
                 </View>
 
             </ScrollView >
@@ -476,8 +483,8 @@ const InfoRow = ({ icon, label, value, colors, isLast, valueColor }: any) => (
             <MaterialCommunityIcons name={icon} size={22} color={colors.textSecondary} />
         </View>
         <View style={styles.infoTextWrapper}>
-            <Text style={[styles.infoRowLabel, { color: colors.textSecondary }]}>{label}</Text>
-            <Text style={[styles.infoRowValue, { color: valueColor || colors.text }]}>{value || 'Not provided'}</Text>
+            <AppText style={[styles.infoRowLabel, { color: colors.textSecondary }]}>{label}</AppText>
+            <AppText style={[styles.infoRowValue, { color: valueColor || colors.text }]}>{value || 'Not provided'}</AppText>
         </View>
     </View>
 );

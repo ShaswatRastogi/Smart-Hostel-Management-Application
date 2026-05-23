@@ -1,21 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AppText from '../../components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Linking,
-    Modal,
-    Pressable,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Linking, Modal, Pressable, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useRefresh } from '../../hooks/useRefresh';
@@ -536,9 +524,9 @@ export default function AdminVisitors() {
                         color={colors.textSecondary}
                         style={styles.emptyIcon}
                     />
-                    <Text style={styles.emptyText}>
+                    <AppText style={styles.emptyText}>
                         {tab === 'all' ? 'No visitors yet' : `No ${tab} visitors`}
-                    </Text>
+                    </AppText>
                 </View>
             );
         }
@@ -568,18 +556,18 @@ export default function AdminVisitors() {
                     ]}>
                         <View style={styles.visitorHeader}>
                             <View style={styles.visitorInfo}>
-                                <Text style={styles.visitorName}>{visitor.visitor_name}</Text>
+                                <AppText style={styles.visitorName}>{visitor.visitor_name}</AppText>
                                 <TouchableOpacity
                                     onPress={() => Linking.openURL(`tel:${visitor.visitor_phone}`)}
                                     style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', marginVertical: 4 }}
                                 >
                                     <MaterialCommunityIcons name="phone" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                                    <Text style={[styles.visitorPhone, { color: colors.primary, fontWeight: '600', marginBottom: 0 }]}>
+                                    <AppText style={[styles.visitorPhone, { color: colors.primary, fontWeight: '600', marginBottom: 0 }]}>
                                         {visitor.visitor_phone}
-                                    </Text>
+                                    </AppText>
                                 </TouchableOpacity>
-                                <Text style={styles.studentInfo}>Student: {visitor.student_name}</Text>
-                                <Text style={[styles.studentInfo, { marginTop: 2 }]}>Room: {visitor.room_number}</Text>
+                                <AppText style={styles.studentInfo}>Student: {visitor.student_name}</AppText>
+                                <AppText style={[styles.studentInfo, { marginTop: 2 }]}>Room: {visitor.room_number}</AppText>
                             </View>
                             <View
                                 style={[
@@ -592,26 +580,26 @@ export default function AdminVisitors() {
                                     size={14}
                                     color={getStatusColor(visitor.status)}
                                 />
-                                <Text style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>
+                                <AppText style={[styles.statusText, { color: getStatusColor(visitor.status) }]}>
                                     {getStatusLabel(visitor.status)}
-                                </Text>
+                                </AppText>
                             </View>
                         </View>
 
                         <View style={styles.detailsRow}>
                             <MaterialCommunityIcons name="calendar" size={16} color={colors.textSecondary} />
-                            <Text style={styles.detailText}>{formatDate(visitor.expected_date)}</Text>
+                            <AppText style={styles.detailText}>{formatDate(visitor.expected_date)}</AppText>
                         </View>
 
                         <View style={styles.detailsRow}>
                             <MaterialCommunityIcons name="clock-outline" size={16} color={colors.textSecondary} />
-                            <Text style={styles.detailText}>
+                            <AppText style={styles.detailText}>
                                 {visitor.expected_time_in ? formatTime(visitor.expected_time_in) : 'N/A'} -{' '}
                                 {visitor.expected_time_out ? formatTime(visitor.expected_time_out) : 'N/A'}
-                            </Text>
+                            </AppText>
                         </View>
 
-                        <Text style={styles.purpose}>{visitor.purpose}</Text>
+                        <AppText style={styles.purpose}>{visitor.purpose}</AppText>
 
                         {/* Actions based on status */}
                         {visitor.status === 'pending' && (
@@ -621,14 +609,14 @@ export default function AdminVisitors() {
                                     onPress={() => handleApprove(visitor)}
                                 >
                                     <MaterialCommunityIcons name="check-circle" size={18} color="#fff" />
-                                    <Text style={[styles.actionButtonText, { color: '#fff' }]}>Approve</Text>
+                                    <AppText style={[styles.actionButtonText, { color: '#fff' }]}>Approve</AppText>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.rejectButton]}
                                     onPress={() => handleReject(visitor)}
                                 >
                                     <MaterialCommunityIcons name="close-circle" size={18} color="#EF4444" />
-                                    <Text style={[styles.actionButtonText, { color: '#EF4444' }]}>Reject</Text>
+                                    <AppText style={[styles.actionButtonText, { color: '#EF4444' }]}>Reject</AppText>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -640,7 +628,7 @@ export default function AdminVisitors() {
                                     onPress={() => handleCheckIn(visitor)}
                                 >
                                     <MaterialCommunityIcons name="login" size={18} color="#fff" />
-                                    <Text style={[styles.actionButtonText, { color: '#fff' }]}>Check In</Text>
+                                    <AppText style={[styles.actionButtonText, { color: '#fff' }]}>Check In</AppText>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -652,7 +640,7 @@ export default function AdminVisitors() {
                                     onPress={() => handleCheckOut(visitor)}
                                 >
                                     <MaterialCommunityIcons name="logout" size={18} color="#fff" />
-                                    <Text style={[styles.actionButtonText, { color: '#fff' }]}>Check Out</Text>
+                                    <AppText style={[styles.actionButtonText, { color: '#fff' }]}>Check Out</AppText>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -682,15 +670,15 @@ export default function AdminVisitors() {
                                 <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
                             </TouchableOpacity>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.headerTitle}>Visitor Management</Text>
+                                <AppText style={styles.headerTitle}>Visitor Management</AppText>
                                 {studentName ? (
                                     <TouchableOpacity onPress={() => router.setParams({ studentId: undefined, studentName: undefined })}>
-                                        <Text style={styles.headerSubtitle}>
+                                        <AppText style={styles.headerSubtitle}>
                                             Filtered: {studentName} <MaterialCommunityIcons name="close-circle" size={14} color="rgba(255,255,255,0.8)" />
-                                        </Text>
+                                        </AppText>
                                     </TouchableOpacity>
                                 ) : (
-                                    <Text style={styles.headerSubtitle}>Approve and track visitors</Text>
+                                    <AppText style={styles.headerSubtitle}>Approve and track visitors</AppText>
                                 )}
                             </View>
                         </View>
@@ -704,24 +692,24 @@ export default function AdminVisitors() {
                     <View style={[styles.iconContainer, { backgroundColor: '#FEF3C7' }]}>
                         <MaterialCommunityIcons name="clock-outline" size={18} color="#D97706" />
                     </View>
-                    <Text style={styles.statNumber}>{pendingCount}</Text>
-                    <Text style={styles.statLabel}>Pending</Text>
+                    <AppText style={styles.statNumber}>{pendingCount}</AppText>
+                    <AppText style={styles.statLabel}>Pending</AppText>
                 </View>
 
                 <View style={styles.statCard}>
                     <View style={[styles.iconContainer, { backgroundColor: '#D1FAE5' }]}>
                         <MaterialCommunityIcons name="check-circle-outline" size={18} color="#059669" />
                     </View>
-                    <Text style={styles.statNumber}>{activeCount}</Text>
-                    <Text style={styles.statLabel}>Active</Text>
+                    <AppText style={styles.statNumber}>{activeCount}</AppText>
+                    <AppText style={styles.statLabel}>Active</AppText>
                 </View>
 
                 <View style={styles.statCard}>
                     <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
                         <MaterialCommunityIcons name="calendar-today" size={18} color="#2563EB" />
                     </View>
-                    <Text style={styles.statNumber}>{todayCount}</Text>
-                    <Text style={styles.statLabel}>Today</Text>
+                    <AppText style={styles.statNumber}>{todayCount}</AppText>
+                    <AppText style={styles.statLabel}>Today</AppText>
                 </View>
             </View>
 
@@ -733,9 +721,9 @@ export default function AdminVisitors() {
                         style={[styles.tab, activeTab === tab && styles.activeTab]}
                         onPress={() => setActiveTab(tab)}
                     >
-                        <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                        <AppText style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        </Text>
+                        </AppText>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -769,8 +757,8 @@ export default function AdminVisitors() {
                 <Pressable style={styles.modalOverlay} onPress={() => setShowRejectModal(false)}>
                     <Pressable onPress={e => e.stopPropagation()}>
                         <View style={styles.modalContainer}>
-                            <Text style={styles.modalTitle}>Reject Visitor Request</Text>
-                            <Text style={styles.modalLabel}>Reason for Rejection *</Text>
+                            <AppText style={styles.modalTitle}>Reject Visitor Request</AppText>
+                            <AppText style={styles.modalLabel}>Reason for Rejection *</AppText>
                             <TextInput
                                 style={styles.modalInput}
                                 value={rejectReason}
@@ -789,13 +777,13 @@ export default function AdminVisitors() {
                                         setSelectedVisitor(null);
                                     }}
                                 >
-                                    <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+                                    <AppText style={[styles.modalButtonText, { color: colors.text }]}>Cancel</AppText>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.modalSubmitButton]}
                                     onPress={submitRejection}
                                 >
-                                    <Text style={[styles.modalButtonText, { color: '#fff' }]}>Reject</Text>
+                                    <AppText style={[styles.modalButtonText, { color: '#fff' }]}>Reject</AppText>
                                 </TouchableOpacity>
                             </View>
                         </View>

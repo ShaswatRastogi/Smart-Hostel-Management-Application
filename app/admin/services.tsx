@@ -2,13 +2,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { ServiceRequest, subscribeToAllServiceRequests, updateServiceStatus } from '../../utils/serviceUtils';
+import AppText from '../../components/AppText';
 
 export default function ServiceRequestsPage() {
     const { colors, theme } = useTheme();
@@ -167,44 +168,44 @@ export default function ServiceRequestsPage() {
         );
     };
 
-    if (!isAdmin(user)) return <View style={styles.center}><Text>Access Denied</Text></View>;
+    if (!isAdmin(user)) return <View style={styles.center}><AppText>Access Denied</AppText></View>;
 
     const renderItem = ({ item }: { item: ServiceRequest }) => (
         <View style={[styles.card, highlightedId === item.id && styles.highlightedCard]}>
             <View style={styles.cardHeader}>
                 <View style={styles.userInfo}>
-                    <Text style={styles.serviceType}>{item.serviceType}</Text>
-                    <Text style={styles.roomNo}>Room {item.roomNo} • {item.studentName}</Text>
+                    <AppText style={styles.serviceType}>{item.serviceType}</AppText>
+                    <AppText style={styles.roomNo}>Room {item.roomNo} • {item.studentName}</AppText>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status.toUpperCase()}</Text>
+                    <AppText style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status.toUpperCase()}</AppText>
                 </View>
             </View>
 
             {item.description ? (
-                <Text style={{ fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginBottom: 8 }}>
+                <AppText style={{ fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginBottom: 8 }}>
                     "{item.description}"
-                </Text>
+                </AppText>
             ) : null}
 
             {/* Timestamps */}
-            <Text style={styles.date}>Requested: {item.createdAt instanceof Date ? item.createdAt.toLocaleString() : ''}</Text>
-            {item.estimatedTime && <Text style={styles.eta}>ETA: {item.estimatedTime}</Text>}
+            <AppText style={styles.date}>Requested: {item.createdAt instanceof Date ? item.createdAt.toLocaleString() : ''}</AppText>
+            {item.estimatedTime && <AppText style={styles.eta}>ETA: {item.estimatedTime}</AppText>}
 
             {/* Actions */}
             {item.status === 'pending' && (
                 <View style={styles.actionRow}>
                     <TouchableOpacity style={[styles.btn, styles.approveBtn]} onPress={() => handleAction(item, 'approve')}>
-                        <Text style={styles.btnText}>Approve & Set ETA</Text>
+                        <AppText style={styles.btnText}>Approve & Set ETA</AppText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.btn, styles.denyBtn]} onPress={() => handleAction(item, 'deny')}>
-                        <Text style={styles.btnText}>Deny</Text>
+                        <AppText style={styles.btnText}>Deny</AppText>
                     </TouchableOpacity>
                 </View>
             )}
             {item.status === 'approved' && (
                 <TouchableOpacity style={[styles.btn, styles.completeBtn]} onPress={() => handleStatusUpdate(item.id, item.status, 'completed')}>
-                    <Text style={styles.btnText}>Mark Completed</Text>
+                    <AppText style={styles.btnText}>Mark Completed</AppText>
                 </TouchableOpacity>
             )}
         </View>
@@ -226,7 +227,7 @@ export default function ServiceRequestsPage() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                     <MaterialIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Service Requests</Text>
+                <AppText style={styles.headerTitle}>Service Requests</AppText>
             </LinearGradient>
 
             {loading ? <ActivityIndicator size="large" color="#004e92" style={{ marginTop: 50 }} /> : (
@@ -237,7 +238,7 @@ export default function ServiceRequestsPage() {
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
-                    ListEmptyComponent={<Text style={styles.empty}>No requests found.</Text>}
+                    ListEmptyComponent={<AppText style={styles.empty}>No requests found.</AppText>}
                     onScrollToIndexFailed={(info) => {
                         const wait = new Promise(resolve => setTimeout(resolve, 500));
                         wait.then(() => {
@@ -253,11 +254,11 @@ export default function ServiceRequestsPage() {
                     style={styles.modalOverlay}
                 >
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{actionType === 'approve' ? 'Approve Request' : 'Deny Request'}</Text>
+                        <AppText style={styles.modalTitle}>{actionType === 'approve' ? 'Approve Request' : 'Deny Request'}</AppText>
 
                         {actionType === 'approve' && (
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Estimated Completion Time</Text>
+                                <AppText style={styles.label}>Estimated Completion Time</AppText>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Today 5:00 PM"
@@ -268,7 +269,7 @@ export default function ServiceRequestsPage() {
                         )}
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Admin Note (Optional)</Text>
+                            <AppText style={styles.label}>Admin Note (Optional)</AppText>
                             <TextInput
                                 style={[styles.input, styles.textArea]}
                                 placeholder="Add a note..."
@@ -280,10 +281,10 @@ export default function ServiceRequestsPage() {
 
                         <View style={styles.modalActions}>
                             <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                                <Text style={styles.cancelText}>Cancel</Text>
+                                <AppText style={styles.cancelText}>Cancel</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.modalBtn, styles.confirmBtn]} onPress={submitAction}>
-                                <Text style={styles.confirmText}>Confirm</Text>
+                                <AppText style={styles.confirmText}>Confirm</AppText>
                             </TouchableOpacity>
                         </View>
                     </View>

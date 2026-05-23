@@ -1,7 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import AppText from '../../../components/AppText';
 
 interface StatsGridProps {
     totalStudents: number;
@@ -21,8 +22,8 @@ export default function StatsGrid({ totalStudents, activeStudents, roomsCount, c
                 style={styles.heroCard}
             >
                 <View>
-                    <Text style={styles.heroLabel}>Total Students</Text>
-                    <Text style={styles.heroValue}>{totalStudents}</Text>
+                    <AppText style={styles.heroLabel}>Total Students</AppText>
+                    <AppText style={styles.heroValue}>{totalStudents}</AppText>
                 </View>
                 <MaterialIcons name="account-group" size={48} color="rgba(255,255,255,0.9)" />
                 <View style={styles.cardWatermark}>
@@ -40,9 +41,9 @@ export default function StatsGrid({ totalStudents, activeStudents, roomsCount, c
                 >
                     <View style={styles.miniHeader}>
                         <MaterialIcons name="check-circle" size={18} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.miniLabel}>Active</Text>
+                        <AppText style={styles.miniLabel}>Active</AppText>
                     </View>
-                    <Text style={styles.miniValue}>{activeStudents}</Text>
+                    <AppText style={styles.miniValue}>{activeStudents}</AppText>
                     <View style={styles.cardWatermark}>
                         <MaterialIcons name="check-circle" size={80} color="#fff" />
                     </View>
@@ -57,9 +58,9 @@ export default function StatsGrid({ totalStudents, activeStudents, roomsCount, c
                 >
                     <View style={styles.miniHeader}>
                         <MaterialIcons name="door-closed" size={18} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.miniLabel}>Rooms</Text>
+                        <AppText style={styles.miniLabel}>Rooms</AppText>
                     </View>
-                    <Text style={styles.miniValue}>{totalStudents}</Text>
+                    <AppText style={styles.miniValue}>{totalStudents}</AppText>
                     <View style={styles.cardWatermark}>
                         <MaterialIcons name="door-closed" size={80} color="#fff" />
                     </View>

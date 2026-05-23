@@ -4,23 +4,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    DeviceEventEmitter,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-    TouchableOpacity
-} from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import api, { API_BASE_URL } from '../utils/api';
 import { getInitial } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function EditProfile() {
     const { colors, isDark } = useTheme();
@@ -91,8 +81,13 @@ export default function EditProfile() {
     const pickImage = async () => {
         try {
             const ImagePicker = await import('expo-image-picker');
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                showAlert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+                return;
+            }
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'] as any,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.5,
@@ -113,11 +108,26 @@ export default function EditProfile() {
                 name: 'profile_photo.jpg',
                 type: 'image/jpeg',
             } as any);
-            const response = await api.post('/students/profile/photo', formDataUpload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+
+            const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
+
+            const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, {
+                method: 'POST',
+                body: formDataUpload,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
             });
-            if (response.data.success && response.data.profilePhoto) {
-                setProfilePhoto(response.data.profilePhoto);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Upload failed: ${response.status} ${errorText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.profilePhoto) {
+                setProfilePhoto(result.profilePhoto);
                 DeviceEventEmitter.emit('profileUpdated');
                 showAlert('Success', 'Profile photo updated successfully!', [], 'success');
             }
@@ -164,7 +174,7 @@ export default function EditProfile() {
 
     const renderInput = (label: string, key: keyof typeof formData, icon: any, placeholder: string, keyboardType: any = 'default', multiline = false) => (
         <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</AppText>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
                 <MaterialCommunityIcons name={icon} size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
                 <TextInput
@@ -184,7 +194,7 @@ export default function EditProfile() {
         <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
             <Stack.Screen options={{ headerShown: false }} />
             <ActivityIndicator size="large" color="#004e92" />
-            <Text style={{ color: colors.textSecondary, marginTop: 12 }}>Loading Details...</Text>
+            <AppText style={{ color: colors.textSecondary, marginTop: 12 }}>Loading Details...</AppText>
         </View>
     );
 
@@ -198,16 +208,16 @@ export default function EditProfile() {
                             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                                 <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
                             </TouchableOpacity>
-                            <Text style={styles.headerTitle}>Edit Profile</Text>
+                            <AppText style={styles.headerTitle}>Edit Profile</AppText>
                             <View style={{ width: 40 }} />
                         </View>
                         <View style={styles.profileCard}>
                             <View style={styles.avatarContainer}>
                                 <View style={[styles.avatar, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)' }]}>
                                     {profilePhoto ? (
-                                        <Image source={{ uri: `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
+                                        <Image source={{ uri: profilePhoto.startsWith('http') ? profilePhoto : `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
                                     ) : (
-                                        <Text style={styles.avatarText}>{getInitial(fullName)}</Text>
+                                        <AppText style={styles.avatarText}>{getInitial(fullName)}</AppText>
                                     )}
                                     {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10, borderWidth: 0 }]}><ActivityIndicator color="#fff" /></View>}
                                 </View>
@@ -215,21 +225,21 @@ export default function EditProfile() {
                                     <View style={styles.cameraButtonInner}><MaterialCommunityIcons name="camera" size={18} color="#004e92" /></View>
                                 </TouchableOpacity>
                             </View>
-                            <Text style={styles.studentName}>{fullName}</Text>
+                            <AppText style={styles.studentName}>{fullName}</AppText>
                         </View>
                     </LinearGradient>
                     <View style={[styles.curveBlock, { backgroundColor: colors.background }]} />
                 </View>
 
                 <View style={styles.scrollContent}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PERSONAL DETAILS</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>PERSONAL DETAILS</AppText>
                     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {renderInput('Phone Number', 'phone', 'phone-outline', 'Enter phone number', 'phone-pad')}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Date of Birth</Text>
+                            <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>Date of Birth</AppText>
                             <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.inputContainer, { height: 52, backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
                                 <MaterialCommunityIcons name="calendar-outline" size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
-                                <Text style={[styles.input, { color: formData.dob ? colors.text : (isDark ? '#64748b' : '#94a3b8'), lineHeight: 52 }]}>{formData.dob || 'Select Date'}</Text>
+                                <AppText style={[styles.input, { color: formData.dob ? colors.text : (isDark ? '#64748b' : '#94a3b8'), lineHeight: 52 }]}>{formData.dob || 'Select Date'}</AppText>
                             </TouchableOpacity>
                         </View>
                         {showDatePicker && <DateTimePicker value={dateValue} mode="date" display="default" onChange={onDateChange} maximumDate={new Date()} />}
@@ -237,7 +247,7 @@ export default function EditProfile() {
                         {renderInput('Permanent Address', 'address', 'map-marker-outline', 'Full home address', 'default', true)}
                     </View>
 
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>FAMILY DETAILS</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>FAMILY DETAILS</AppText>
                     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {renderInput("Father's Name", 'fatherName', 'account-outline', "Enter father's name")}
                         {renderInput("Father's Phone", 'fatherPhone', 'phone-outline', "Enter father's phone", 'phone-pad')}
@@ -245,7 +255,7 @@ export default function EditProfile() {
                         {renderInput("Mother's Phone", 'motherPhone', 'phone-outline', "Enter mother's phone", 'phone-pad')}
                     </View>
 
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>MEDICAL & EMERGENCY</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>MEDICAL & EMERGENCY</AppText>
                     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {renderInput("Emergency Contact", 'emergencyContactName', 'account-alert-outline', "Name of contact person")}
                         {renderInput("Emergency Phone", 'emergencyContactPhone', 'phone-alert-outline', "Emergency phone number", 'phone-pad')}
@@ -253,7 +263,7 @@ export default function EditProfile() {
                     </View>
 
                     <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
-                        {saving ? <ActivityIndicator color="#fff" /> : <><MaterialCommunityIcons name="check-decagram-outline" size={22} color="#fff" /><Text style={styles.saveBtnText}>Save Profile Changes</Text></>}
+                        {saving ? <ActivityIndicator color="#fff" /> : <><MaterialCommunityIcons name="check-decagram-outline" size={22} color="#fff" /><AppText style={styles.saveBtnText}>Save Profile Changes</AppText></>}
                     </TouchableOpacity>
                 </View>
             </ScrollView>

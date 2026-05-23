@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { faqData } from '../utils/complaintsUtils';
 
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function Complaints() {
     const router = useRouter();
@@ -25,8 +26,8 @@ export default function Complaints() {
                 <SafeAreaView edges={['top', 'left', 'right']}>
                     <View style={styles.headerContent}>
                         <View>
-                            <Text style={styles.headerTitle}>Complaints and FAQs</Text>
-                            <Text style={styles.headerSubtitle}>Resolve Issues & Queries</Text>
+                            <AppText style={styles.headerTitle}>Complaints and FAQs</AppText>
+                            <AppText style={styles.headerSubtitle}>Resolve Issues & Queries</AppText>
                         </View>
                         <View style={styles.headerIcon}>
                             <MaterialIcons name="support-agent" size={24} color="#fff" />
@@ -43,7 +44,7 @@ export default function Complaints() {
 
                 {/* Complaints Actions */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>COMPLAINTS</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>COMPLAINTS</AppText>
                     <View style={styles.actionsGrid}>
                         <Pressable
                             style={[styles.actionButton, styles.shadowProp, { backgroundColor: colors.card }]}
@@ -56,7 +57,7 @@ export default function Complaints() {
                                 <View style={[styles.actionIconBox, { backgroundColor: isDark ? '#334155' : '#fff' }]}>
                                     <MaterialIcons name="add-circle-outline" size={28} color={isDark ? '#60A5FA' : '#004e92'} />
                                 </View>
-                                <Text style={[styles.actionText, { color: isDark ? '#93C5FD' : '#1E3A8A' }]}>Raise New{"\n"}Complaint</Text>
+                                <AppText style={[styles.actionText, { color: isDark ? '#93C5FD' : '#1E3A8A' }]}>Raise New{"\n"}Complaint</AppText>
                             </LinearGradient>
                         </Pressable>
 
@@ -71,7 +72,7 @@ export default function Complaints() {
                                 <View style={[styles.actionIconBox, { backgroundColor: isDark ? '#166534' : '#fff' }]}>
                                     <MaterialIcons name="history" size={28} color={isDark ? '#4ADE80' : '#16A34A'} />
                                 </View>
-                                <Text style={[styles.actionText, { color: isDark ? '#86EFAC' : '#14532D' }]}>Track Past{"\n"}Complaints</Text>
+                                <AppText style={[styles.actionText, { color: isDark ? '#86EFAC' : '#14532D' }]}>Track Past{"\n"}Complaints</AppText>
                             </LinearGradient>
                         </Pressable>
                     </View>
@@ -79,7 +80,7 @@ export default function Complaints() {
 
                 {/* FAQ Section */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>FREQUENTLY ASKED QUESTIONS</Text>
+                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>FREQUENTLY ASKED QUESTIONS</AppText>
                     <View style={styles.faqContainer}>
                         {faqData.map((faq, index) => (
                             <View
@@ -88,9 +89,9 @@ export default function Complaints() {
                             >
                                 <View style={styles.faqHeader}>
                                     <MaterialCommunityIcons name="help-circle-outline" size={20} color={colors.primary} style={{ marginTop: 2 }} />
-                                    <Text style={[styles.question, { color: colors.text }]}>{faq.question}</Text>
+                                    <AppText style={[styles.question, { color: colors.text }]}>{faq.question}</AppText>
                                 </View>
-                                <Text style={[styles.answer, { color: colors.textSecondary }]}>{faq.answer}</Text>
+                                <AppText style={[styles.answer, { color: colors.textSecondary }]}>{faq.answer}</AppText>
                             </View>
                         ))}
                     </View>

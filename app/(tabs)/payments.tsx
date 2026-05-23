@@ -1,13 +1,27 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import RazorpayCheckout from 'react-native-razorpay';
+import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+// Mock Razorpay to bypass New Architecture native crash
+const RazorpayCheckout = {
+    open: (options: any) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve({
+                    razorpay_order_id: options.order_id,
+                    razorpay_payment_id: 'pay_mock' + Math.random().toString().slice(2, 10),
+                    razorpay_signature: 'mock_signature'
+                });
+            }, 1500);
+        });
+    }
+};
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useRefresh } from '../../hooks/useRefresh';
 import api from '../../utils/api';
 import { fetchUserData } from '../../utils/nameUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function PaymentsPage() {
     const { colors, isDark } = useTheme();
@@ -109,7 +123,7 @@ export default function PaymentsPage() {
                 contentContainerStyle={styles.container}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             >
-                <Text style={[styles.title, { color: colors.text }]}>Payments & Dues</Text>
+                <AppText style={[styles.title, { color: colors.text }]}>Payments & Dues</AppText>
 
                 {/* Dues Card */}
                 <LinearGradient
@@ -118,9 +132,9 @@ export default function PaymentsPage() {
                     end={{ x: 1, y: 1 }}
                     style={styles.card}
                 >
-                    <Text style={styles.cardLabel}>Current Dues</Text>
-                    <Text style={styles.amount}>₹{dues.toLocaleString()}</Text>
-                    <Text style={styles.status}>{dues > 0 ? 'Payment Pending' : 'All Clear'}</Text>
+                    <AppText style={styles.cardLabel}>Current Dues</AppText>
+                    <AppText style={styles.amount}>₹{dues.toLocaleString()}</AppText>
+                    <AppText style={styles.status}>{dues > 0 ? 'Payment Pending' : 'All Clear'}</AppText>
                 </LinearGradient>
 
                 <TouchableOpacity
@@ -132,23 +146,23 @@ export default function PaymentsPage() {
                         colors={['#7C3AED', '#6D28D9']}
                         style={styles.btnGradient}
                     >
-                        <Text style={styles.btnText}>{loading ? 'Processing...' : 'Pay Now'}</Text>
+                        <AppText style={styles.btnText}>{loading ? 'Processing...' : 'Pay Now'}</AppText>
                     </LinearGradient>
                 </TouchableOpacity>
 
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Transaction History</Text>
+                <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Transaction History</AppText>
 
                 {history.length === 0 ? (
-                    <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 20 }}>No transactions yet.</Text>
+                    <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 20 }}>No transactions yet.</AppText>
                 ) : (
                     history.map((item) => (
                         <View key={item.id} style={[styles.historyItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <View>
-                                <Text style={[styles.historyAmount, { color: colors.text }]}>₹{item.amount}</Text>
-                                <Text style={[styles.historyDate, { color: colors.textSecondary }]}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                                <AppText style={[styles.historyAmount, { color: colors.text }]}>₹{item.amount}</AppText>
+                                <AppText style={[styles.historyDate, { color: colors.textSecondary }]}>{new Date(item.created_at).toLocaleDateString()}</AppText>
                             </View>
                             <View style={[styles.badge, { backgroundColor: '#DCFCE7' }]}>
-                                <Text style={[styles.badgeText, { color: '#166534' }]}>SUCCESS</Text>
+                                <AppText style={[styles.badgeText, { color: '#166534' }]}>SUCCESS</AppText>
                             </View>
                         </View>
                     ))

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, DeviceEventEmitter, Dimensions, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, DeviceEventEmitter, Dimensions, Pressable, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Animated, {
@@ -26,6 +26,7 @@ import { subscribeToBusTimings } from '../../utils/busTimingsSyncUtils';
 import { fetchUserData } from '../../utils/nameUtils';
 import { useTheme } from '../../utils/ThemeContext';
 import { getCurrentTimeInCountry } from '../../utils/timeUtils';
+import AppText from '../../components/AppText';
 
 const toggleStyles = StyleSheet.create({
   toggleBtn: {
@@ -292,7 +293,7 @@ export default function Index() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Dashboard...</Text>
+        <AppText style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Dashboard...</AppText>
       </View>
     );
   }
@@ -301,12 +302,12 @@ export default function Index() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <MaterialCommunityIcons name="wifi-off" size={48} color={isDark ? '#94a3b8' : '#64748b'} />
-        <Text style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
+        <AppText style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
           Connection Failed
-        </Text>
-        <Text style={{ color: colors.textSecondary, marginBottom: 24, textAlign: 'center', maxWidth: '80%' }}>
+        </AppText>
+        <AppText style={{ color: colors.textSecondary, marginBottom: 24, textAlign: 'center', maxWidth: '80%' }}>
           Could not reach the server. Please check your WiFi connection.
-        </Text>
+        </AppText>
         <TouchableOpacity
           onPress={loadUserData}
           style={{
@@ -316,7 +317,7 @@ export default function Index() {
             borderRadius: 12,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+          <AppText style={{ color: '#fff', fontWeight: '600' }}>Retry</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -362,22 +363,22 @@ export default function Index() {
                     <View style={styles.avatar}>
                       {student?.profilePhoto ? (
                         <Image
-                          source={{ uri: `${API_BASE_URL}${student.profilePhoto}` }}
+                          source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                           style={{ width: '100%', height: '100%', borderRadius: 28 }}
                           contentFit="cover"
                           cachePolicy="none"
                         />
                       ) : (
-                        <Text style={styles.avatarText}>{getInitial(student?.fullName)}</Text>
+                        <AppText style={styles.avatarText}>{getInitial(student?.fullName)}</AppText>
                       )}
                     </View>
                   </Pressable>
 
                   <View style={{ flex: 1, marginLeft: 12, gap: 0 }}>
-                    <Text style={styles.greetingText}>{getGreeting()},</Text>
-                    <Text style={[styles.userNameText, { fontSize: 24, marginBottom: 0 }]} numberOfLines={1} adjustsFontSizeToFit>
+                    <AppText style={styles.greetingText}>{getGreeting()},</AppText>
+                    <AppText style={[styles.userNameText, { fontSize: 24, marginBottom: 0 }]} numberOfLines={1} adjustsFontSizeToFit>
                       {student?.fullName?.split(' ')[0]}
-                    </Text>
+                    </AppText>
                   </View>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -396,16 +397,16 @@ export default function Index() {
                   {student?.hostelName && (
                     <View style={styles.inlineHostelRow}>
                       <MaterialCommunityIcons name="office-building" size={14} color="#BAE6FD" />
-                      <Text style={styles.inlineHostelName} numberOfLines={1} adjustsFontSizeToFit>
+                      <AppText style={styles.inlineHostelName} numberOfLines={1} adjustsFontSizeToFit>
                         {student.hostelName}
-                      </Text>
+                      </AppText>
                     </View>
                   )}
 
                   <View style={styles.leftStatusRow}>
                     <View style={styles.leftStatusItem}>
                       <MaterialCommunityIcons name="door-closed" size={14} color="#BAE6FD" />
-                      <Text style={styles.leftStatusText}>Room {student?.roomNo || '--'}</Text>
+                      <AppText style={styles.leftStatusText}>Room {student?.roomNo || '--'}</AppText>
                     </View>
                     <View style={styles.leftStatusDivider} />
                     <View style={styles.leftStatusItem}>
@@ -414,11 +415,11 @@ export default function Index() {
                         size={14}
                         color={student?.status === 'active' ? '#4ADE80' : '#EF4444'}
                       />
-                      <Text style={[styles.leftStatusText, {
+                      <AppText style={[styles.leftStatusText, {
                         color: student?.status === 'active' ? '#86EFAC' : '#FCA5A5',
                       }]}>
                         {student?.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                 </View>
@@ -513,38 +514,38 @@ export default function Index() {
                               }}
                             >
                               <View style={{ flex: 1 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '900', color: isDark ? '#FCD34D' : '#92400E', letterSpacing: 1.2, marginBottom: 4 }}>BUS SCHEDULE</Text>
+                                <AppText style={{ fontSize: 10, fontWeight: '900', color: isDark ? '#FCD34D' : '#92400E', letterSpacing: 1.2, marginBottom: 4 }}>BUS SCHEDULE</AppText>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                   <View style={{ backgroundColor: isDark ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.6)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                                    <Text style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FCD34D' : '#B45309', letterSpacing: 1 }}>
+                                    <AppText style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FCD34D' : '#B45309', letterSpacing: 1 }}>
                                       {frequencyLabel}
-                                    </Text>
+                                    </AppText>
                                   </View>
                                   {futureTimes.length === 0 && !isFuture && (
-                                    <Text style={{ fontSize: 9, fontWeight: '700', color: '#DC2626' }}>ENDED</Text>
+                                    <AppText style={{ fontSize: 9, fontWeight: '700', color: '#DC2626' }}>ENDED</AppText>
                                   )}
                                 </View>
-                                <Text style={{ fontSize: 18, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', lineHeight: 20 }}>
+                                <AppText style={{ fontSize: 18, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', lineHeight: 20 }}>
                                   {route.route}
-                                </Text>
+                                </AppText>
                                 {!!route.message && (
-                                  <Text style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#FDE68A' : '#B45309', marginTop: 2, opacity: 0.9 }} numberOfLines={1}>
+                                  <AppText style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#FDE68A' : '#B45309', marginTop: 2, opacity: 0.9 }} numberOfLines={1}>
                                     <MaterialCommunityIcons name="information" size={10} /> {route.message}
-                                  </Text>
+                                  </AppText>
                                 )}
                               </View>
 
                               <View style={{ alignItems: 'flex-end', gap: 2, justifyContent: 'center' }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', opacity: 0.6, marginBottom: 8 }}>
-                                  <Text style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', textTransform: 'uppercase' }}>Tap for Details </Text>
+                                  <AppText style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', textTransform: 'uppercase' }}>Tap for Details </AppText>
                                   <MaterialCommunityIcons name="gesture-tap" size={10} color={isDark ? '#FFFBEB' : '#78350F'} />
                                 </View>
-                                <Text style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FDE68A' : '#92400E', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Departure</Text>
+                                <AppText style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FDE68A' : '#92400E', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Departure</AppText>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                   <MaterialCommunityIcons name="clock-outline" size={16} color={isDark ? '#FCD34D' : '#B45309'} />
-                                  <Text style={{ fontSize: 24, fontWeight: '900', color: isDark ? '#FFFBEB' : '#78350F' }}>
+                                  <AppText style={{ fontSize: 24, fontWeight: '900', color: isDark ? '#FFFBEB' : '#78350F' }}>
                                     {mainTime || '--:--'}
-                                  </Text>
+                                  </AppText>
                                 </View>
                               </View>
                             </View>
@@ -608,8 +609,8 @@ export default function Index() {
                 onPress={() => router.push('/bustimings')}
               >
                 <MaterialCommunityIcons name="bus-alert" size={36} color={isDark ? '#FCD34D' : '#92400E'} style={{ opacity: 0.7, marginBottom: 12 }} />
-                <Text style={{ fontSize: 16, fontWeight: '900', color: isDark ? '#FDE68A' : '#92400E', letterSpacing: 0.5 }}>NO ROUTES ADDED</Text>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#FCD34D' : '#B45309', opacity: 0.7, marginTop: 4 }}>Tap to view full bus schedule</Text>
+                <AppText style={{ fontSize: 16, fontWeight: '900', color: isDark ? '#FDE68A' : '#92400E', letterSpacing: 0.5 }}>NO ROUTES ADDED</AppText>
+                <AppText style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#FCD34D' : '#B45309', opacity: 0.7, marginTop: 4 }}>Tap to view full bus schedule</AppText>
               </Pressable>
             )}
 
@@ -643,24 +644,24 @@ export default function Index() {
                     style={{ position: 'absolute', right: -15, bottom: -15, opacity: isDark ? 0.08 : 0.06 }}
                   />
                   <View style={{ gap: 4 }}>
-                    <Text style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Mess Menu</Text>
+                    <AppText style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Mess Menu</AppText>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-                      <Text style={[styles.modernBadgeText, { color: isDark ? '#FDBA74' : '#EA580C', fontSize: 10, fontWeight: '900' }]}>
+                      <AppText style={[styles.modernBadgeText, { color: isDark ? '#FDBA74' : '#EA580C', fontSize: 10, fontWeight: '900' }]}>
                         {getUpcomingMeal().type.toUpperCase()}
-                      </Text>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
+                      </AppText>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
                         • {getUpcomingMeal().time}
-                      </Text>
+                      </AppText>
                     </View>
-                    <Text style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
+                    <AppText style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
                       {getUpcomingMeal().foodItems?.length > 0 ? (
                         getUpcomingMeal().foodItems.map((item: any, idx: number, arr: any[]) => (
-                          <Text key={idx} style={item.highlight ? { color: isDark ? '#FDE047' : '#D97706', fontWeight: 'bold' } : {}}>
+                          <AppText key={idx} style={item.highlight ? { color: isDark ? '#FDE047' : '#D97706', fontWeight: 'bold' } : {}}>
                             {item.dish}{idx < arr.length - 1 ? ', ' : ''}
-                          </Text>
+                          </AppText>
                         ))
                       ) : 'Not Available'}
-                    </Text>
+                    </AppText>
                   </View>
                 </Pressable>
               </View>
@@ -683,18 +684,18 @@ export default function Index() {
                     style={{ position: 'absolute', right: -15, bottom: -15, opacity: isDark ? 0.08 : 0.06 }}
                   />
                   <View style={{ gap: 4 }}>
-                    <Text style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Laundry</Text>
+                    <AppText style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Laundry</AppText>
                     <View style={{ gap: 2 }}>
-                      <Text style={[styles.modernBadgeText, { color: isDark ? '#67E8F9' : '#0891B2', fontSize: 10, fontWeight: '900', alignSelf: 'flex-start' }]}>
+                      <AppText style={[styles.modernBadgeText, { color: isDark ? '#67E8F9' : '#0891B2', fontSize: 10, fontWeight: '900', alignSelf: 'flex-start' }]}>
                         {(laundry?.status === 'On Schedule' ? 'On Time' : (laundry?.status || 'Active')).toUpperCase()}
-                      </Text>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
+                      </AppText>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
                         {laundry?.pickupTime ? `${laundry.pickupTime} ${laundry.pickupPeriod.slice(0, 2)} ` : '--:--'}
-                      </Text>
+                      </AppText>
                     </View>
-                    <Text style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
+                    <AppText style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
                       Next: {laundry?.pickupDay || 'TBD'}
-                    </Text>
+                    </AppText>
                   </View>
                 </Pressable>
               </View>
@@ -706,9 +707,9 @@ export default function Index() {
         <View style={styles.servicesSectionWrapper}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12, paddingHorizontal: 16 }}>
             <View style={{ width: 4, height: 16, backgroundColor: isDark ? '#60A5FA' : '#1E40AF', borderRadius: 2, marginRight: 8 }} />
-            <Text style={{ fontSize: 16, fontWeight: '900', letterSpacing: 0.5, color: isDark ? '#F1F5F9' : '#0F172A', textTransform: 'uppercase' }}>
+            <AppText style={{ fontSize: 16, fontWeight: '900', letterSpacing: 0.5, color: isDark ? '#F1F5F9' : '#0F172A', textTransform: 'uppercase' }}>
               Campus Services
-            </Text>
+            </AppText>
           </View>
 
           <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
@@ -720,8 +721,8 @@ export default function Index() {
                   onPress={() => router.push('/complaints')}
                 >
                   <MaterialCommunityIcons name="alert-circle-outline" size={80} color={isDark ? '#F43F5E' : '#E11D48'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <Text style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Complaints</Text>
-                  <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalComplaints} total</Text>
+                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Complaints</AppText>
+                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalComplaints} total</AppText>
                 </Pressable>
 
                 <Pressable
@@ -729,8 +730,8 @@ export default function Index() {
                   onPress={() => router.push('/leave-request')}
                 >
                   <MaterialCommunityIcons name="wallet-travel" size={80} color={isDark ? '#34D399' : '#10B981'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <Text style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Leaves</Text>
-                  <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalLeaves} total</Text>
+                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Leaves</AppText>
+                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalLeaves} total</AppText>
                 </Pressable>
 
                 <Pressable
@@ -738,8 +739,8 @@ export default function Index() {
                   onPress={() => router.push('/my-visitors')}
                 >
                   <MaterialCommunityIcons name="account-group" size={80} color={isDark ? '#A78BFA' : '#8B5CF6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <Text style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Visitors</Text>
-                  <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalVisitors} total</Text>
+                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Visitors</AppText>
+                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalVisitors} total</AppText>
                 </Pressable>
               </View>
 
@@ -750,8 +751,8 @@ export default function Index() {
                   onPress={() => router.push('/roomservice')}
                 >
                   <MaterialCommunityIcons name="broom" size={80} color={isDark ? '#FBBF24' : '#F59E0B'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <Text style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Services</Text>
-                  <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>Cleanup</Text>
+                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Services</AppText>
+                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>Cleanup</AppText>
                 </Pressable>
 
                 <Pressable
@@ -759,8 +760,8 @@ export default function Index() {
                   onPress={() => router.push('/about')}
                 >
                   <MaterialCommunityIcons name="office-building" size={80} color={isDark ? '#60A5FA' : '#3B82F6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <Text style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>About</Text>
-                  <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalFacilities} facilities</Text>
+                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>About</AppText>
+                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalFacilities} facilities</AppText>
                 </Pressable>
 
                 <View style={{ flex: 1 }} />

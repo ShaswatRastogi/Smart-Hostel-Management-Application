@@ -4,20 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    LayoutAnimation,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    UIManager,
-    View
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, UIManager, View } from 'react-native';
 import { Directions, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +12,7 @@ import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { DayMenu, initializeDay, MenuItem, MessTimings, subscribeToMenu, updateDayMenu, WeekMenu } from '../../utils/messSyncUtils';
+import AppText from '../../components/AppText';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner'];
@@ -612,7 +600,7 @@ export default function ManageMessMenuPage() {
                     <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>Manage Mess Menu</Text>
+                    <AppText style={styles.headerTitle}>Manage Mess Menu</AppText>
                 </View>
                 <TouchableOpacity onPress={() => setTimingsModalVisible(true)} style={styles.timingBtn}>
                     <MaterialCommunityIcons name="clock-edit-outline" size={24} color="#fff" />
@@ -640,9 +628,9 @@ export default function ManageMessMenuPage() {
                                     style={[styles.dayBtn, selectedDay === day && styles.dayBtnSelected]}
                                     onPress={() => setSelectedDay(day)}
                                 >
-                                    <Text style={[styles.dayBtnText, selectedDay === day && styles.dayBtnTextSelected]}>
+                                    <AppText style={[styles.dayBtnText, selectedDay === day && styles.dayBtnTextSelected]}>
                                         {day.slice(0, 3)}
-                                    </Text>
+                                    </AppText>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
@@ -654,7 +642,7 @@ export default function ManageMessMenuPage() {
                             contentContainerStyle={{ paddingBottom: 100 }}
                             keyboardShouldPersistTaps="handled"
                         >
-                            <Text style={styles.currentDayTitle}>{selectedDay}'s Menu</Text>
+                            <AppText style={styles.currentDayTitle}>{selectedDay}'s Menu</AppText>
                             {MEALS.map(meal => {
                                 // @ts-ignore
                                 const items: MenuItem[] = currentDayMenu[meal] || [];
@@ -662,15 +650,15 @@ export default function ManageMessMenuPage() {
                                 return (
                                     <View key={meal} style={styles.mealSection}>
                                         <View style={styles.mealHeader}>
-                                            <Text style={styles.mealTitle}>{meal}</Text>
+                                            <AppText style={styles.mealTitle}>{meal}</AppText>
                                             <TouchableOpacity onPress={() => handleAddItem(meal)} style={styles.addItemBtn}>
                                                 <MaterialCommunityIcons name="plus-circle" size={18} color={colors.primary} />
-                                                <Text style={styles.addItemText}>Add Item</Text>
+                                                <AppText style={styles.addItemText}>Add Item</AppText>
                                             </TouchableOpacity>
                                         </View>
 
                                         {items.length === 0 ? (
-                                            <Text style={{ color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }}>No items added yet.</Text>
+                                            <AppText style={{ color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }}>No items added yet.</AppText>
                                         ) : (
                                             items.map((item, idx) => (
                                                 <View key={idx} style={styles.itemRow}>
@@ -728,7 +716,7 @@ export default function ManageMessMenuPage() {
                         ) : (
                             <>
                                 <MaterialCommunityIcons name="content-save" size={24} color="#fff" />
-                                <Text style={styles.saveBtnText}>Save {selectedDay}'s Menu</Text>
+                                <AppText style={styles.saveBtnText}>Save {selectedDay}'s Menu</AppText>
                             </>
                         )}
                     </TouchableOpacity>
@@ -749,7 +737,7 @@ export default function ManageMessMenuPage() {
                     >
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Update {selectedDay}'s Timings</Text>
+                                <AppText style={styles.modalTitle}>Update {selectedDay}'s Timings</AppText>
                                 <TouchableOpacity onPress={() => setTimingsModalVisible(false)}>
                                     <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                                 </TouchableOpacity>
@@ -758,11 +746,11 @@ export default function ManageMessMenuPage() {
                             <ScrollView style={{ maxHeight: 550 }} showsVerticalScrollIndicator={false}>
                                 {MEALS.map((meal) => (
                                     <View key={meal} style={{ marginBottom: 20 }}>
-                                        <Text style={styles.label}>{meal.charAt(0).toUpperCase() + meal.slice(1)} Timings</Text>
+                                        <AppText style={styles.label}>{meal.charAt(0).toUpperCase() + meal.slice(1)} Timings</AppText>
 
                                         {/* Start Time Row */}
                                         <View style={styles.timeInputRow}>
-                                            <Text style={{ width: 40, color: colors.textSecondary, fontWeight: '600' }}>From</Text>
+                                            <AppText style={{ width: 40, color: colors.textSecondary, fontWeight: '600' }}>From</AppText>
                                             <TextInput
                                                 style={styles.timeInput}
                                                 placeholder="08:00"
@@ -781,7 +769,7 @@ export default function ManageMessMenuPage() {
                                                     onPress={() => setTimings({ ...timings, [meal]: { ...timings[meal], startPeriod: 'AM' } })}
                                                 >
                                                     {/* @ts-ignore */}
-                                                    <Text style={[styles.periodText, { color: timings[meal].startPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</Text>
+                                                    <AppText style={[styles.periodText, { color: timings[meal].startPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</AppText>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
                                                     // @ts-ignore
@@ -790,14 +778,14 @@ export default function ManageMessMenuPage() {
                                                     onPress={() => setTimings({ ...timings, [meal]: { ...timings[meal], startPeriod: 'PM' } })}
                                                 >
                                                     {/* @ts-ignore */}
-                                                    <Text style={[styles.periodText, { color: timings[meal].startPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</Text>
+                                                    <AppText style={[styles.periodText, { color: timings[meal].startPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</AppText>
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
 
                                         {/* End Time Row */}
                                         <View style={styles.timeInputRow}>
-                                            <Text style={{ width: 40, color: colors.textSecondary, fontWeight: '600' }}>To</Text>
+                                            <AppText style={{ width: 40, color: colors.textSecondary, fontWeight: '600' }}>To</AppText>
                                             <TextInput
                                                 style={styles.timeInput}
                                                 placeholder="09:30"
@@ -816,7 +804,7 @@ export default function ManageMessMenuPage() {
                                                     onPress={() => setTimings({ ...timings, [meal]: { ...timings[meal], endPeriod: 'AM' } })}
                                                 >
                                                     {/* @ts-ignore */}
-                                                    <Text style={[styles.periodText, { color: timings[meal].endPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</Text>
+                                                    <AppText style={[styles.periodText, { color: timings[meal].endPeriod === 'AM' ? '#fff' : colors.textSecondary }]}>AM</AppText>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
                                                     // @ts-ignore
@@ -825,7 +813,7 @@ export default function ManageMessMenuPage() {
                                                     onPress={() => setTimings({ ...timings, [meal]: { ...timings[meal], endPeriod: 'PM' } })}
                                                 >
                                                     {/* @ts-ignore */}
-                                                    <Text style={[styles.periodText, { color: timings[meal].endPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</Text>
+                                                    <AppText style={[styles.periodText, { color: timings[meal].endPeriod === 'PM' ? '#fff' : colors.textSecondary }]}>PM</AppText>
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
@@ -841,7 +829,7 @@ export default function ManageMessMenuPage() {
                                 {savingTimings ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.saveBtnText}>Save Timings</Text>
+                                    <AppText style={styles.saveBtnText}>Save Timings</AppText>
                                 )}
                             </TouchableOpacity>
                         </View>

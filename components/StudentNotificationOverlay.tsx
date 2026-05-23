@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import api from '../utils/api';
 import { useTheme } from '../utils/ThemeContext';
 import { CompactNoticeListSkeleton } from './SkeletonLists';
+import AppText from './AppText';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -189,16 +190,16 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                 <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={styles.headerCompact}>
                         <View style={[styles.headerTitleContainer, { flex: 1 }]}>
-                            <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
+                            <AppText style={[styles.headerTitle, { color: colors.text }]}>Notifications</AppText>
                             {(notifications.length > 0) && (
                                 <View style={styles.badgeSmall}>
-                                    <Text style={styles.badgeText}>{notifications.length}</Text>
+                                    <AppText style={styles.badgeText}>{notifications.length}</AppText>
                                 </View>
                             )}
                         </View>
                         {notifications.length > 0 && (
                             <TouchableOpacity onPress={handleClear} style={styles.clearBtnCompact}>
-                                <Text style={[styles.clearBtnText, { color: colors.primary }]}>Clear All</Text>
+                                <AppText style={[styles.clearBtnText, { color: colors.primary }]}>Clear All</AppText>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -230,22 +231,22 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                                         {/* Content */}
                                         <View style={{ flex: 1, gap: 4 }}>
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <Text style={[styles.noticeTitle, { color: colors.text }]}>{item.title}</Text>
-                                                <Text style={[styles.noticeDate, { color: colors.textSecondary }]}>
+                                                <AppText style={[styles.noticeTitle, { color: colors.text }]}>{item.title}</AppText>
+                                                <AppText style={[styles.noticeDate, { color: colors.textSecondary }]}>
                                                     {new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </Text>
+                                                </AppText>
                                             </View>
 
-                                            <Text style={[styles.noticeBody, { color: colors.textSecondary }]} numberOfLines={2}>
+                                            <AppText style={[styles.noticeBody, { color: colors.textSecondary }]} numberOfLines={2}>
                                                 {item.subtitle}
-                                            </Text>
+                                            </AppText>
                                         </View>
                                     </TouchableOpacity>
                                 ))
                             ) : (
                                 <View style={styles.emptyStateCompact}>
                                     <MaterialCommunityIcons name="bell-sleep-outline" size={32} color={colors.textSecondary} style={{ opacity: 0.5, marginBottom: 8 }} />
-                                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No new notifications</Text>
+                                    <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No new notifications</AppText>
                                 </View>
                             )}
                         </View>

@@ -3,10 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
+import * as FileSystem from 'expo-file-system/legacy';
+import AppText from '../../components/AppText';
 
 interface StorageBreakdown { label: string; icon: any; size: string; bytes: number; color: string; }
 
@@ -18,53 +20,62 @@ export default function DataStorage() {
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
   const [totalCacheSize, setTotalCacheSize] = useState('0 KB');
-  const [autoDownloadWifi, setAutoDownloadWifi] = useState(true);
-  const [autoDownloadMobile, setAutoDownloadMobile] = useState(false);
-  const [dataSaver, setDataSaver] = useState(false);
   const [breakdown, setBreakdown] = useState<StorageBreakdown[]>([]);
 
-  useEffect(() => { calculateStorage(); loadPreferences(); }, []);
+  useEffect(() => { calculateStorage(); }, []);
 
-  const loadPreferences = async () => {
+  const getDirSize = async (dirUri: string | null): Promise<number> => {
+    if (!dirUri) return 0;
     try {
-      const { default: api } = await import('../../utils/api');
-      const response = await api.get('/preferences');
-      const prefs = response.data.preferences || {};
-      setAutoDownloadWifi(prefs.auto_download_wifi ?? true);
-      setAutoDownloadMobile(prefs.auto_download_mobile ?? false);
-      setDataSaver(prefs.data_saver ?? false);
-      await AsyncStorage.multiSet([['auto_download_wifi', String(prefs.auto_download_wifi ?? true)], ['auto_download_mobile', String(prefs.auto_download_mobile ?? false)], ['data_saver', String(prefs.data_saver ?? false)]]);
+      const info = await FileSystem.getInfoAsync(dirUri);
+      if (!info.exists) return 0;
+      if (!info.isDirectory) return info.size || 0;
+      
+      let totalSize = 0;
+      const files = await FileSystem.readDirectoryAsync(dirUri);
+      for (const file of files) {
+        const fileUri = dirUri.endsWith('/') ? `${dirUri}${file}` : `${dirUri}/${file}`;
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (fileInfo.exists) {
+            if (fileInfo.isDirectory) {
+               totalSize += await getDirSize(fileUri);
+            } else {
+               totalSize += fileInfo.size || 0;
+            }
+        }
+      }
+      return totalSize;
     } catch (e) {
-      try {
-        const [wifi, mobile, saver] = await Promise.all([AsyncStorage.getItem('auto_download_wifi'), AsyncStorage.getItem('auto_download_mobile'), AsyncStorage.getItem('data_saver')]);
-        if (wifi !== null) setAutoDownloadWifi(wifi === 'true');
-        if (mobile !== null) setAutoDownloadMobile(mobile === 'true');
-        if (saver !== null) setDataSaver(saver === 'true');
-      } catch (err) { console.error('Failed to load local fallback:', err); }
+      return 0;
     }
-  };
-
-  const savePreference = async (key: string, value: boolean) => {
-    try { await AsyncStorage.setItem(key, String(value)); const { default: api } = await import('../../utils/api'); await api.put('/preferences', { preferences: { [key]: value } }); } catch (e) { console.error('Failed to save preference:', e); }
   };
 
   const calculateStorage = async () => {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      let totalBytes = 0, chatBytes = 0, mediaBytes = 0, cacheBytes = 0, otherBytes = 0;
+      let chatBytes = 0, mediaBytes = 0, cacheBytes = 0, otherBytes = 0;
+      
+      // 1. Calculate AsyncStorage Size
       for (const key of allKeys) {
         const value = await AsyncStorage.getItem(key);
         const size = value ? new Blob([value]).size : 0;
-        totalBytes += size;
         if (key.includes('chat') || key.includes('message')) chatBytes += size;
-        else if (key.includes('photo') || key.includes('image') || key.includes('media')) mediaBytes += size;
-        else if (key.includes('cache') || key.includes('cached') || key.includes('sync')) cacheBytes += size;
         else otherBytes += size;
       }
+
+      // 2. Calculate File System Size
+      const fsCacheSize = await getDirSize(FileSystem.cacheDirectory);
+      const fsDocSize = await getDirSize(FileSystem.documentDirectory);
+      
+      cacheBytes += fsCacheSize;
+      mediaBytes += fsDocSize;
+
+      const totalBytes = chatBytes + mediaBytes + cacheBytes + otherBytes;
+
       setTotalCacheSize(formatBytes(totalBytes));
       setBreakdown([
         { label: 'Chat Data', icon: 'chat-outline', size: formatBytes(chatBytes), bytes: chatBytes, color: '#3B82F6' },
-        { label: 'Media & Photos', icon: 'image-outline', size: formatBytes(mediaBytes), bytes: mediaBytes, color: '#8B5CF6' },
+        { label: 'Media & Documents', icon: 'image-outline', size: formatBytes(mediaBytes), bytes: mediaBytes, color: '#8B5CF6' },
         { label: 'Cached Data', icon: 'database-outline', size: formatBytes(cacheBytes), bytes: cacheBytes, color: '#F59E0B' },
         { label: 'App Preferences', icon: 'tune-vertical', size: formatBytes(otherBytes), bytes: otherBytes, color: '#10B981' },
       ]);
@@ -88,6 +99,15 @@ export default function DataStorage() {
           const allKeys = await AsyncStorage.getAllKeys();
           const keysToClear = allKeys.filter(key => !keysToKeep.includes(key) && !key.startsWith('onboarding_completed'));
           if (keysToClear.length > 0) await AsyncStorage.multiRemove(keysToClear);
+          
+          if (FileSystem.cacheDirectory) {
+            const files = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
+            for (const file of files) {
+              const fileUri = FileSystem.cacheDirectory.endsWith('/') ? `${FileSystem.cacheDirectory}${file}` : `${FileSystem.cacheDirectory}/${file}`;
+              await FileSystem.deleteAsync(fileUri, { idempotent: true });
+            }
+          }
+
           await calculateStorage();
           showAlert('Done', 'Cache cleared successfully!', [], 'success');
         } catch (e) { showAlert('Error', 'Failed to clear cache.'); } finally { setClearing(false); }
@@ -116,7 +136,7 @@ export default function DataStorage() {
       <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Data & Storage</Text>
+          <AppText style={styles.headerTitle}>Data & Storage</AppText>
           <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
@@ -127,7 +147,7 @@ export default function DataStorage() {
           <View style={[styles.overviewCard, { backgroundColor: isDark ? '#1e293b' : '#f0f4ff', borderColor: isDark ? '#334155' : '#dbeafe' }]}>
             <View style={styles.overviewRow}>
               <View style={[styles.storageIcon, { backgroundColor: isDark ? '#0F172A' : '#fff' }]}><MaterialCommunityIcons name="harddisk" size={32} color="#004e92" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>TOTAL APP STORAGE</Text><Text style={[styles.overviewValue, { color: colors.text }]}>{totalCacheSize}</Text></View>
+              <View style={{ flex: 1 }}><AppText style={[styles.overviewLabel, { color: colors.textSecondary }]}>TOTAL APP STORAGE</AppText><AppText style={[styles.overviewValue, { color: colors.text }]}>{totalCacheSize}</AppText></View>
             </View>
             <View style={styles.barContainer}>
               {breakdown.map((item, i) => {
@@ -138,51 +158,25 @@ export default function DataStorage() {
             </View>
             <View style={styles.legendGrid}>
               {breakdown.map((item, i) => (
-                <View key={i} style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: item.color }]} /><Text style={[styles.legendText, { color: colors.textSecondary }]}>{item.label}</Text><Text style={[styles.legendSize, { color: colors.text }]}>{item.size}</Text></View>
+                <View key={i} style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: item.color }]} /><AppText style={[styles.legendText, { color: colors.textSecondary }]}>{item.label}</AppText><AppText style={[styles.legendSize, { color: colors.text }]}>{item.size}</AppText></View>
               ))}
             </View>
           </View>
 
           {/* Manage Storage */}
-          <Text style={[styles.secTitle, { color: colors.textSecondary }]}>MANAGE STORAGE</Text>
+          <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>MANAGE STORAGE</AppText>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <TouchableOpacity style={styles.actionRow} onPress={handleClearCache}>
               <View style={[styles.actionIcon, { backgroundColor: 'rgba(245,158,11,0.1)' }]}><MaterialCommunityIcons name="broom" size={22} color="#F59E0B" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.actionLabel, { color: colors.text }]}>Clear App Cache</Text><Text style={[styles.actionDesc, { color: colors.textSecondary }]}>Free up space by removing temporary files</Text></View>
+              <View style={{ flex: 1 }}><AppText style={[styles.actionLabel, { color: colors.text }]}>Clear App Cache</AppText><AppText style={[styles.actionDesc, { color: colors.textSecondary }]}>Free up space by removing temporary files</AppText></View>
               {clearing ? <ActivityIndicator size="small" color="#F59E0B" /> : <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textSecondary} />}
             </TouchableOpacity>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <TouchableOpacity style={styles.actionRow} onPress={handleClearChatData}>
               <View style={[styles.actionIcon, { backgroundColor: 'rgba(59,130,246,0.1)' }]}><MaterialCommunityIcons name="chat-remove-outline" size={22} color="#3B82F6" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.actionLabel, { color: colors.text }]}>Clear Chat Data</Text><Text style={[styles.actionDesc, { color: colors.textSecondary }]}>Remove locally stored messages</Text></View>
+              <View style={{ flex: 1 }}><AppText style={[styles.actionLabel, { color: colors.text }]}>Clear Chat Data</AppText><AppText style={[styles.actionDesc, { color: colors.textSecondary }]}>Remove locally stored messages</AppText></View>
               <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-          </View>
-
-          {/* Auto Download */}
-          <Text style={[styles.secTitle, { color: colors.textSecondary }]}>AUTO-DOWNLOAD</Text>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.toggleRow}>
-              <View style={[styles.actionIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }]}><MaterialCommunityIcons name="wifi" size={22} color="#10B981" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.actionLabel, { color: colors.text }]}>When on Wi-Fi</Text><Text style={[styles.actionDesc, { color: colors.textSecondary }]}>Auto-download media on Wi-Fi</Text></View>
-              <Switch value={autoDownloadWifi} onValueChange={v => { setAutoDownloadWifi(v); savePreference('auto_download_wifi', v); }} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={autoDownloadWifi ? '#004e92' : '#f4f3f4'} />
-            </View>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <View style={styles.toggleRow}>
-              <View style={[styles.actionIcon, { backgroundColor: 'rgba(139,92,246,0.1)' }]}><MaterialCommunityIcons name="signal-cellular-3" size={22} color="#8B5CF6" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.actionLabel, { color: colors.text }]}>When on Mobile Data</Text><Text style={[styles.actionDesc, { color: colors.textSecondary }]}>Auto-download media on cellular</Text></View>
-              <Switch value={autoDownloadMobile} onValueChange={v => { setAutoDownloadMobile(v); savePreference('auto_download_mobile', v); }} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={autoDownloadMobile ? '#004e92' : '#f4f3f4'} />
-            </View>
-          </View>
-
-          {/* Network */}
-          <Text style={[styles.secTitle, { color: colors.textSecondary }]}>NETWORK</Text>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.toggleRow}>
-              <View style={[styles.actionIcon, { backgroundColor: 'rgba(239,68,68,0.1)' }]}><MaterialCommunityIcons name="speedometer-slow" size={22} color="#EF4444" /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.actionLabel, { color: colors.text }]}>Data Saver</Text><Text style={[styles.actionDesc, { color: colors.textSecondary }]}>Reduce data usage by loading lower-quality images</Text></View>
-              <Switch value={dataSaver} onValueChange={v => { setDataSaver(v); savePreference('data_saver', v); }} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={dataSaver ? '#004e92' : '#f4f3f4'} />
-            </View>
           </View>
         </ScrollView>
       )}
@@ -212,7 +206,6 @@ const styles = StyleSheet.create({
   secTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.1, marginBottom: 10, marginTop: 16, marginLeft: 4 },
   card: { borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 4, shadowColor: '#004e92', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
   actionRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
   actionIcon: { width: 42, height: 42, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   actionLabel: { fontSize: 15, fontWeight: '600' },
   actionDesc: { fontSize: 12, marginTop: 2 },

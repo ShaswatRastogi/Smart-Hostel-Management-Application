@@ -142,16 +142,10 @@ export const googleLogin = async (req: Request, res: Response) => {
             const userId = studentResult.rows[0].user_id;
             const linkedUserResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
             user = linkedUserResult.rows[0];
-        } else {
-            // FALLBACK: Check if this is an Admin logging in (not necessarily a student)
-            const adminResult = await query('SELECT * FROM users WHERE email = $1', [email]);
-            if (adminResult.rows.length > 0 && adminResult.rows[0].role === 'admin') {
-                user = adminResult.rows[0];
-            }
         }
 
         if (!user) {
-            res.status(403).json({ error: 'Account not found. If you are a student, please ensure your Google Email matches your registered profile.' });
+            res.status(403).json({ error: 'Account not found. Admins must use email and password to log in.' });
             return;
         }
 

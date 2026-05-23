@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimatedGradientHeader from './AnimatedGradientHeader';
+import AppText from './AppText';
 
 interface Props {
     title: string;
@@ -25,8 +26,8 @@ export default function ScreenHeader({ title, subtitle, showBackButton = true, r
                     </TouchableOpacity>
                 )}
                 <View style={styles.textContainer}>
-                    <Text style={styles.title}>{title}</Text>
-                    {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+                    <AppText style={styles.title}>{title}</AppText>
+                    {subtitle && <AppText style={styles.subtitle}>{subtitle}</AppText>}
                 </View>
                 {/* Render right action or placeholder */}
                 {rightAction ? (

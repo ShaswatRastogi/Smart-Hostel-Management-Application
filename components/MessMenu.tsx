@@ -1,10 +1,11 @@
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, Text, UIManager, View } from 'react-native';
+import { ActivityIndicator, LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, UIManager, View } from 'react-native';
 import { Directions, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from './AppText';
 
 interface MenuItem {
   dish: string;
@@ -308,12 +309,12 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
                 styles.shadowProp
               ]}
             >
-              <Text style={[
+              <AppText style={[
                 styles.dayText,
                 selectedDay === day && styles.selectedDayText
               ]}>
                 {day.slice(0, 3)}
-              </Text>
+              </AppText>
             </Pressable>
           ))}
         </ScrollView>
@@ -321,7 +322,7 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
 
       <GestureDetector gesture={swipeGestures}>
         <View style={styles.menuContainer}>
-          <Text style={styles.currentDayTitle}>{selectedDay}'s Menu</Text>
+          <AppText style={styles.currentDayTitle}>{selectedDay}'s Menu</AppText>
 
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
@@ -343,12 +344,12 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
                         />
                       </View>
                       <View>
-                        <Text style={styles.mealType}>
+                        <AppText style={styles.mealType}>
                           {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-                        </Text>
-                        <Text style={styles.timings}>
+                        </AppText>
+                        <AppText style={styles.timings}>
                           {getMealTimings(mealType)}
-                        </Text>
+                        </AppText>
                       </View>
                     </View>
                   </View>
@@ -357,7 +358,7 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
 
                   {/* @ts-ignore */}
                   {!fullMenu[selectedDay]?.[mealType]?.length ? (
-                    <Text style={{ color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }}>No menu available</Text>
+                    <AppText style={{ color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }}>No menu available</AppText>
                   ) : (
                     // @ts-ignore
                     fullMenu[selectedDay][mealType].map((item: MenuItem, index: number) => (
@@ -374,18 +375,18 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
                           color={item.type === 'veg' ? '#10B981' : '#EF4444'}
                           style={{ marginTop: 2 }}
                         />
-                        <Text style={[
+                        <AppText style={[
                           styles.menuItemText,
                           item.highlight && { color: colors.text, fontWeight: '500' }
                         ]}>
                           {item.dish}
                           {item.highlight && (
-                            <Text>
+                            <AppText>
                               {"  "}
                               <FontAwesome name="star" size={10} color="#F59E0B" />
-                            </Text>
+                            </AppText>
                           )}
-                        </Text>
+                        </AppText>
                       </View>
                     ))
                   )}

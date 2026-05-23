@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import { performGlobalSearch } from '../../utils/adminSearchUtils';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { Payment } from '../../utils/financeUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function FinancePage() {
     const { colors, theme } = useTheme();
@@ -548,7 +549,7 @@ export default function FinancePage() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                     <MaterialIcons name="chevron-left" size={32} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Finance</Text>
+                <AppText style={styles.headerTitle}>Finance</AppText>
                 <TouchableOpacity onPress={() => setSettingsModalVisible(true)} style={[styles.backBtn, { marginLeft: 'auto', backgroundColor: 'rgba(255,255,255,0.1)' }]}>
                     <MaterialIcons name="cog" size={24} color="#fff" />
                 </TouchableOpacity>
@@ -563,7 +564,7 @@ export default function FinancePage() {
                     }}
                 >
                     <MaterialIcons name="clipboard-check-outline" size={20} color={activeTab === 'requests' ? colors.primary : colors.textSecondary} />
-                    <Text style={[styles.navItemLabel, activeTab === 'requests' && styles.navItemLabelActive]}>Requests & Verify</Text>
+                    <AppText style={[styles.navItemLabel, activeTab === 'requests' && styles.navItemLabelActive]}>Requests & Verify</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.navItem, activeTab === 'history' && styles.navItemActive]}
@@ -573,7 +574,7 @@ export default function FinancePage() {
                     }}
                 >
                     <MaterialIcons name="history" size={20} color={activeTab === 'history' ? colors.primary : colors.textSecondary} />
-                    <Text style={[styles.navItemLabel, activeTab === 'history' && styles.navItemLabelActive]}>Payment History</Text>
+                    <AppText style={[styles.navItemLabel, activeTab === 'history' && styles.navItemLabelActive]}>Payment History</AppText>
                 </TouchableOpacity>
             </View>
 
@@ -591,7 +592,7 @@ export default function FinancePage() {
                         keyExtractor={item => item.id}
                         contentContainerStyle={styles.listContent}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-                        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: colors.textSecondary }}>No pending requests.</Text>}
+                        ListEmptyComponent={<AppText style={{ textAlign: 'center', marginTop: 40, color: colors.textSecondary }}>No pending requests.</AppText>}
                         renderItem={({ item }) => (
                             <View style={[styles.card, item.status === 'paid_unverified' && { borderColor: '#F59E0B', borderWidth: 1 }]}>
                                 <View style={styles.cardHeader}>
@@ -605,27 +606,27 @@ export default function FinancePage() {
                                         </View>
                                     </View>
                                     <View style={styles.info}>
-                                        <Text style={styles.name}>{item.studentName}</Text>
+                                        <AppText style={styles.name}>{item.studentName}</AppText>
                                         <View style={styles.metaContainer}>
                                             <View style={styles.pill}>
-                                                <Text style={styles.detailSmall}>{item.type}</Text>
+                                                <AppText style={styles.detailSmall}>{item.type}</AppText>
                                             </View>
                                         </View>
                                         {item.status === 'paid_unverified' && (
-                                            <Text style={[styles.detailSmall, { color: '#D97706', marginTop: 4 }]}>
+                                            <AppText style={[styles.detailSmall, { color: '#D97706', marginTop: 4 }]}>
                                                 Ref: {item.transactionId || 'N/A'}
-                                            </Text>
+                                            </AppText>
                                         )}
                                     </View>
                                     <View style={{ alignItems: 'flex-end' }}>
-                                        <Text style={styles.amount}>₹{item.amount.toLocaleString()}</Text>
+                                        <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
                                         {item.status === 'paid_unverified' ? (
                                             <TouchableOpacity onPress={() => handleVerify(item)} style={styles.verifyBtn}>
-                                                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Verify</Text>
+                                                <AppText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Verify</AppText>
                                             </TouchableOpacity>
                                         ) : (
                                             <View style={[styles.pill, { marginTop: 4, backgroundColor: '#E2E8F0' }]}>
-                                                <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>PENDING</Text>
+                                                <AppText style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>PENDING</AppText>
                                             </View>
                                         )}
                                     </View>
@@ -646,10 +647,10 @@ export default function FinancePage() {
                     >
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <View>
-                                <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                <AppText style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
                                     {isSpecificStudentView ? `Total Paid by ${historySearch}` : (historySearch ? 'Filtered Total' : 'Total Received (Recent)')}
-                                </Text>
-                                <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>₹{activeTotal.toLocaleString()}</Text>
+                                </AppText>
+                                <AppText style={{ color: '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>₹{activeTotal.toLocaleString()}</AppText>
                             </View>
                             <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
                                 <MaterialIcons name="cash-multiple" size={24} color="#fff" />
@@ -704,8 +705,8 @@ export default function FinancePage() {
                                                 <MaterialIcons name="account" size={18} color={colors.primary} />
                                             </View>
                                             <View>
-                                                <Text style={{ fontWeight: '600', color: colors.text }}>{s.title}</Text>
-                                                <Text style={{ fontSize: 10, color: colors.textSecondary }}>{s.subtitle}</Text>
+                                                <AppText style={{ fontWeight: '600', color: colors.text }}>{s.title}</AppText>
+                                                <AppText style={{ fontSize: 10, color: colors.textSecondary }}>{s.subtitle}</AppText>
                                             </View>
                                         </TouchableOpacity>
                                     ))}
@@ -723,9 +724,9 @@ export default function FinancePage() {
                         renderSectionHeader={({ section: { title } }) => (
                             <View style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}>
                                 <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginRight: 12 }} />
-                                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                <AppText style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
                                     {title}
-                                </Text>
+                                </AppText>
                                 <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginLeft: 12 }} />
                             </View>
                         )}
@@ -738,19 +739,19 @@ export default function FinancePage() {
                                         </View>
                                     </View>
                                     <View style={styles.info}>
-                                        <Text style={styles.name}>{item.studentName}</Text>
+                                        <AppText style={styles.name}>{item.studentName}</AppText>
                                         <View style={styles.metaContainer}>
                                             <View style={styles.pill}>
-                                                <Text style={styles.detailSmall}>{item.type}</Text>
+                                                <AppText style={styles.detailSmall}>{item.type}</AppText>
                                             </View>
-                                            <Text style={[styles.detailSmall, { opacity: 0.7 }]}>• {item.method}</Text>
+                                            <AppText style={[styles.detailSmall, { opacity: 0.7 }]}>• {item.method}</AppText>
                                         </View>
-                                        <Text style={[styles.detailSmall, { marginTop: 2, opacity: 0.5 }]}>
+                                        <AppText style={[styles.detailSmall, { marginTop: 2, opacity: 0.5 }]}>
                                             {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                                        <Text style={styles.amount}>₹{item.amount.toLocaleString()}</Text>
+                                        <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
                                         <View style={{ flexDirection: 'row' }}>
                                             <TouchableOpacity
                                                 onPress={() => handleDeletePayment(item)}
@@ -778,7 +779,7 @@ export default function FinancePage() {
                         ListEmptyComponent={
                             <View style={{ alignItems: 'center', marginTop: 40, opacity: 0.5 }}>
                                 <MaterialIcons name="history" size={48} color={colors.textSecondary} />
-                                <Text style={{ marginTop: 12, color: colors.textSecondary }}>No records found</Text>
+                                <AppText style={{ marginTop: 12, color: colors.textSecondary }}>No records found</AppText>
                             </View>
                         }
                     />
@@ -797,21 +798,21 @@ export default function FinancePage() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
-                            <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>New Transaction</Text>
+                            <AppText style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>New Transaction</AppText>
                             <TouchableOpacity onPress={() => setModalVisible(false)}><MaterialIcons name="close" size={24} color={colors.text} /></TouchableOpacity>
                         </View>
 
                         <View style={styles.modeSwitch}>
                             <TouchableOpacity onPress={() => setMode('request')} style={[styles.modeOption, mode === 'request' && styles.modeActive]}>
-                                <Text style={{ fontWeight: '700', color: mode === 'request' ? colors.primary : colors.textSecondary }}>Request Payment</Text>
+                                <AppText style={{ fontWeight: '700', color: mode === 'request' ? colors.primary : colors.textSecondary }}>Request Payment</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setMode('record')} style={[styles.modeOption, mode === 'record' && styles.modeActive]}>
-                                <Text style={{ fontWeight: '700', color: mode === 'record' ? colors.primary : colors.textSecondary }}>Record Cash</Text>
+                                <AppText style={{ fontWeight: '700', color: mode === 'record' ? colors.primary : colors.textSecondary }}>Record Cash</AppText>
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <Text style={styles.label}>Student</Text>
+                            <AppText style={styles.label}>Student</AppText>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Search Student..."
@@ -823,30 +824,30 @@ export default function FinancePage() {
                                 <View style={{ backgroundColor: theme === 'dark' ? '#1E293B' : '#F1F5F9', borderRadius: 8, marginBottom: 10 }}>
                                     {studentSearchResults.map((s) => (
                                         <TouchableOpacity key={s.id} onPress={() => selectStudent(s)} style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                                            <Text style={{ color: colors.text }}>{s.title}</Text>
+                                            <AppText style={{ color: colors.text }}>{s.title}</AppText>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
                             )}
-                            {selectedStudent && <Text style={{ color: '#10B981', marginBottom: 10 }}>Selected: {selectedStudent.name}</Text>}
+                            {selectedStudent && <AppText style={{ color: '#10B981', marginBottom: 10 }}>Selected: {selectedStudent.name}</AppText>}
 
-                            <Text style={styles.label}>Amount</Text>
+                            <AppText style={styles.label}>Amount</AppText>
                             <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="0" placeholderTextColor={colors.textSecondary} />
 
-                            <Text style={styles.label}>Type</Text>
+                            <AppText style={styles.label}>Type</AppText>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                                 {['Hostel Fee', 'Mess Fee', 'Fine', 'Other'].map(t => (
                                     <TouchableOpacity key={t} onPress={() => setType(t as any)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: type === t ? colors.primary : colors.border, marginRight: 8 }}>
-                                        <Text style={{ color: type === t ? '#fff' : colors.textSecondary }}>{t}</Text>
+                                        <AppText style={{ color: type === t ? '#fff' : colors.textSecondary }}>{t}</AppText>
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
 
-                            <Text style={styles.label}>Note / Remarks</Text>
+                            <AppText style={styles.label}>Note / Remarks</AppText>
                             <TextInput style={styles.input} value={remarks} onChangeText={setRemarks} placeholder="Optional..." placeholderTextColor={colors.textSecondary} />
 
                             <TouchableOpacity onPress={handleSubmit} style={styles.btn} disabled={submitting}>
-                                {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{mode === 'request' ? 'Send Request' : 'Record Payment'}</Text>}
+                                {submitting ? <ActivityIndicator color="#fff" /> : <AppText style={styles.btnText}>{mode === 'request' ? 'Send Request' : 'Record Payment'}</AppText>}
                             </TouchableOpacity>
                             <View style={{ height: 40 }} />
                         </ScrollView>
@@ -858,18 +859,18 @@ export default function FinancePage() {
             <Modal visible={settingsModalVisible} transparent animationType="fade" onRequestClose={() => setSettingsModalVisible(false)}>
                 <View style={[styles.modalOverlay, { justifyContent: 'center', padding: 20 }]}>
                     <View style={[styles.modalContent, { borderRadius: 24, maxHeight: 400 }]}>
-                        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 20 }}>Payment Settings</Text>
-                        <Text style={styles.label}>UPI ID (VPA)</Text>
+                        <AppText style={{ fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 20 }}>Payment Settings</AppText>
+                        <AppText style={styles.label}>UPI ID (VPA)</AppText>
                         <TextInput style={styles.input} value={upiId} onChangeText={setUpiId} placeholder="e.g. hostel@upi" placeholderTextColor={colors.textSecondary} />
 
-                        <Text style={styles.label}>Payee Name (Merchant Name)</Text>
+                        <AppText style={styles.label}>Payee Name (Merchant Name)</AppText>
                         <TextInput style={styles.input} value={payeeName} onChangeText={setPayeeName} placeholder="e.g. Smart Hostel Admin" placeholderTextColor={colors.textSecondary} />
 
                         <TouchableOpacity onPress={saveData} style={styles.btn}>
-                            <Text style={styles.btnText}>Save Settings</Text>
+                            <AppText style={styles.btnText}>Save Settings</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => setSettingsModalVisible(false)} style={{ marginTop: 16, alignItems: 'center' }}>
-                            <Text style={{ color: colors.textSecondary }}>Cancel</Text>
+                            <AppText style={{ color: colors.textSecondary }}>Cancel</AppText>
                         </TouchableOpacity>
                     </View>
                 </View>

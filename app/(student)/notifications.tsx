@@ -3,10 +3,11 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StudentNotification, clearStudentNotifications, subscribeToStudentNotifications } from '../../utils/notificationUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 export default function StudentNotifications() {
     const { colors, theme } = useTheme();
@@ -120,11 +121,11 @@ export default function StudentNotifications() {
                 <MaterialCommunityIcons name={getIcon(item.type) as any} size={24} color={getColor(item.type)} />
             </View>
             <View style={styles.textContainer}>
-                <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
-                <Text style={[styles.time, { color: colors.textSecondary }]}>
+                <AppText style={[styles.title, { color: colors.text }]}>{item.title}</AppText>
+                <AppText style={[styles.subtitle, { color: colors.textSecondary }]}>{item.subtitle}</AppText>
+                <AppText style={[styles.time, { color: colors.textSecondary }]}>
                     {new Date(item.time).toLocaleString()}
-                </Text>
+                </AppText>
             </View>
         </TouchableOpacity>
     );
@@ -139,10 +140,10 @@ export default function StudentNotifications() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialIcons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Notifications</Text>
+                    <AppText style={styles.headerTitle}>Notifications</AppText>
                     {notifications.length > 0 && (
                         <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
-                            <Text style={styles.clearText}>Clear All</Text>
+                            <AppText style={styles.clearText}>Clear All</AppText>
                         </TouchableOpacity>
                     )}
                     {notifications.length === 0 && <View style={{ width: 60 }} />}
@@ -163,7 +164,7 @@ export default function StudentNotifications() {
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <MaterialCommunityIcons name="bell-sleep-outline" size={60} color={colors.textSecondary} style={{ opacity: 0.5 }} />
-                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No new notifications</Text>
+                            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No new notifications</AppText>
                         </View>
                     }
                 />

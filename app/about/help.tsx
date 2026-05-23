@@ -2,9 +2,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { LayoutAnimation, Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { LayoutAnimation, Linking, Platform, ScrollView, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -90,8 +91,8 @@ export default function HelpCenter() {
             <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
           </TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>Help Center</Text>
-            <Text style={styles.headerSubtitle}>FAQs & Support</Text>
+            <AppText style={styles.headerTitle}>Help Center</AppText>
+            <AppText style={styles.headerSubtitle}>FAQs & Support</AppText>
           </View>
           <View style={{ width: 40 }} />
         </View>
@@ -109,14 +110,14 @@ export default function HelpCenter() {
               <MaterialCommunityIcons name="lifebuoy" size={32} color="#fff" />
             </LinearGradient>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>How can we help?</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>How can we help?</AppText>
+          <AppText style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
             Find quick answers to common questions below, or reach out to our support team.
-          </Text>
+          </AppText>
         </View>
 
         {/* FAQ Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>FREQUENTLY ASKED QUESTIONS</Text>
+        <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>FREQUENTLY ASKED QUESTIONS</AppText>
 
         {FAQS.map((faq, index) => {
           const isExpanded = expandedIndex === index;
@@ -134,7 +135,7 @@ export default function HelpCenter() {
                 <View style={[styles.cardIconBox, { backgroundColor: faq.bg }]}>
                   <MaterialCommunityIcons name={faq.icon as any} size={20} color={faq.color} />
                 </View>
-                <Text style={[styles.cardQuestion, { color: colors.text, flex: 1 }]}>{faq.q}</Text>
+                <AppText style={[styles.cardQuestion, { color: colors.text, flex: 1 }]}>{faq.q}</AppText>
                 <MaterialCommunityIcons
                   name={isExpanded ? 'chevron-up' : 'chevron-down'}
                   size={22}
@@ -142,14 +143,14 @@ export default function HelpCenter() {
                 />
               </View>
               {isExpanded && (
-                <Text style={[styles.cardAnswer, { color: colors.textSecondary }]}>{faq.a}</Text>
+                <AppText style={[styles.cardAnswer, { color: colors.textSecondary }]}>{faq.a}</AppText>
               )}
             </TouchableOpacity>
           );
         })}
 
         {/* Contact Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 32 }]}>CONTACT SUPPORT</Text>
+        <AppText style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 32 }]}>CONTACT SUPPORT</AppText>
 
         <View style={[styles.contactCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {CONTACTS.map((contact, i) => (
@@ -164,8 +165,8 @@ export default function HelpCenter() {
                   <MaterialCommunityIcons name={contact.icon as any} size={22} color={contact.color} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.contactLabel, { color: colors.textSecondary }]}>{contact.label}</Text>
-                  <Text style={[styles.contactValue, { color: colors.text }]}>{contact.value}</Text>
+                  <AppText style={[styles.contactLabel, { color: colors.textSecondary }]}>{contact.label}</AppText>
+                  <AppText style={[styles.contactValue, { color: colors.text }]}>{contact.value}</AppText>
                 </View>
                 {contact.onPress && (
                   <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textSecondary} />
@@ -183,10 +184,10 @@ export default function HelpCenter() {
         }]}>
           <MaterialCommunityIcons name="alert-circle-outline" size={22} color="#F59E0B" />
           <View style={{ flex: 1 }}>
-            <Text style={[styles.emergencyTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>Emergency?</Text>
-            <Text style={[styles.emergencyText, { color: isDark ? '#FDE68A' : '#B45309' }]}>
+            <AppText style={[styles.emergencyTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>Emergency?</AppText>
+            <AppText style={[styles.emergencyText, { color: isDark ? '#FDE68A' : '#B45309' }]}>
               For urgent issues outside office hours, contact the security desk directly at the hostel gate.
-            </Text>
+            </AppText>
           </View>
         </View>
       </ScrollView>

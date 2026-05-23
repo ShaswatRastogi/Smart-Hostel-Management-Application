@@ -3,23 +3,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useTheme } from '../utils/ThemeContext';
 import { formatUniversalTime } from '../utils/timeUtils';
 import { registerVisitor } from '../utils/visitorUtils';
+import AppText from '../components/AppText';
 
 export default function VisitorRequest() {
     const { colors, isDark } = useTheme();
@@ -246,8 +236,8 @@ export default function VisitorRequest() {
                         <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 16 }}>
                             <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Register Visitor</Text>
-                        <Text style={styles.headerSubtitle}>Submit visitor details for approval</Text>
+                        <AppText style={styles.headerTitle}>Register Visitor</AppText>
+                        <AppText style={styles.headerSubtitle}>Submit visitor details for approval</AppText>
                     </View>
                 </SafeAreaView>
             </LinearGradient>
@@ -266,9 +256,9 @@ export default function VisitorRequest() {
                     <View style={styles.formContainer}>
                         {/* Visitor Name */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>
-                                Visitor Name <Text style={styles.required}>*</Text>
-                            </Text>
+                            <AppText style={styles.label}>
+                                Visitor Name <AppText style={styles.required}>*</AppText>
+                            </AppText>
                             <TextInput
                                 style={styles.input}
                                 value={visitorName}
@@ -280,9 +270,9 @@ export default function VisitorRequest() {
 
                         {/* Visitor Phone */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>
-                                Visitor Phone <Text style={styles.required}>*</Text>
-                            </Text>
+                            <AppText style={styles.label}>
+                                Visitor Phone <AppText style={styles.required}>*</AppText>
+                            </AppText>
                             <TextInput
                                 style={styles.input}
                                 value={visitorPhone}
@@ -296,7 +286,7 @@ export default function VisitorRequest() {
 
                         {/* Relation */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Relation (Optional)</Text>
+                            <AppText style={styles.label}>Relation (Optional)</AppText>
                             <TextInput
                                 style={styles.input}
                                 value={visitorRelation}
@@ -308,9 +298,9 @@ export default function VisitorRequest() {
 
                         {/* Purpose */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>
-                                Purpose of Visit <Text style={styles.required}>*</Text>
-                            </Text>
+                            <AppText style={styles.label}>
+                                Purpose of Visit <AppText style={styles.required}>*</AppText>
+                            </AppText>
                             <TextInput
                                 style={[styles.input, styles.textArea]}
                                 value={purpose}
@@ -324,11 +314,11 @@ export default function VisitorRequest() {
 
                         {/* Expected Date */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>
-                                Expected Date <Text style={styles.required}>*</Text>
-                            </Text>
+                            <AppText style={styles.label}>
+                                Expected Date <AppText style={styles.required}>*</AppText>
+                            </AppText>
                             <Pressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-                                <Text style={styles.dateButtonText}>{formatDate(expectedDate)}</Text>
+                                <AppText style={styles.dateButtonText}>{formatDate(expectedDate)}</AppText>
                                 <MaterialCommunityIcons name="calendar" size={20} color={colors.primary} />
                             </Pressable>
                             {showDatePicker && (
@@ -348,9 +338,9 @@ export default function VisitorRequest() {
                         {/* Expected Time */}
                         <View style={styles.timeRow}>
                             <View style={styles.timeGroup}>
-                                <Text style={styles.label}>Time In</Text>
+                                <AppText style={styles.label}>Time In</AppText>
                                 <Pressable style={styles.dateButton} onPress={() => setShowTimeInPicker(true)}>
-                                    <Text style={styles.dateButtonText}>{formatTime(expectedTimeIn)}</Text>
+                                    <AppText style={styles.dateButtonText}>{formatTime(expectedTimeIn)}</AppText>
                                     <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
                                 </Pressable>
                                 {showTimeInPicker && (
@@ -367,9 +357,9 @@ export default function VisitorRequest() {
                             </View>
 
                             <View style={styles.timeGroup}>
-                                <Text style={styles.label}>Time Out</Text>
+                                <AppText style={styles.label}>Time Out</AppText>
                                 <Pressable style={styles.dateButton} onPress={() => setShowTimeOutPicker(true)}>
-                                    <Text style={styles.dateButtonText}>{formatTime(expectedTimeOut)}</Text>
+                                    <AppText style={styles.dateButtonText}>{formatTime(expectedTimeOut)}</AppText>
                                     <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
                                 </Pressable>
                                 {showTimeOutPicker && (
@@ -404,7 +394,7 @@ export default function VisitorRequest() {
                                 ) : (
                                     <>
                                         <MaterialCommunityIcons name="send" size={20} color="#fff" />
-                                        <Text style={styles.submitButtonText}>Submit Request</Text>
+                                        <AppText style={styles.submitButtonText}>Submit Request</AppText>
                                     </>
                                 )}
                             </LinearGradient>

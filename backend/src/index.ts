@@ -7,7 +7,7 @@ import http from 'http';
 dotenv.config();
 
 import path from 'path';
-import { query } from './config/db';
+import { query, initDatabase } from './config/db';
 import analyticsRoutes from './routes/analytics';
 import attendanceRoutes from './routes/attendanceRoutes';
 import authRoutes from './routes/authRoutes';
@@ -29,6 +29,9 @@ import aiRoutes from './routes/aiRoutes';
 import sessionRoutes from './routes/sessionRoutes';
 import preferenceRoutes from './routes/preferenceRoutes';
 import twoFactorRoutes from './routes/twoFactorRoutes';
+import teamRoutes from './routes/teamRoutes';
+import cleaningRoutes from './routes/cleaning_routes';
+import guardRoutes from './routes/guardRoutes';
 import { initSocket } from './socket';
 
 const app = express();
@@ -69,6 +72,7 @@ app.use('/api/visitors', visitorRoutes);
 app.use('/api/facilities', facilityRoutes);
 app.use('/api/hostel-info', hostelRoutes);
 app.use('/api/mess', messAttendanceRoutes);
+app.use('/api/guard', guardRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/export', exportRoutes);
@@ -76,6 +80,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/auth/sessions', sessionRoutes);
 app.use('/api/auth/2fa', twoFactorRoutes);
 app.use('/api/preferences', preferenceRoutes);
+app.use('/api/team', teamRoutes);
+app.use('/api/cleaning', cleaningRoutes);
 
 // Basic Route
 app.get('/', (req: Request, res: Response) => {
@@ -96,10 +102,16 @@ app.get('/health', async (req: Request, res: Response) => {
 // Start Server
 const startServer = async () => {
     try {
+        // Connect to DB (Supabase first, falls back to local automatically)
+        await initDatabase();
+
         console.log('Checking database schema...');
         await query(`
             ALTER TABLE students 
             ADD COLUMN IF NOT EXISTS last_notifications_cleared_at BIGINT DEFAULT 0;
+            
+            ALTER TABLE leave_requests
+            ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General';
             
             ALTER TABLE messages
             ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
@@ -176,6 +188,56 @@ const startServer = async () => {
             UPDATE facilities SET title = name WHERE title IS NULL AND name IS NOT NULL;
             -- Fallback for title if name is also null
             UPDATE facilities SET title = 'New Facility' WHERE title IS NULL;
+
+            -- Cleaning Portal Tables
+            CREATE TABLE IF NOT EXISTS cleaning_inventory (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                stock VARCHAR(50) NOT NULL,
+                status VARCHAR(50) DEFAULT 'Good',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS cleaning_checklist (
+                id SERIAL PRIMARY KEY,
+                area_name VARCHAR(255) NOT NULL,
+                is_done BOOLEAN DEFAULT FALSE,
+                completed_at TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Seed default inventory if empty
+            INSERT INTO cleaning_inventory (name, stock, status)
+            SELECT 'Phenyl / Disinfectant', '12L', 'Good'
+            WHERE NOT EXISTS (SELECT 1 FROM cleaning_inventory WHERE name = 'Phenyl / Disinfectant');
+
+            INSERT INTO cleaning_inventory (name, stock, status)
+            SELECT 'Brooms / Mops', '5', 'Low'
+            WHERE NOT EXISTS (SELECT 1 FROM cleaning_inventory WHERE name = 'Brooms / Mops');
+
+            -- Seed default checklist if empty
+            INSERT INTO cleaning_checklist (area_name)
+            SELECT 'Main Corridors' WHERE NOT EXISTS (SELECT 1 FROM cleaning_checklist WHERE area_name = 'Main Corridors');
+            
+            INSERT INTO cleaning_checklist (area_name)
+            SELECT 'Student Bathrooms' WHERE NOT EXISTS (SELECT 1 FROM cleaning_checklist WHERE area_name = 'Student Bathrooms');
+
+            ALTER TABLE rooms 
+            ADD COLUMN IF NOT EXISTS last_cleaned_at TIMESTAMPTZ;
+
+            ALTER TABLE conversations
+            ADD COLUMN IF NOT EXISTS staff_id INTEGER REFERENCES users(id);
+            
+            ALTER TABLE conversations
+            ADD COLUMN IF NOT EXISTS admin_unread INTEGER DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS student_unread INTEGER DEFAULT 0;
+
+            -- Update existing nulls to 0
+            UPDATE conversations SET admin_unread = 0 WHERE admin_unread IS NULL;
+            UPDATE conversations SET student_unread = 0 WHERE student_unread IS NULL;
+            
+            -- Optional: Add index for performance
+            CREATE INDEX IF NOT EXISTS idx_conversations_student_staff ON conversations(student_id, staff_id);
         `);
         console.log('✅ Database schema verified');
 
@@ -195,3 +257,4 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 });
 
 startServer();
+

@@ -41,6 +41,8 @@ yarn-error.*
 .env.local
 .env.*
 !.env.example
+backend/.env
+ai-service/.env
 
 # typescript
 *.tsbuildinfo
@@ -68,13 +70,20 @@ disk_files.txt
 git_files.txt
 missing_files.txt
 
-# Firebase & Service Accounts
+# Firebase & Service Accounts (NEVER commit)
 google-services.json
+GoogleService-Info.plist
 firestore.rules
 serviceAccountKey.json
 *firebase-adminsdk*.json
 firebase-service-account.json
 backend/firebase-service-account.json
+*-service-account*.json
+*serviceAccount*.json
+debug.keystore
+
+# Team onboarding (contains secrets - share privately)
+TEAM_ONBOARDING.txt
 
 # IDE
 .vscode/
@@ -84,3 +93,4 @@ backend/firebase-service-account.json
 backend/uploads/
 uploads/
 backend/users_push_tokens.json
+

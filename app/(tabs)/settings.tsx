@@ -4,20 +4,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  DeviceEventEmitter,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { API_BASE_URL } from '../../utils/api';
 import { fetchUserData, getInitial, StudentData } from '../../utils/nameUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 // Reusable row component
 const SettingRow = ({ icon, iconColor, iconBg, label, description, onPress, value, danger, isLast, colors, isDark }: any) => (
@@ -32,12 +25,12 @@ const SettingRow = ({ icon, iconColor, iconBg, label, description, onPress, valu
         <MaterialCommunityIcons name={icon} size={20} color={iconColor || (danger ? '#EF4444' : (isDark ? '#60A5FA' : '#004e92'))} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.rowLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</Text>
-        {description && <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{description}</Text>}
+        <AppText style={[styles.rowLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</AppText>
+        {description && <AppText style={[styles.rowDesc, { color: colors.textSecondary }]}>{description}</AppText>}
       </View>
     </View>
     {value ? (
-      <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>
+      <AppText style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</AppText>
     ) : (
       onPress && <MaterialIcons name="chevron-right" size={20} color="#94A3B8" />
     )}
@@ -79,9 +72,16 @@ export default function Settings() {
             const { deregisterPushToken } = await import('../../utils/usePushNotifications');
             const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
             const { useAuthStore } = await import('../../store/useAuthStore');
+            const { default: api } = await import('../../utils/api');
+            // Delete the session from the backend so it disappears from "online devices"
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+            if (refreshToken) {
+              await api.post('/auth/sessions/logout', { refreshToken }).catch(() => {});
+            }
             await deregisterPushToken();
             await setStoredUser(null);
             await AsyncStorage.removeItem('userToken');
+            await AsyncStorage.removeItem('refreshToken');
             useAuthStore.getState().setUser(null);
             router.replace('/login');
           } catch (error) { console.error("Logout error:", error); }
@@ -121,8 +121,8 @@ export default function Settings() {
           <SafeAreaView edges={['top', 'left', 'right']}>
             <View style={styles.headerContent}>
               <View>
-                <Text style={styles.headerTitle}>Settings</Text>
-                <Text style={styles.headerSubtitle}>Manage your account & app</Text>
+                <AppText style={styles.headerTitle}>Settings</AppText>
+                <AppText style={styles.headerSubtitle}>Manage your account & app</AppText>
               </View>
               <View style={styles.headerIcon}>
                 <MaterialCommunityIcons name="cog" size={24} color="#fff" />
@@ -142,28 +142,28 @@ export default function Settings() {
               <View style={styles.avatarWrap}>
                 {student?.profilePhoto ? (
                   <Image
-                    source={{ uri: `${API_BASE_URL}${student.profilePhoto}` }}
+                    source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                     style={styles.avatar}
                     contentFit="cover"
                     cachePolicy="memory-disk"
                   />
                 ) : (
                   <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.avatarText}>{getInitial(student?.fullName || 'U')}</Text>
+                    <AppText style={styles.avatarText}>{getInitial(student?.fullName || 'U')}</AppText>
                   </View>
                 )}
                 <View style={[styles.onlineDot, { borderColor: colors.card }]} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.profileName, { color: colors.text }]}>{student?.fullName || 'Student'}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{student?.email || 'No email'}</Text>
+                <AppText style={[styles.profileName, { color: colors.text }]}>{student?.fullName || 'Student'}</AppText>
+                <AppText style={[styles.profileEmail, { color: colors.textSecondary }]}>{student?.email || 'No email'}</AppText>
                 <View style={styles.profileMeta}>
                   <View style={[styles.roleBadge, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF' }]}>
-                    <Text style={[styles.roleBadgeText, { color: isDark ? '#60A5FA' : '#004e92' }]}>
+                    <AppText style={[styles.roleBadgeText, { color: isDark ? '#60A5FA' : '#004e92' }]}>
                       Room {student?.roomNo || '--'}
-                    </Text>
+                    </AppText>
                   </View>
-                  <Text style={[styles.rollText, { color: colors.textSecondary }]}>{student?.rollNo || ''}</Text>
+                  <AppText style={[styles.rollText, { color: colors.textSecondary }]}>{student?.rollNo || ''}</AppText>
                 </View>
               </View>
               <MaterialIcons name="chevron-right" size={24} color="#94A3B8" />
@@ -171,23 +171,23 @@ export default function Settings() {
           </TouchableOpacity>
 
           {/* ── Account & Security ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account & Security</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account & Security</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="account-edit-outline" label="Edit Profile" description="Personal info, parent details" onPress={() => router.push('/edit-profile')} colors={colors} isDark={isDark} />
             <SettingRow icon="lock-outline" label="Change Password" description="Update your login credentials" onPress={() => router.push('/account/change-password')} colors={colors} isDark={isDark} />
             <SettingRow icon="shield-check-outline" label="Two-Factor Auth" description="Extra layer of protection" onPress={() => router.push('/settings/two-factor')} colors={colors} isDark={isDark} />
             <SettingRow icon="devices" label="Manage Devices" description="View active sessions" onPress={() => router.push('/settings/devices')} colors={colors} isDark={isDark} />
-            <SettingRow icon="link-variant" label="Linked Accounts" description="Google, Biometrics" onPress={() => router.push('/account/linked-accounts')} colors={colors} isDark={isDark} isLast />
+            <SettingRow icon="link-variant" label="Linked Accounts" description="Google Account" onPress={() => router.push('/account/linked-accounts')} colors={colors} isDark={isDark} isLast />
           </View>
 
           {/* ── Notifications ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="bell-outline" label="Push Notifications" description="Manage granular push alerts" onPress={() => router.push('/account/notification-settings')} colors={colors} isDark={isDark} isLast />
           </View>
 
           {/* ── Appearance & Display ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Appearance & Display</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Appearance & Display</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="brightness-6" label="Theme Mode" description={isDark ? "Dark theme active" : "Light theme active"} onPress={toggleTheme} value={getThemeLabel()} colors={colors} isDark={isDark} />
             <SettingRow icon="translate" label="App Language" description="Choose interface language" value="English" onPress={() => router.push('/settings/language')} colors={colors} isDark={isDark} />
@@ -195,20 +195,20 @@ export default function Settings() {
           </View>
 
           {/* ── Data & Storage ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Data & Storage</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Data & Storage</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="database-outline" label="Storage & Cache" description="Manage app storage, clear cache" onPress={() => router.push('/settings/data-storage')} colors={colors} isDark={isDark} isLast />
           </View>
 
           {/* ── Privacy ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Privacy</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Privacy</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="download-outline" label="Download My Data" description="Export your personal data" onPress={() => router.push('/account/download-data')} colors={colors} isDark={isDark} />
             <SettingRow icon="text-box-check-outline" label="Privacy Policy" description="How we handle your data" onPress={() => router.push('/about/privacy')} colors={colors} isDark={isDark} isLast />
           </View>
 
           {/* ── Support ── */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support</Text>
+          <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support</AppText>
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SettingRow icon="help-circle-outline" label="Help Center" description="FAQs and contact support" onPress={() => router.push('/about/help')} colors={colors} isDark={isDark} />
             <SettingRow icon="bug-outline" label="Report a Bug" onPress={() => showAlert('Bug Report', 'Send bug reports to support@smarthostel.com with screenshots and steps to reproduce.')} colors={colors} isDark={isDark} />
@@ -219,9 +219,9 @@ export default function Settings() {
           {/* ── Version Info ── */}
           <View style={[styles.versionRow, { marginTop: 8 }]}>
             <MaterialCommunityIcons name="tag-outline" size={16} color={colors.textSecondary} />
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+            <AppText style={[styles.versionText, { color: colors.textSecondary }]}>
               SmartStay v{Application.nativeApplicationVersion} ({Application.nativeBuildVersion})
-            </Text>
+            </AppText>
           </View>
 
           {/* ── Logout ── */}
@@ -230,10 +230,10 @@ export default function Settings() {
             onPress={handleLogout}
           >
             <MaterialCommunityIcons name="logout-variant" size={22} color="#EF4444" />
-            <Text style={styles.logoutText}>Log Out Session</Text>
+            <AppText style={styles.logoutText}>Log Out Session</AppText>
           </TouchableOpacity>
 
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>SmartStay Hostels © 2026 • Premium Experience</Text>
+          <AppText style={[styles.footerText, { color: colors.textSecondary }]}>SmartStay Hostels © 2026 • Premium Experience</AppText>
         </View>
       </ScrollView>
     </View>

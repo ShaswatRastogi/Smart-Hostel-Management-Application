@@ -2,11 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { BarChart, LineChart, PieChart } from 'react-native-chart-kit';
 import PagerView from 'react-native-pager-view';
 import api from '../../utils/api';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 const { width } = Dimensions.get('window');
 
@@ -28,12 +29,12 @@ const MetricCard = ({ icon, value, label, trend, colors, isDark }: any) => {
                 {trendStr && trendStr !== '0%' && (
                     <View style={[styles.trendBadge, { backgroundColor: trendBg }]}>
                         <MaterialCommunityIcons name={trendIcon} size={14} color={trendColor} />
-                        <Text style={[styles.trendText, { color: trendColor }]}>{trendStr}</Text>
+                        <AppText style={[styles.trendText, { color: trendColor }]}>{trendStr}</AppText>
                     </View>
                 )}
             </View>
-            <Text style={[styles.metricValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>{value}</Text>
-            <Text style={[styles.metricLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{label}</Text>
+            <AppText style={[styles.metricValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>{value}</AppText>
+            <AppText style={[styles.metricLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{label}</AppText>
         </View>
     );
 };
@@ -46,17 +47,17 @@ const SectionHeader = ({ title, icon, isDark }: any) => (
             size={20}
             color={isDark ? '#60A5FA' : '#3B82F6'}
         />
-        <Text style={[styles.sectionTitle, { color: isDark ? '#F3F4F6' : '#111827' }]}>
+        <AppText style={[styles.sectionTitle, { color: isDark ? '#F3F4F6' : '#111827' }]}>
             {title}
-        </Text>
+        </AppText>
     </View>
 );
 
 // Info row component for data tables
 const InfoRow = ({ label, value, isDark }: any) => (
     <View style={styles.infoRow}>
-        <Text style={[styles.infoLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{label}</Text>
-        <Text style={[styles.infoValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>{value}</Text>
+        <AppText style={[styles.infoLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{label}</AppText>
+        <AppText style={[styles.infoValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>{value}</AppText>
     </View>
 );
 
@@ -148,7 +149,7 @@ export default function Analytics() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
                         <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
-                    <Text style={[styles.modernHeaderTitle, { color: '#FFFFFF' }]}>Analytics</Text>
+                    <AppText style={[styles.modernHeaderTitle, { color: '#FFFFFF' }]}>Analytics</AppText>
                     <View style={styles.headerButton} />
                 </LinearGradient>
                 <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 100 }} />
@@ -186,7 +187,7 @@ export default function Analytics() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
-                <Text style={[styles.modernHeaderTitle, { color: '#FFFFFF' }]}>Analytics Dashboard</Text>
+                <AppText style={[styles.modernHeaderTitle, { color: '#FFFFFF' }]}>Analytics Dashboard</AppText>
                 <TouchableOpacity onPress={onRefresh} style={styles.headerButton}>
                     <MaterialCommunityIcons name="refresh" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
@@ -208,12 +209,12 @@ export default function Analytics() {
                         ]}
                         onPress={() => setSelectedPeriod(period.value)}
                     >
-                        <Text style={[
+                        <AppText style={[
                             styles.filterText,
                             { color: selectedPeriod === period.value ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#6B7280') }
                         ]}>
                             {period.label}
-                        </Text>
+                        </AppText>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -239,12 +240,12 @@ export default function Analytics() {
                                 size={18}
                                 color={selectedTab === tab.key ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#6B7280')}
                             />
-                            <Text style={[
+                            <AppText style={[
                                 styles.modernTabText,
                                 { color: selectedTab === tab.key ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#6B7280') }
                             ]}>
                                 {tab.label}
-                            </Text>
+                            </AppText>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -366,16 +367,16 @@ function OverviewTab({ stats, roomOccupancy, recentActivity, isDark, chartConfig
                     />
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statItemValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>
+                            <AppText style={[styles.statItemValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>
                                 {roomOccupancy.find((r: any) => r.status === 'Occupied')?.count || 0}
-                            </Text>
-                            <Text style={[styles.statItemLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Occupied</Text>
+                            </AppText>
+                            <AppText style={[styles.statItemLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Occupied</AppText>
                         </View>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statItemValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>
+                            <AppText style={[styles.statItemValue, { color: isDark ? '#F3F4F6' : '#111827' }]}>
                                 {roomOccupancy.find((r: any) => r.status === 'Vacant')?.count || 0}
-                            </Text>
-                            <Text style={[styles.statItemLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Available</Text>
+                            </AppText>
+                            <AppText style={[styles.statItemLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Available</AppText>
                         </View>
                     </View>
                 </View>

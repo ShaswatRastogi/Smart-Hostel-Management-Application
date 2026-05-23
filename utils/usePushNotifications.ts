@@ -58,6 +58,7 @@ async function registerForPushNotificationsAsync() {
 
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
+import { isAdmin } from './authUtils';
 
 export const deregisterPushToken = async () => {
     try {
@@ -117,7 +118,7 @@ export const usePushNotifications = () => {
 
         // Small delay to ensure navigation is ready and layout is stable
         setTimeout(() => {
-            if (userRole === 'admin') {
+            if (isAdmin({ role: userRole })) {
                 console.log(`📍 [Push] Admin navigating to: ${type}`);
                 switch (type) {
                     case 'message':
@@ -232,16 +233,39 @@ export const usePushNotifications = () => {
         };
     }, []);
 
-    // Sync token with backend when User is authenticated
+    // Re-attempt token registration when user logs in (covers the case where
+    // the token wasn't ready yet during the initial mount)
+    useEffect(() => {
+        if (user && !expoPushToken) {
+            console.log("🔄 [Push] User logged in but no token yet — retrying registration...");
+            const retry = async () => {
+                const token = await registerForPushNotificationsAsync();
+                if (token) setExpoPushToken(token);
+            };
+            retry();
+        }
+    }, [user]);
+
+    // Sync token with backend when User is authenticated (with retry)
     useEffect(() => {
         if (expoPushToken && user) {
-            console.log(`🔄 [Push] Syncing Token for ${user.role}: ${user.name || 'User'}`);
-            api.post('/auth/push-token', { pushToken: expoPushToken })
-                .then(() => console.log('✅ [Push] Token successfully saved/synced to backend'))
-                .catch(err => {
+            const syncWithRetry = async (attempt = 1) => {
+                try {
+                    console.log(`🔄 [Push] Syncing Token for ${user.role}: ${user.name || 'User'} (attempt ${attempt})`);
+                    await api.post('/auth/push-token', { pushToken: expoPushToken });
+                    console.log('✅ [Push] Token successfully saved/synced to backend');
+                } catch (err: any) {
                     const status = err.response ? err.response.status : 'Network Error';
                     console.error(`❌ [Push] Failed to sync token (${status}):`, err.message);
-                });
+                    // Retry up to 3 times with increasing delay
+                    if (attempt < 3) {
+                        const delay = attempt * 5000;
+                        console.log(`🔄 [Push] Retrying in ${delay / 1000}s...`);
+                        setTimeout(() => syncWithRetry(attempt + 1), delay);
+                    }
+                }
+            };
+            syncWithRetry();
         } else if (expoPushToken && !user) {
             console.log("ℹ️ [Push] Token available but no user logged in. Skipping sync.");
         }

@@ -2,21 +2,12 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sendChatMessage, ChatMessage } from '../utils/aiChat';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function AIChatScreen() {
     const router = useRouter();
@@ -103,10 +94,10 @@ export default function AIChatScreen() {
                         <MaterialCommunityIcons name="robot-outline" size={24} color="#fff" />
                     </View>
                     <View>
-                        <Text style={[styles.headerTitle, { color: colors.text }]}>SmartStay Assistant</Text>
+                        <AppText style={[styles.headerTitle, { color: colors.text }]}>SmartStay Assistant</AppText>
                         <View style={styles.statusContainer}>
                             <View style={styles.onlineDot} />
-                            <Text style={styles.headerSubtitle}>Always Online</Text>
+                            <AppText style={styles.headerSubtitle}>Always Online</AppText>
                         </View>
                     </View>
                 </View>
@@ -158,14 +149,14 @@ export default function AIChatScreen() {
                                         msg.isError && { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#EF4444' }
                                     ]}
                                 >
-                                    <Text style={[
+                                    <AppText style={[
                                         styles.messageText,
                                         { color: msg.role === 'user' ? '#ffffff' : (msg.isError ? '#B91C1C' : colors.text) }
                                     ]}>
                                         {msg.text}
-                                    </Text>
+                                    </AppText>
                                 </View>
-                                <Text style={[
+                                <AppText style={[
                                     styles.timestamp, 
                                     { 
                                         alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
@@ -173,7 +164,7 @@ export default function AIChatScreen() {
                                     }
                                 ]}>
                                     {formatTime(msg.timestamp)}
-                                </Text>
+                                </AppText>
                             </View>
                         </View>
                     ))}

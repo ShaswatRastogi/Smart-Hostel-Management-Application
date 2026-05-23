@@ -3,11 +3,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import api from '../../utils/api';
+import AppText from '../../components/AppText';
 
 const PreferenceItem = ({ icon, iconColor, iconBg, label, description, value, onValueChange, colors, isLast }: any) => (
   <View style={[styles.prefRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
@@ -15,8 +16,8 @@ const PreferenceItem = ({ icon, iconColor, iconBg, label, description, value, on
       <MaterialIcons name={icon} size={22} color={iconColor} />
     </View>
     <View style={styles.textWrap}>
-      <Text style={[styles.prefLabel, { color: colors.text }]}>{label}</Text>
-      <Text style={[styles.prefDesc, { color: colors.textSecondary }]}>{description}</Text>
+      <AppText style={[styles.prefLabel, { color: colors.text }]}>{label}</AppText>
+      <AppText style={[styles.prefDesc, { color: colors.textSecondary }]}>{description}</AppText>
     </View>
     <Switch value={value} onValueChange={onValueChange} trackColor={{ false: '#CBD5E1', true: '#004e92' }} thumbColor={'#fff'} ios_backgroundColor="#CBD5E1" />
   </View>
@@ -66,8 +67,8 @@ export default function NotificationSettings() {
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>Push Notifications</Text>
-            <Text style={styles.headerSub}>Changes save automatically{saving ? ' • Saving...' : ''}</Text>
+            <AppText style={styles.headerTitle}>Push Notifications</AppText>
+            <AppText style={styles.headerSub}>Changes save automatically{saving ? ' • Saving...' : ''}</AppText>
           </View>
           <View style={{ width: 40 }} />
         </View>
@@ -81,7 +82,7 @@ export default function NotificationSettings() {
 
         {/* Granular */}
         {prefs.master !== false && (<>
-          <Text style={[styles.secTitle, { color: colors.textSecondary }]}>GRANULAR PREFERENCES</Text>
+          <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>GRANULAR PREFERENCES</AppText>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {CATEGORIES.map((cat, i) => (
               <PreferenceItem key={cat.key} icon={cat.icon} iconColor={cat.color} iconBg={cat.color + '15'} label={cat.label} description={cat.desc} value={prefs[cat.key]} onValueChange={() => togglePreference(cat.key)} colors={colors} isLast={i === CATEGORIES.length - 1} />

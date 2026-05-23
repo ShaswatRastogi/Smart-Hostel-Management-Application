@@ -7,7 +7,7 @@ import {
     exportStudents,
     getExportFilters
 } from '../controllers/exportController';
-import { requireAdmin, requireAuth } from '../middleware/auth';
+import { requireStaffOrHigher, requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -15,21 +15,21 @@ const router = Router();
 router.use(requireAuth);
 
 // Get distinct filter options (admin only)
-router.get('/filters', requireAdmin, getExportFilters);
+router.get('/filters', requireStaffOrHigher, getExportFilters);
 
 // Student exports (admin only)
-router.get('/students', requireAdmin, exportStudents);
+router.get('/students', requireStaffOrHigher, exportStudents);
 
 // Attendance exports (admin only)
-router.get('/attendance', requireAdmin, exportAttendance);
+router.get('/attendance', requireStaffOrHigher, exportAttendance);
 
 // Complaints exports (admin only)
-router.get('/complaints', requireAdmin, exportComplaints);
+router.get('/complaints', requireStaffOrHigher, exportComplaints);
 
 // Payments exports (admin only)
-router.get('/payments', requireAdmin, exportPayments);
+router.get('/payments', requireStaffOrHigher, exportPayments);
 
 // Leave requests exports (admin only)
-router.get('/leave-requests', requireAdmin, exportLeaveRequests);
+router.get('/leave-requests', requireStaffOrHigher, exportLeaveRequests);
 
 export default router;

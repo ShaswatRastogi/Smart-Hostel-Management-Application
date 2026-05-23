@@ -1,21 +1,25 @@
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
-import path from 'path';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../uploads/profiles');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Configure Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+// Configure Storage (Cloudinary)
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+        return {
+            folder: 'smarthostel/profiles',
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+            public_id: `${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+            // Optional: Auto-crop to square for profile photos
+            transformation: [{ width: 500, height: 500, crop: 'limit' }]
+        };
     }
 });
 
@@ -36,7 +40,7 @@ export const upload = multer({
 
 // Debug logging middleware
 export const logUpload = (req: any, res: any, next: any) => {
-    console.log('📸 Upload middleware triggered');
+    console.log('📸 Upload middleware triggered (Cloudinary)');
     console.log('Content-Type:', req.headers['content-type']);
     console.log('Content-Length:', req.headers['content-length']);
     next();

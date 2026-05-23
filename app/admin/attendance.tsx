@@ -3,7 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Image, RefreshControl, SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AlphabetJumpBar from '../../components/AlphabetJumpBar';
 import StudentDetailsModal from '../../components/StudentDetailsModal';
@@ -12,6 +12,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import api, { API_BASE_URL } from '../../utils/api';
 import { useTheme } from '../../utils/ThemeContext';
 import { formatUniversalTime, getCurrentTimeInCountry } from '../../utils/timeUtils';
+import AppText from '../../components/AppText';
 
 const AttendancePage = () => {
     const { colors, theme } = useTheme();
@@ -392,7 +393,7 @@ const AttendancePage = () => {
                 }}>
                     <MaterialIcons name="chevron-left" size={28} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Attendance</Text>
+                <AppText style={styles.headerTitle}>Attendance</AppText>
             </LinearGradient>
 
             <View style={{ flex: 1, position: 'relative' }}>
@@ -413,7 +414,7 @@ const AttendancePage = () => {
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => setShowDatePicker(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                     <MaterialCommunityIcons name="calendar-month" size={20} color={colors.primary} />
-                                    <Text style={styles.dateText}>
+                                    <AppText style={styles.dateText}>
                                         {(() => {
                                             const d = new Date(date);
                                             const nowCountry = getCurrentTimeInCountry();
@@ -424,7 +425,7 @@ const AttendancePage = () => {
                                             if (d.toDateString() === yesterdayCountry.toDateString()) return 'Yesterday';
                                             return formatUniversalTime(d, { weekday: 'short', day: 'numeric', month: 'long' });
                                         })()}
-                                    </Text>
+                                    </AppText>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[styles.dateBtn, { opacity: date.getTime() + 86400000 > new Date().setHours(23, 59, 59, 999) ? 0.3 : 1 }]} onPress={() => changeDate(1)}>
                                     <MaterialIcons name="chevron-right" size={24} color={colors.text} />
@@ -449,8 +450,8 @@ const AttendancePage = () => {
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                 >
-                                    <Text style={styles.statsValue}>{stats.present}</Text>
-                                    <Text style={styles.statsLabel}>Present</Text>
+                                    <AppText style={styles.statsValue}>{stats.present}</AppText>
+                                    <AppText style={styles.statsLabel}>Present</AppText>
                                 </LinearGradient>
 
                                 <LinearGradient
@@ -459,8 +460,8 @@ const AttendancePage = () => {
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                 >
-                                    <Text style={styles.statsValue}>{stats.absent}</Text>
-                                    <Text style={styles.statsLabel}>Absent</Text>
+                                    <AppText style={styles.statsValue}>{stats.absent}</AppText>
+                                    <AppText style={styles.statsLabel}>Absent</AppText>
                                 </LinearGradient>
 
                                 <LinearGradient
@@ -469,8 +470,8 @@ const AttendancePage = () => {
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                 >
-                                    <Text style={styles.statsValue}>{stats.late}</Text>
-                                    <Text style={styles.statsLabel}>Late</Text>
+                                    <AppText style={styles.statsValue}>{stats.late}</AppText>
+                                    <AppText style={styles.statsLabel}>Late</AppText>
                                 </LinearGradient>
 
                                 <LinearGradient
@@ -479,8 +480,8 @@ const AttendancePage = () => {
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                 >
-                                    <Text style={styles.statsValue}>{stats.total}</Text>
-                                    <Text style={styles.statsLabel}>Total</Text>
+                                    <AppText style={styles.statsValue}>{stats.total}</AppText>
+                                    <AppText style={styles.statsLabel}>Total</AppText>
                                 </LinearGradient>
                             </View>
 
@@ -534,12 +535,12 @@ const AttendancePage = () => {
                         loading ? (
                             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
                         ) : (
-                            <Text style={{ textAlign: 'center', marginTop: 30, color: colors.textSecondary }}>No students found</Text>
+                            <AppText style={{ textAlign: 'center', marginTop: 30, color: colors.textSecondary }}>No students found</AppText>
                         )
                     }
                     renderSectionHeader={({ section: { title } }) => (
                         <View style={{ backgroundColor: colors.background, paddingVertical: 8, paddingHorizontal: 20 }}>
-                            <Text style={{ fontWeight: 'bold', color: colors.primary }}>{title}</Text>
+                            <AppText style={{ fontWeight: 'bold', color: colors.primary }}>{title}</AppText>
                         </View>
                     )}
                     renderItem={({ item: student }) => {
@@ -549,19 +550,19 @@ const AttendancePage = () => {
                                     <TouchableOpacity style={styles.studentInfo} onPress={() => openDetails(student)}>
                                         {student.profilePhoto ? (
                                             <Image
-                                                source={{ uri: `${API_BASE_URL}${student.profilePhoto}` }}
+                                                source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                                                 style={styles.avatar}
                                             />
                                         ) : (
                                             <View style={styles.avatarPlaceholder}>
-                                                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textSecondary }}>
+                                                <AppText style={{ fontSize: 16, fontWeight: '700', color: colors.textSecondary }}>
                                                     {student.name.charAt(0)}
-                                                </Text>
+                                                </AppText>
                                             </View>
                                         )}
                                         <View>
-                                            <Text style={styles.nameText}>{student.name}</Text>
-                                            <Text style={styles.roomText}>Room {student.room}</Text>
+                                            <AppText style={styles.nameText}>{student.name}</AppText>
+                                            <AppText style={styles.roomText}>Room {student.room}</AppText>
                                         </View>
                                     </TouchableOpacity>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -569,7 +570,7 @@ const AttendancePage = () => {
                                             style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#EF444415', borderRadius: 8 }}
                                             onPress={() => handleMark(student.studentId, 'clear')}
                                         >
-                                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>Clear</Text>
+                                            <AppText style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>Clear</AppText>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -594,14 +595,14 @@ const AttendancePage = () => {
                                                 ]}
                                                 onPress={() => handleMark(student.studentId, status)}
                                             >
-                                                <Text style={{
+                                                <AppText style={{
                                                     fontSize: 12,
                                                     fontWeight: '700',
                                                     color: textColor,
                                                     textTransform: 'capitalize'
                                                 }}>
                                                     {status}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         );
                                     })}

@@ -1,6 +1,6 @@
 # 🏠 SmartStay - Smart Hostel Management Application
 
-A comprehensive full-stack mobile application for managing hostel operations, built with React Native (Expo) and PostgreSQL. SmartStay streamlines hostel administration with features for student management, attendance tracking, facility management, and real-time communication.
+A comprehensive full-stack mobile application for managing hostel operations, built with React Native (Expo), Node.js, Python AI, and PostgreSQL. SmartStay streamlines hostel administration with features for student management, attendance tracking, facility management, AI-powered assistance, and real-time communication.
 
 ## 📑 Table of Contents
 
@@ -27,19 +27,22 @@ A comprehensive full-stack mobile application for managing hostel operations, bu
 
 ### For Students
 - 📱 **Dashboard** - Overview of hostel activities and personal information
+- 🤖 **AI Assistant** - Interactive chatbot that can log complaints, apply for leaves, and answer queries in real-time
 - 📅 **Attendance** - View attendance records and history with calendar visualization
 - 🎫 **Leave Requests** - Submit and track leave applications with approval workflow
 - 🛠️ **Complaints** - Report and monitor facility issues with real-time status updates
-- 💬 **Chat** - Direct one-on-one communication with hostel administrators
-- 🔔 **Notifications** - Real-time updates with granular opt-in/opt-out preferences
+- 💬 **Chat** - Real-time one-on-one messaging with administrators (read receipts, typing indicators)
+- 🔔 **Notifications** - Real-time push notifications with 10+ granular opt-in/opt-out categories
 - 📢 **Notice Board** - Access hostel notices and important announcements
 - 👥 **Visitor Management** - Register and track visitor requests with QR codes
-- 🧺 **Laundry Service** - Request and track laundry services
-- 🍽️ **Mess Attendance** - Mark and view mess attendance
-- ⚙️ **Settings & Profile** - Comprehensive account management with self-service profile photo updates
+- 🧺 **Laundry & Room Service** - Request and track services
+- 🍽️ **Mess Attendance** - Mark and view mess attendance with 'Going vs Skipping' analytics
+- 📥 **Data Export** - Download personal data as a secure PDF (profile photo URLs stripped for privacy)
+- ⚙️ **Settings & Profile** - Premium Neo-Bento UI with self-service photo uploads (Cloudinary CDN), linked accounts, and 2FA
+- ♿ **Accessibility Suite** - High contrast, haptic feedback, reduced motion, dynamic font sizing, and bold text via global `AppText` component
 
 ### For Administrators
-- 👥 **Student Management** - Manage student profiles, records, and room assignments
+- 👥 **Student Management** - Manage student profiles, records, and room assignments (with automated email domain formatting)
 - ✅ **Attendance Tracking** - Record and monitor daily attendance with calendar view
 - 📋 **Leave Management** - Review and approve/reject leave requests with remarks
 - 🔧 **Facility Management** - Track, prioritize, and resolve maintenance complaints
@@ -54,8 +57,32 @@ A comprehensive full-stack mobile application for managing hostel operations, bu
 - 🍲 **Mess Analytics** - Daily 'Going vs Skipping' statistics for meal planning
 - 🚌 **Bus Broadcaster** - Create/Update routes with instant push notifications to all students
 - 💳 **Payment Verification** - Real-time processing via Razorpay with automated dues updating
+- 🔐 **Security Hub** - Enforce Two-Factor Authentication (2FA) and monitor active device sessions with heartbeat tracking
 
-## 🌟 Recent Major Enhancements (V3) - Enterprise & UX Overhaul
+## 🌟 Latest Enhancements (V3.5 Updated) — Data Privacy, Accessibility & Stability
+
+### 1. Cloudinary CDN Image Handling
+*   **Universal URI Resolution**: Fixed profile photo rendering across the entire app — Student Details Modal, Chat message avatars, Attendance Details, and Admin views now properly handle absolute Cloudinary URLs instead of incorrectly prepending the backend base URL.
+*   **Privacy-Safe Data Export**: The PDF data export now strips `profilePhoto` / `profile_photo` fields to prevent Cloudinary URLs from leaking into downloaded files.
+
+### 2. Global AppText Accessibility Component
+*   **`components/AppText.tsx`**: A new drop-in replacement for React Native's `<Text>` that automatically respects the user's accessibility preferences (dynamic font size, bold text) from the Zustand accessibility store.
+*   **Codebase-Wide Migration**: All 90+ screens and components now use `<AppText>` instead of raw `<Text>`, ensuring consistent accessibility across the entire application.
+
+### 3. Session Heartbeat & Device Management
+*   **`utils/useSessionHeartbeat.ts`**: New hook that pings the backend at regular intervals to track online device status.
+*   **Active Sessions**: The "Manage Devices" panel now shows only genuinely online sessions, with proper logout cleanup that deletes database records.
+
+### 4. Firebase Admin SDK Centralization
+*   **`backend/src/config/firebase.ts`**: Consolidated Firebase initialization into a single shared module, replacing scattered inline initialization across push service and auth controllers.
+
+### 5. Cloudinary Upload Migration & Security Hardening
+*   **Backend `uploadMiddleware.ts`**: Migrated profile photo uploads from local disk storage to Cloudinary CDN.
+*   **`.gitignore` Fortification**: Added credential patterns for enhanced security.
+*   **Environment Templates**: `.env.example` files updated across all three services (root, backend, ai-service).
+*   **`start-dev.sh`**: Added macOS/Linux development launcher alongside existing `start-dev.bat`.
+
+## 🌟 Previous Major Enhancements (V3) - Enterprise & UX Overhaul
 
 ### 1. Instant Cloud Sync (Supabase Integration)
 *   **Team-Ready Backend**: Support for `DATABASE_URL` connection strings, allowing the entire team to sync with a live Supabase cloud database instantly.
@@ -89,7 +116,7 @@ A comprehensive full-stack mobile application for managing hostel operations, bu
 *   **Conflict-Free Allotments**: Fixed a race condition where room details (WiFi, Room Type) were being overwritten by `null` values during the subsequent profile photo upload.
 *   **Resilient Updates**: The `updateStudent` API now preserves existing database fields if new values aren't provided, ensuring data integrity across partial updates.
 
-## 🌟 Latest Major Enhancements (V3.5) - AI, Accessibility & Security
+## 🌟 Enhancements (V3.5) - AI, Accessibility & Security
 
 ### 1. Phase 2 AI Assistant: "Action Takers" (`ai-service/`)
 *   **Dedicated Python AI Microservice**: Built a robust Uvicorn/Python service utilizing LangChain and OpenAI models to handle complex conversational logic.
@@ -161,9 +188,11 @@ A comprehensive full-stack mobile application for managing hostel operations, bu
 - **Axios** (1.13.3) - HTTP client with unified interceptors
 - **FlashList** - High-performance list rendering for large datasets
 
-### Backend (Server)
-- **Node.js** (18+) - JavaScript runtime
+### Backend (Node.js & Python Services)
+- **Node.js** (18+) - JavaScript runtime for core API
 - **Express.js** (4.18.2) - API framework
+- **Python / Uvicorn** - High-performance microservice for AI processing
+- **LangChain & OpenAI** - LLM orchestration for the AI Action Takers
 - **PostgreSQL** (14+) - Primary relational storage
 - **Supabase** - Live cloud database hosting & connection pooling
 - **JWT** (9.0.0) - Secure, stateless authentication
@@ -173,6 +202,7 @@ A comprehensive full-stack mobile application for managing hostel operations, bu
 ### Authentication
 - **Google OAuth 2.0** - Secure organization email sign-in
 - **JWT Tokens** - Session management with refresh tokens
+- **Two-Factor Authentication (2FA)** - TOTP-based secondary verification
 - **Role-Based Access** - Separate student and admin permissions
 
 ## 🔧 How It Works
@@ -262,7 +292,8 @@ The application uses **15+ interconnected PostgreSQL tables**:
 
 **users**
 - Stores authentication data for both students and admins
-- Fields: `id`, `email`, `name`, `photo_url`, `role` (student/admin), `google_id`
+- Fields: `id`, `email`, `name`, `photo_url`, `role` (student/admin), `google_id`, `two_factor_secret`, `app_preferences`
+- Relationships: One-to-one with `students`
 
 **students**
 - Extended student profile information
@@ -329,6 +360,14 @@ The backend exposes **RESTful APIs** organized by domain:
 - `POST /google` - Google OAuth sign-in
 - `POST /verify-token` - Verify JWT token validity
 - `POST /refresh` - Refresh access token
+
+#### Two-Factor APIs (`/api/2fa`)
+- `POST /setup` - Generate 2FA secret and QR code
+- `POST /verify` - Verify TOTP token and enable 2FA
+- `POST /validate` - Validate 2FA during login
+
+#### AI Assistant APIs (`/api/ai`)
+- `POST /chat` - Proxy queries to the Python LangChain service
 
 #### Student APIs (`/api/students`)
 - `GET /` - Get all students (admin only)
@@ -399,7 +438,7 @@ app/
 │   ├── attendance.tsx
 │   ├── services.tsx
 │   ├── chat.tsx
-│   └── profile.tsx
+│   └── settings.tsx    # Neo-Bento Unified Settings Hub
 ├── admin/              # Admin-only routes (protected)
 │   ├── dashboard.tsx
 │   ├── students.tsx
@@ -407,8 +446,10 @@ app/
 │   ├── complaints.tsx
 │   ├── analytics.tsx
 │   └── chat/[id].tsx   # Dynamic chat route
-├── login.tsx
-├── chat/[id].tsx       # Student chat route
+├── account/            # Account management & 2FA
+├── about/              # App info & legal
+├── ai-chat.tsx         # Full-screen AI conversational UI
+├── login.tsx           # Authentication
 └── _layout.tsx         # Root layout with auth check
 ```
 
@@ -1011,7 +1052,15 @@ smarthostel/
 │   ├── images/
 │   └── fonts/
 │
-├── backend/                      # Backend server
+├── ai-service/                   # Python AI Microservice
+│   ├── chatbot/                 # LangChain agent definitions
+│   │   ├── tools.py             # Action tools (complaints, leaves)
+│   │   ├── chain.py             # Agent executor config
+│   │   └── prompts.py           # System instructions
+│   ├── main.py                  # Uvicorn FastAPI server
+│   └── requirements.txt         # Python dependencies
+│
+├── backend/                      # Node.js backend server
 │   ├── src/
 │   │   ├── config/
 │   │   │   └── db.ts            # PostgreSQL connection pool

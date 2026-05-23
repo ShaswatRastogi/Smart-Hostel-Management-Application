@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Modal, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -11,6 +11,7 @@ import { isAdmin, useUser } from '../../utils/authUtils';
 import { createNotice, deleteNotice, Notice, subscribeToNotices } from '../../utils/noticesSyncUtils';
 import { useTheme } from '../../utils/ThemeContext';
 import { formatUniversalTime } from '../../utils/timeUtils';
+import AppText from '../../components/AppText';
 
 export default function NoticesPage() {
   const { colors, theme } = useTheme();
@@ -296,7 +297,7 @@ export default function NoticesPage() {
   if (!isAdmin(user))
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Access denied.</Text>
+        <AppText>Access denied.</AppText>
       </View>
     );
 
@@ -368,13 +369,13 @@ export default function NoticesPage() {
                 <MaterialIcons name="chevron-left" size={32} color="#fff" />
               </TouchableOpacity>
               <View style={styles.headerContent}>
-                <Text style={styles.headerTitle}>Notices</Text>
+                <AppText style={styles.headerTitle}>Notices</AppText>
               </View>
             </LinearGradient>
 
             <TouchableOpacity style={styles.createBtn} onPress={() => setModalVisible(true)}>
               <MaterialIcons name="plus-circle" size={20} color="#fff" />
-              <Text style={styles.createBtnText}>Create New Notice</Text>
+              <AppText style={styles.createBtnText}>Create New Notice</AppText>
             </TouchableOpacity>
           </>
         }
@@ -407,30 +408,30 @@ export default function NoticesPage() {
                   >
                     <MaterialIcons name="bullhorn-outline" size={20} color={isDark ? '#C7D2FE' : '#4F46E5'} />
                   </LinearGradient>
-                  <Text style={[styles.noticeTitleText, { color: colors.text }]}>{item.title}</Text>
+                  <AppText style={[styles.noticeTitleText, { color: colors.text }]}>{item.title}</AppText>
                 </View>
                 <View style={[styles.priorityBadge, { backgroundColor: priorityColor + '15' }]}>
-                  <Text style={[styles.priorityText, { color: priorityColor }]}>
+                  <AppText style={[styles.priorityText, { color: priorityColor }]}>
                     {item.priority}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <MaterialIcons name="calendar-range" size={14} color={colors.textSecondary} />
-                <Text style={[styles.noticeDate, { color: colors.textSecondary, marginBottom: 0 }]}>
+                <AppText style={[styles.noticeDate, { color: colors.textSecondary, marginBottom: 0 }]}>
                   {formatUniversalTime(item.date, { day: 'numeric', month: 'short', year: 'numeric' })}
-                </Text>
+                </AppText>
               </View>
 
               {selectedId === item.id && (
                 <View style={{ marginTop: 12 }}>
                   <View style={[styles.noticeBody, { borderTopColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9' }]}>
-                    <Text style={{ color: colors.text, lineHeight: 22 }}>{item.body}</Text>
+                    <AppText style={{ color: colors.text, lineHeight: 22 }}>{item.body}</AppText>
                   </View>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
                     <MaterialIcons name="delete-outline" size={16} color="#EF4444" style={{ marginRight: 6 }} />
-                    <Text style={styles.deleteBtnText}>Delete Notice</Text>
+                    <AppText style={styles.deleteBtnText}>Delete Notice</AppText>
                   </TouchableOpacity>
                 </View>
               )}
@@ -451,19 +452,19 @@ export default function NoticesPage() {
             </TouchableOpacity>
           );
         }}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>No notices found.</Text>}
+        ListEmptyComponent={<AppText style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>No notices found.</AppText>}
       />
 
       {/* Create Modal */}
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>New Notice</Text>
+            <AppText style={styles.modalTitle}>New Notice</AppText>
 
-            <Text style={styles.label}>Title</Text>
+            <AppText style={styles.label}>Title</AppText>
             <TextInput style={styles.input} placeholder="Notice Title" value={newTitle} onChangeText={setNewTitle} />
 
-            <Text style={styles.label}>Body</Text>
+            <AppText style={styles.label}>Body</AppText>
             <TextInput
               style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
               placeholder="Notice Details..."
@@ -472,7 +473,7 @@ export default function NoticesPage() {
               onChangeText={setNewBody}
             />
 
-            <Text style={styles.label}>Priority</Text>
+            <AppText style={styles.label}>Priority</AppText>
             <View style={styles.priorityRow}>
               {['low', 'medium', 'high'].map((p) => (
                 <TouchableOpacity
@@ -483,17 +484,17 @@ export default function NoticesPage() {
                   ]}
                   onPress={() => setNewPriority(p as any)}
                 >
-                  <Text style={[styles.priorityOptionText, newPriority === p && { color: '#fff' }]}>{p.toUpperCase()}</Text>
+                  <AppText style={[styles.priorityOptionText, newPriority === p && { color: '#fff' }]}>{p.toUpperCase()}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
 
             <View style={styles.modalActions}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <AppText style={styles.cancelBtnText}>Cancel</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleCreate}>
-                <Text style={styles.saveBtnText}>Post Notice</Text>
+                <AppText style={styles.saveBtnText}>Post Notice</AppText>
               </TouchableOpacity>
             </View>
           </View>

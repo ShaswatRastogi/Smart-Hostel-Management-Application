@@ -2,13 +2,14 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
 import { useUser } from '../utils/authUtils';
 import { fetchUserData } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
+import AppText from '../components/AppText';
 
 export default function NewComplaintPage() {
   const router = useRouter();
@@ -95,8 +96,8 @@ export default function NewComplaintPage() {
               <MaterialIcons name="arrow-back" size={24} color="#fff" />
             </Pressable>
             <View>
-              <Text style={styles.headerTitle}>New Complaint</Text>
-              <Text style={styles.headerSubtitle}>Raise an Issue</Text>
+              <AppText style={styles.headerTitle}>New Complaint</AppText>
+              <AppText style={styles.headerSubtitle}>Raise an Issue</AppText>
             </View>
           </View>
         </SafeAreaView>
@@ -115,7 +116,7 @@ export default function NewComplaintPage() {
           <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Title Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Title</Text>
+              <AppText style={[styles.label, { color: colors.textSecondary }]}>Title</AppText>
               <View style={[styles.inputWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <MaterialIcons name="edit" size={20} color={colors.textSecondary} />
                 <TextInput
@@ -130,7 +131,7 @@ export default function NewComplaintPage() {
 
             {/* Priority Selector */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Priority Level</Text>
+              <AppText style={[styles.label, { color: colors.textSecondary }]}>Priority Level</AppText>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -152,7 +153,7 @@ export default function NewComplaintPage() {
                       size={18}
                       color={priority === level ? '#fff' : colors.textSecondary}
                     />
-                    <Text style={[
+                    <AppText style={[
                       styles.priorityText,
                       {
                         color: priority === level
@@ -161,7 +162,7 @@ export default function NewComplaintPage() {
                       }
                     ]}>
                       {capitalize(level)}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -169,7 +170,7 @@ export default function NewComplaintPage() {
 
             {/* Description Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Description</Text>
+              <AppText style={[styles.label, { color: colors.textSecondary }]}>Description</AppText>
               <View style={[styles.inputWrapper, styles.textAreaWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <TextInput
                   style={[styles.input, styles.textArea, { color: colors.text }]}
@@ -200,7 +201,7 @@ export default function NewComplaintPage() {
                   <ActivityIndicator color="white" />
                 ) : (
                   <View style={styles.btnContent}>
-                    <Text style={styles.submitButtonText}>Submit Complaint</Text>
+                    <AppText style={styles.submitButtonText}>Submit Complaint</AppText>
                     <MaterialIcons name="send" size={18} color="white" />
                   </View>
                 )}

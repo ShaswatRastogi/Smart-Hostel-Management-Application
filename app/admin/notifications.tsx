@@ -2,7 +2,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -10,6 +10,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { isAdmin, useUser } from '../../utils/authUtils';
 import { AdminNotification, clearNotifications, subscribeToNotifications } from '../../utils/notificationUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import AppText from '../../components/AppText';
 
 const { width } = Dimensions.get('window');
 const CONTAINER_WIDTH = Math.min(width * 0.85, 380);
@@ -250,7 +251,7 @@ export default function AdminNotifications() {
     if (!isAdmin(user)) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Access denied.</Text>
+                <AppText>Access denied.</AppText>
             </View>
         );
     }
@@ -267,10 +268,10 @@ export default function AdminNotifications() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <MaterialIcons name="chevron-left" size={32} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Notifications</Text>
+                    <AppText style={styles.headerTitle}>Notifications</AppText>
                     {notifications.length > 0 ? (
                         <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
-                            <Text style={styles.clearBtnText}>CLEAR</Text>
+                            <AppText style={styles.clearBtnText}>CLEAR</AppText>
                         </TouchableOpacity>
                     ) : (
                         <View style={{ width: 40 }} /> // Spacer to balance back button
@@ -294,9 +295,9 @@ export default function AdminNotifications() {
                             <MaterialCommunityIcons name={getIcon(item.type)} size={24} color={getColor(item.type)} />
                         </View>
                         <View style={styles.cardText}>
-                            <Text style={styles.cardTitle}>{item.title}</Text>
-                            <Text style={styles.cardSubtitle} numberOfLines={2}>{item.subtitle}</Text>
-                            <Text style={styles.cardTime}>{formatTime(item.time)}</Text>
+                            <AppText style={styles.cardTitle}>{item.title}</AppText>
+                            <AppText style={styles.cardSubtitle} numberOfLines={2}>{item.subtitle}</AppText>
+                            <AppText style={styles.cardTime}>{formatTime(item.time)}</AppText>
                         </View>
                         <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
@@ -304,7 +305,7 @@ export default function AdminNotifications() {
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <MaterialCommunityIcons name="bell-sleep-outline" size={48} color={isDark ? colors.secondary : "#CBD5E1"} />
-                        <Text style={styles.emptyText}>No new notifications</Text>
+                        <AppText style={styles.emptyText}>No new notifications</AppText>
                     </View>
                 }
             />
