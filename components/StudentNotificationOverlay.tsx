@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Animated, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import api from '../utils/api';
-import { useTheme } from '../utils/ThemeContext';
 import { CompactNoticeListSkeleton } from './SkeletonLists';
 import AppText from './AppText';
 
@@ -26,7 +25,6 @@ interface StudentNotificationOverlayProps {
 export default function StudentNotificationOverlay({ visible, onClose }: StudentNotificationOverlayProps) {
     const [notifications, setNotifications] = React.useState<StudentNotification[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const { colors, theme } = useTheme();
     const router = useRouter();
 
     const scale = React.useRef(new Animated.Value(0)).current;
@@ -34,7 +32,6 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
 
     React.useEffect(() => {
         if (visible) {
-            // Animate In - Quick Pop
             Animated.parallel([
                 Animated.spring(scale, {
                     toValue: 1,
@@ -51,7 +48,7 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
 
             fetchNotifications();
         } else {
-            scale.setValue(0.8); // Start smaller for next pop
+            scale.setValue(0.8);
             opacity.setValue(0);
         }
     }, [visible]);
@@ -70,8 +67,6 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
 
     const handleClear = async () => {
         if (notifications.length === 0) return;
-
-        // Optimistic update
         const prev = [...notifications];
         setNotifications([]);
 
@@ -79,7 +74,7 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
             await api.post('/notifications/student/clear');
         } catch (error) {
             console.error('Clear Notifs Error:', error);
-            setNotifications(prev); // Revert if failed
+            setNotifications(prev);
         }
     };
 
@@ -94,9 +89,7 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
     };
 
     const handlePress = (item: StudentNotification) => {
-        handleClose(); // Close overlay first
-
-        // Small timeout to allow animation to start closing before navigation
+        handleClose();
         setTimeout(() => {
             switch (item.type) {
                 case 'bus':
@@ -121,7 +114,6 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                     router.push('/alerts');
                     break;
                 case 'mess':
-                    // Pass day and meal if available
                     // @ts-ignore
                     const params = new URLSearchParams({ tab: 'menu' });
                     // @ts-ignore
@@ -151,20 +143,6 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
         }
     };
 
-    const getColor = (type: string) => {
-        switch (type) {
-            case 'bus': return '#F59E0B';
-            case 'emergency': return '#EF4444';
-            case 'message': return '#3B82F6';
-            case 'leave': return '#10B981';
-            case 'complaint': return '#F97316';
-            case 'service': return '#8B5CF6';
-            case 'notice': return '#EC4899';
-            case 'mess': return '#F59E0B';
-            default: return colors.primary;
-        }
-    };
-
     return (
         <Modal
             animationType="none"
@@ -184,13 +162,10 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                     ]
                 }
             ]}>
-                {/* Arrow Pointer */}
-                <View style={[styles.arrow, { borderBottomColor: colors.card }]} />
-
-                <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.container}>
                     <View style={styles.headerCompact}>
-                        <View style={[styles.headerTitleContainer, { flex: 1 }]}>
-                            <AppText style={[styles.headerTitle, { color: colors.text }]}>Notifications</AppText>
+                        <View style={styles.headerTitleContainer}>
+                            <AppText style={styles.headerTitle}>Notifications</AppText>
                             {(notifications.length > 0) && (
                                 <View style={styles.badgeSmall}>
                                     <AppText style={styles.badgeText}>{notifications.length}</AppText>
@@ -199,7 +174,7 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                         </View>
                         {notifications.length > 0 && (
                             <TouchableOpacity onPress={handleClear} style={styles.clearBtnCompact}>
-                                <AppText style={[styles.clearBtnText, { color: colors.primary }]}>Clear All</AppText>
+                                <AppText style={styles.clearBtnText}>Clear All</AppText>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -216,28 +191,25 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                                 notifications.map((item) => (
                                     <TouchableOpacity
                                         key={item.id}
-                                        style={[styles.noticeItem, { borderBottomColor: colors.border }]}
+                                        style={styles.noticeItem}
                                         onPress={() => handlePress(item)}
                                     >
-                                        {/* Icon Box */}
-                                        <View style={[styles.noticeIcon, { backgroundColor: getColor(item.type) + '15' }]}>
+                                        <View style={styles.noticeIcon}>
                                             <MaterialCommunityIcons
                                                 name={getIcon(item.type) as any}
-                                                size={20}
-                                                color={getColor(item.type)}
+                                                size={22}
+                                                color="#FFFFFF"
                                             />
                                         </View>
 
-                                        {/* Content */}
                                         <View style={{ flex: 1, gap: 4 }}>
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <AppText style={[styles.noticeTitle, { color: colors.text }]}>{item.title}</AppText>
-                                                <AppText style={[styles.noticeDate, { color: colors.textSecondary }]}>
+                                                <AppText style={styles.noticeTitle}>{item.title}</AppText>
+                                                <AppText style={styles.noticeDate}>
                                                     {new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </AppText>
                                             </View>
-
-                                            <AppText style={[styles.noticeBody, { color: colors.textSecondary }]} numberOfLines={2}>
+                                            <AppText style={styles.noticeBody} numberOfLines={2}>
                                                 {item.subtitle}
                                             </AppText>
                                         </View>
@@ -245,8 +217,8 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
                                 ))
                             ) : (
                                 <View style={styles.emptyStateCompact}>
-                                    <MaterialCommunityIcons name="bell-sleep-outline" size={32} color={colors.textSecondary} style={{ opacity: 0.5, marginBottom: 8 }} />
-                                    <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No new notifications</AppText>
+                                    <MaterialCommunityIcons name="bell-sleep-outline" size={32} color="#666666" style={{ opacity: 0.5, marginBottom: 8 }} />
+                                    <AppText style={styles.emptyText}>No new notifications</AppText>
                                 </View>
                             )}
                         </View>
@@ -260,43 +232,21 @@ export default function StudentNotificationOverlay({ visible, onClose }: Student
 const styles = StyleSheet.create({
     backdrop: {
         position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.6)',
     },
     popoverContainer: {
         position: 'absolute',
-        top: 90, // Adjusted for Header height
+        top: 90,
         right: 20,
-        width: 320,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 20,
+        width: 340,
         zIndex: 100,
     },
-    arrow: {
-        position: 'absolute',
-        top: -10,
-        right: 15,
-        width: 0,
-        height: 0,
-        backgroundColor: 'transparent',
-        borderStyle: 'solid',
-        borderLeftWidth: 10,
-        borderRightWidth: 10,
-        borderBottomWidth: 10,
-        borderLeftColor: 'transparent',
-        borderRightColor: 'transparent',
-        borderBottomColor: '#fff',
-        zIndex: 200,
-    },
     container: {
+        backgroundColor: '#000000',
         borderRadius: 24,
         borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
         overflow: 'hidden',
     },
     headerCompact: {
@@ -307,27 +257,30 @@ const styles = StyleSheet.create({
         paddingTop: 20,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.05)',
+        borderBottomColor: 'rgba(255,255,255,0.1)',
     },
     headerTitleContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+        flex: 1,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: -0.5,
     },
     badgeSmall: {
-        backgroundColor: '#EF4444',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
     },
     badgeText: {
-        color: '#fff',
+        color: '#000000',
         fontSize: 11,
-        fontWeight: 'bold',
+        fontWeight: '900',
     },
     content: {
         maxHeight: SCREEN_HEIGHT * 0.5,
@@ -338,31 +291,36 @@ const styles = StyleSheet.create({
     noticeItem: {
         flexDirection: 'row',
         padding: 16,
-        gap: 12,
+        gap: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.05)',
+        borderBottomColor: 'rgba(255,255,255,0.1)',
         alignItems: 'center',
     },
     noticeIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.05)',
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     noticeTitle: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '700',
-        marginBottom: 2,
+        color: '#FFFFFF',
         flex: 1,
     },
     noticeBody: {
         fontSize: 13,
         lineHeight: 18,
+        color: '#A1A1AA',
     },
     noticeDate: {
         fontSize: 11,
-        fontWeight: '500',
+        fontWeight: '600',
+        color: '#666666',
         marginLeft: 8,
     },
     emptyStateCompact: {
@@ -373,15 +331,17 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 14,
         fontWeight: '500',
+        color: '#666666',
     },
     clearBtnCompact: {
         paddingHorizontal: 12,
         paddingVertical: 6,
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 12,
     },
     clearBtnText: {
         fontSize: 12,
-        fontWeight: '600',
+        fontWeight: '800',
+        color: '#FFFFFF',
     },
 });

@@ -1,87 +1,163 @@
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AppText from '../components/AppText';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing as RNEasing, StyleSheet, View } from 'react-native';
+import {
+  Canvas,
+  Text as SkiaText,
+  useFont,
+  LinearGradient,
+  vec,
+  Group,
+} from '@shopify/react-native-skia';
+import {
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  withSequence,
+  withDelay,
+  useDerivedValue,
+  Easing,
+} from 'react-native-reanimated';
 
-const { width, height } = Dimensions.get('window');
-
-// Import the new brand logo
-const LOGO_SOURCE = require('../assets/brand_icon.jpg');
+const FONT_SIZE = 52;
+const SHINE_WIDTH = 100;
+const SHINE_HALF = SHINE_WIDTH / 2;
 
 export default function Index() {
   const router = useRouter();
+  const [isReady, setIsReady] = React.useState(false);
 
+  // Load font for Skia rendering
+  const font = useFont(
+    require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
+    FONT_SIZE
+  );
+
+  // RN Animated for entrance/exit fade
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const scaleIn = useRef(new Animated.Value(0.88)).current;
+  const fadeOut = useRef(new Animated.Value(1)).current;
+
+  // Reanimated shared value for shine position
+  const shinePos = useSharedValue(-SHINE_HALF);
+
+  // Measure text using Skia font metrics
+  const textWidth = font ? font.measureText('SmartStay').width : 0;
+  const canvasWidth = textWidth + 20;
+  const canvasHeight = FONT_SIZE * 1.4;
+  const textX = 10;
+  const textY = FONT_SIZE + 2;
+
+  // ── Background preload ──
   useEffect(() => {
-    // Simple navigation logic
-    const navigate = async () => {
-      // Wait 3 seconds then navigate
-      await new Promise(r => setTimeout(r, 1500));
-
+    (async () => {
       try {
         const { setStoredUser } = await import('../utils/authUtils');
         await setStoredUser(null);
-        router.replace('/login');
-      } catch (error) {
-        console.log("Error in splash navigation:", error);
-        router.replace('/login');
+      } catch (err) {
+        console.log('Splash preload error:', err);
       }
-    };
-
-    navigate();
+      setIsReady(true);
+    })();
   }, []);
+
+  // ── Entrance animation ──
+  useEffect(() => {
+    if (!font) return;
+    Animated.parallel([
+      Animated.timing(fadeIn, {
+        toValue: 1,
+        duration: 700,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleIn, {
+        toValue: 1,
+        duration: 700,
+        easing: RNEasing.out(RNEasing.back(1.05)),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [font]);
+
+  // ── Shine sweep loop (Reanimated) ──
+  useEffect(() => {
+    if (!font || textWidth === 0) return;
+
+    shinePos.value = -SHINE_HALF;
+    shinePos.value = withRepeat(
+      withSequence(
+        withTiming(textWidth + SHINE_HALF + 10, {
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withDelay(500, withTiming(-SHINE_HALF, { duration: 0 }))
+      ),
+      -1, // infinite loop
+      false
+    );
+  }, [font, textWidth]);
+
+  // ── Navigate when ready ──
+  useEffect(() => {
+    if (!isReady || !font) return;
+
+    const timer = setTimeout(() => {
+      Animated.timing(fadeOut, {
+        toValue: 0,
+        duration: 350,
+        easing: RNEasing.in(RNEasing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        router.replace('/login');
+      });
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [isReady, font]);
+
+  // ── Animated gradient start/end derived from shinePos ──
+  const gradientStart = useDerivedValue(() =>
+    vec(shinePos.value - SHINE_HALF, 0)
+  );
+  const gradientEnd = useDerivedValue(() =>
+    vec(shinePos.value + SHINE_HALF, 0)
+  );
+
+  // Black screen while font loads
+  if (!font) return <View style={styles.container} />;
 
   return (
     <View style={styles.container}>
-      {/* BACKGROUND LAYERS */}
-      <LinearGradient
-        colors={['#000310', '#000924', '#001e50']}
-        locations={[0, 0.6, 1]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-
-      <LinearGradient
-        colors={['rgba(0, 210, 255, 0.1)', 'transparent']}
-        style={[StyleSheet.absoluteFill, { top: -height * 0.2 }]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.6 }}
-      />
-
-      {/* CONTENT LAYER - High Z-Index to prevent hiding */}
-      <SafeAreaView style={styles.content}>
-
-        <View style={styles.centerWrapper}>
-          {/* Logo Container */}
-          <View style={styles.logoWrapper}>
+      <Animated.View
+        style={[
+          styles.center,
+          {
+            opacity: Animated.multiply(fadeIn, fadeOut),
+            transform: [{ scale: scaleIn }],
+          },
+        ]}
+      >
+        <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
+          <Group>
+            {/* Gradient shader applied as the text fill color.
+                Outside the gradient range, Skia clamps to edge color (#777)
+                so only the moving center band lights up to white. */}
             <LinearGradient
-              colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.01)']}
-              style={StyleSheet.absoluteFill}
+              start={gradientStart}
+              end={gradientEnd}
+              colors={['#777777', '#b0b0b0', '#ffffff', '#b0b0b0', '#777777']}
+              positions={[0, 0.25, 0.5, 0.75, 1]}
             />
-            <View style={styles.borderStroke} />
-            <Image
-              source={LOGO_SOURCE}
-              style={styles.logoImage}
-              contentFit="contain"
+            <SkiaText
+              text="SmartStay"
+              x={textX}
+              y={textY}
+              font={font}
             />
-          </View>
-
-          {/* Text Container */}
-          <View style={styles.textContainer}>
-            <AppText style={styles.title}>SMARTSTAY</AppText>
-            <View style={styles.divider} />
-            <AppText style={styles.subtitle}>The Future of Hostel Living</AppText>
-          </View>
-        </View>
-
-      </SafeAreaView>
-
-      <View style={styles.footer}>
-        <AppText style={styles.version}>v2.0 Universal</AppText>
-      </View>
+          </Group>
+        </Canvas>
+      </Animated.View>
     </View>
   );
 }
@@ -89,77 +165,12 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000428', // Fallback color
-  },
-  content: {
-    flex: 1,
-    zIndex: 100, // Force on top
-    elevation: 100,
-  },
-  centerWrapper: {
-    flex: 1,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: height * 0.15,
   },
-  logoWrapper: {
-    width: width * 0.5,
-    height: width * 0.5,
+  center: {
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 40,
-    borderRadius: 45,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    position: 'relative', // Ensure sizing works
   },
-  borderStroke: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 45,
-    borderWidth: 1.5,
-    borderColor: 'rgba(0, 210, 255, 0.25)',
-  },
-  logoImage: {
-    width: '65%',
-    height: '65%',
-    zIndex: 10,
-  },
-  textContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 12,
-    letterSpacing: 4,
-    textAlign: 'center',
-  },
-  divider: {
-    width: 30,
-    height: 2,
-    backgroundColor: 'rgba(0, 210, 255, 0.5)',
-    borderRadius: 1,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#90CAF9',
-    letterSpacing: 1.5,
-    fontWeight: '400',
-    fontStyle: 'italic',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    zIndex: 100,
-  },
-  version: {
-    color: 'rgba(255,255,255,0.2)',
-    fontSize: 10,
-    letterSpacing: 1,
-  }
 });

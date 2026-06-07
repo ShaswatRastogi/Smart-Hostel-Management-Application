@@ -1,10 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, DeviceEventEmitter, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import api, { API_BASE_URL } from '../utils/api';
@@ -13,10 +12,10 @@ import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
 export default function EditProfile() {
-    const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showAlert } = useAlert();
+    const { isDark } = useTheme();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -26,26 +25,26 @@ export default function EditProfile() {
     const [fullName, setFullName] = useState<string>('Student');
 
     const [formData, setFormData] = useState({
-        phone: '',
-        dob: '',
-        bloodGroup: '',
-        address: '',
-        medicalHistory: '',
-        fatherName: '',
-        fatherPhone: '',
-        motherName: '',
-        motherPhone: '',
-        emergencyContactName: '',
-        emergencyContactPhone: '',
+        phone: '', dob: '', bloodGroup: '', address: '', medicalHistory: '',
+        fatherName: '', fatherPhone: '', motherName: '', motherPhone: '',
+        emergencyContactName: '', emergencyContactPhone: '',
     });
 
     const [initialData, setInitialData] = useState<any>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [dateValue, setDateValue] = useState(new Date(2000, 0, 1));
 
-    useEffect(() => {
-        loadProfileData();
-    }, []);
+    // Dynamic Theme Map
+    const themeBg = isDark ? '#000000' : '#F8FAFC';
+    const textMain = isDark ? '#FFFFFF' : '#111111';
+    const textMuted = isDark ? '#888888' : '#64748B';
+    const borderSubtle = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+    const iconBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+    const primaryBtnBg = isDark ? '#FFFFFF' : '#111111';
+    const primaryBtnText = isDark ? '#000000' : '#FFFFFF';
+    const inputPlaceholder = isDark ? '#444444' : '#94A3B8';
+
+    useEffect(() => { loadProfileData(); }, []);
 
     const loadProfileData = async () => {
         try {
@@ -53,219 +52,153 @@ export default function EditProfile() {
             const data = response.data;
             setProfilePhoto(data.profilePhoto || null);
             setFullName(data.fullName || 'Student');
-            const dobString = data.dob ? new Date(data.dob).toISOString().split('T')[0] : '';
             if (data.dob) setDateValue(new Date(data.dob));
             const loadedFormData = {
-                phone: data.phone || '',
-                dob: dobString,
-                bloodGroup: data.bloodGroup || '',
-                address: data.address || '',
-                medicalHistory: data.medicalHistory || '',
-                fatherName: data.fatherName || '',
-                fatherPhone: data.fatherPhone || '',
-                motherName: data.motherName || '',
-                motherPhone: data.motherPhone || '',
-                emergencyContactName: data.emergencyContactName || '',
-                emergencyContactPhone: data.emergencyContactPhone || '',
+                phone: data.phone || '', dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
+                bloodGroup: data.bloodGroup || '', address: data.address || '', medicalHistory: data.medicalHistory || '',
+                fatherName: data.fatherName || '', fatherPhone: data.fatherPhone || '', motherName: data.motherName || '',
+                motherPhone: data.motherPhone || '', emergencyContactName: data.emergencyContactName || '', emergencyContactPhone: data.emergencyContactPhone || '',
             };
-            setFormData(loadedFormData);
-            setInitialData(loadedFormData);
-        } catch (error: any) {
-            console.error('Error loading profile:', error.response?.data || error.message);
-            showAlert('Error', 'Failed to load profile details.');
-        } finally {
-            setLoading(false);
-        }
+            setFormData(loadedFormData); setInitialData(loadedFormData);
+        } catch (error) {} finally { setLoading(false); }
     };
 
     const pickImage = async () => {
         try {
             const ImagePicker = await import('expo-image-picker');
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                showAlert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
-                return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.5,
-            });
+            if (status !== 'granted') return showAlert('Permission Required', 'Need camera roll permissions!');
+            const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.5 });
             if (!result.canceled && result.assets[0].uri) uploadImage(result.assets[0].uri);
-        } catch (error) {
-            console.error('Error picking image:', error);
-            showAlert('Error', 'Failed to open image picker');
-        }
+        } catch (error) {}
     };
 
     const uploadImage = async (uri: string) => {
         setUploading(true);
         try {
             const formDataUpload = new FormData();
-            formDataUpload.append('profilePhoto', {
-                uri: uri,
-                name: 'profile_photo.jpg',
-                type: 'image/jpeg',
-            } as any);
-
+            formDataUpload.append('profilePhoto', { uri, name: 'profile_photo.jpg', type: 'image/jpeg' } as any);
             const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
-
-            const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, {
-                method: 'POST',
-                body: formDataUpload,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                }
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Upload failed: ${response.status} ${errorText}`);
-            }
-
+            const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, { method: 'POST', body: formDataUpload, headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) throw new Error('Upload failed');
             const result = await response.json();
-
             if (result.success && result.profilePhoto) {
                 setProfilePhoto(result.profilePhoto);
                 DeviceEventEmitter.emit('profileUpdated');
-                showAlert('Success', 'Profile photo updated successfully!', [], 'success');
+                showAlert('Success', 'Profile photo updated!', [], 'success');
             }
-        } catch (error: any) {
-            console.error('Error uploading image:', error);
-            showAlert('Upload Failed', error.message);
-        } finally {
-            setUploading(false);
-        }
+        } catch (error) {} finally { setUploading(false); }
     };
 
     const handleSave = async () => {
-        if (initialData && JSON.stringify(formData) === JSON.stringify(initialData)) {
-            showAlert('No Changes', 'You have not made any changes to your profile.', [], 'info');
-            return;
-        }
+        if (initialData && JSON.stringify(formData) === JSON.stringify(initialData)) return showAlert('No Changes', 'No changes made.', [], 'info');
         setSaving(true);
         try {
-            if (!formData.phone || formData.phone.length < 10) {
-                showAlert('Validation Error', 'Please enter a valid phone number.');
-                setSaving(false);
-                return;
-            }
+            if (!formData.phone || formData.phone.length < 10) { showAlert('Validation Error', 'Enter valid phone number.'); setSaving(false); return; }
             await api.put('/students/profile', formData);
             DeviceEventEmitter.emit('profileUpdated');
-            showAlert('Success', 'Profile updated successfully!', [], 'success');
+            showAlert('Success', 'Profile updated!', [], 'success');
             router.back();
-        } catch (error: any) {
-            console.error('Error saving profile:', error);
-            showAlert('Update Failed', error.message);
-        } finally {
-            setSaving(false);
-        }
+        } catch (error) {} finally { setSaving(false); }
     };
 
     const onDateChange = (event: any, selectedDate?: Date) => {
         setShowDatePicker(Platform.OS === 'ios');
         if (selectedDate) {
             setDateValue(selectedDate);
-            const formattedDate = selectedDate.toISOString().split('T')[0];
-            setFormData(prev => ({ ...prev, dob: formattedDate }));
+            setFormData(prev => ({ ...prev, dob: selectedDate.toISOString().split('T')[0] }));
         }
     };
 
     const renderInput = (label: string, key: keyof typeof formData, icon: any, placeholder: string, keyboardType: any = 'default', multiline = false) => (
         <View style={styles.inputGroup}>
-            <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</AppText>
-            <View style={[styles.inputContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
-                <MaterialCommunityIcons name={icon} size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
-                <TextInput
-                    style={[styles.input, { color: colors.text, minHeight: multiline ? 80 : 48 }, multiline && { textAlignVertical: 'top', paddingTop: 12 }]}
-                    placeholder={placeholder}
-                    placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                    value={formData[key]}
-                    onChangeText={(val) => setFormData(prev => ({ ...prev, [key]: val }))}
-                    keyboardType={keyboardType}
-                    multiline={multiline}
-                />
+            <View style={styles.inputLabelRow}>
+                <MaterialCommunityIcons name={icon} size={18} color={textMuted} style={styles.inputIcon} />
+                <AppText style={[styles.inputLabel, { color: textMuted }]}>{label}</AppText>
             </View>
+            <TextInput
+                style={[styles.input, { color: textMain, borderColor: borderSubtle }, multiline && { textAlignVertical: 'top', paddingTop: 8, paddingBottom: 16 }]}
+                placeholder={placeholder} placeholderTextColor={inputPlaceholder}
+                value={formData[key]} onChangeText={(val) => setFormData(prev => ({ ...prev, [key]: val }))}
+                keyboardType={keyboardType} multiline={multiline}
+            />
         </View>
     );
 
     if (loading) return (
-        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <ActivityIndicator size="large" color="#004e92" />
-            <AppText style={{ color: colors.textSecondary, marginTop: 12 }}>Loading Details...</AppText>
+            <ActivityIndicator size="large" color={textMain} />
         </View>
     );
 
     return (
-        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: themeBg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <Stack.Screen options={{ headerShown: false }} />
-            <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <View style={styles.headerContainer}>
-                    <LinearGradient colors={['#000428', '#004e92']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.headerGradient, { paddingTop: insets.top + 10 }]}>
-                        <View style={styles.headerContent}>
-                            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                                <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
-                            </TouchableOpacity>
-                            <AppText style={styles.headerTitle}>Edit Profile</AppText>
-                            <View style={{ width: 40 }} />
+            <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+                <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+                    <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+                </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <View style={styles.hero}>
+                    <View style={styles.avatarContainer}>
+                        <View style={[styles.avatar, { backgroundColor: iconBg }]}>
+                            {profilePhoto ? (
+                                <Image source={{ uri: profilePhoto.startsWith('http') ? profilePhoto : `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
+                            ) : <AppText style={[styles.avatarText, { color: textMain }]}>{getInitial(fullName)}</AppText>}
+                            {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10 }]}><ActivityIndicator color="#fff" /></View>}
                         </View>
-                        <View style={styles.profileCard}>
-                            <View style={styles.avatarContainer}>
-                                <View style={[styles.avatar, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)' }]}>
-                                    {profilePhoto ? (
-                                        <Image source={{ uri: profilePhoto.startsWith('http') ? profilePhoto : `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
-                                    ) : (
-                                        <AppText style={styles.avatarText}>{getInitial(fullName)}</AppText>
-                                    )}
-                                    {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10, borderWidth: 0 }]}><ActivityIndicator color="#fff" /></View>}
-                                </View>
-                                <TouchableOpacity style={styles.cameraButton} onPress={pickImage} disabled={uploading} activeOpacity={0.8}>
-                                    <View style={styles.cameraButtonInner}><MaterialCommunityIcons name="camera" size={18} color="#004e92" /></View>
-                                </TouchableOpacity>
-                            </View>
-                            <AppText style={styles.studentName}>{fullName}</AppText>
-                        </View>
-                    </LinearGradient>
-                    <View style={[styles.curveBlock, { backgroundColor: colors.background }]} />
+                        <Pressable style={[styles.cameraButton, { backgroundColor: textMain }]} onPress={pickImage} disabled={uploading}>
+                            <MaterialCommunityIcons name="camera" size={20} color={themeBg} />
+                        </Pressable>
+                    </View>
+                    <AppText style={[styles.heroTitle, { color: textMain }]}>Edit Profile</AppText>
+                    <AppText style={[styles.studentName, { color: textMuted }]}>{fullName}</AppText>
                 </View>
 
-                <View style={styles.scrollContent}>
-                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>PERSONAL DETAILS</AppText>
-                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        {renderInput('Phone Number', 'phone', 'phone-outline', 'Enter phone number', 'phone-pad')}
-                        <View style={styles.inputGroup}>
-                            <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>Date of Birth</AppText>
-                            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.inputContainer, { height: 52, backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
-                                <MaterialCommunityIcons name="calendar-outline" size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
-                                <AppText style={[styles.input, { color: formData.dob ? colors.text : (isDark ? '#64748b' : '#94a3b8'), lineHeight: 52 }]}>{formData.dob || 'Select Date'}</AppText>
-                            </TouchableOpacity>
+                <View style={styles.section}>
+                    <AppText style={styles.sectionTitle}>PERSONAL DETAILS</AppText>
+                    {renderInput('Phone Number', 'phone', 'phone-outline', 'Enter phone number', 'phone-pad')}
+                    <View style={styles.inputGroup}>
+                        <View style={styles.inputLabelRow}>
+                            <MaterialCommunityIcons name="calendar-outline" size={18} color={textMuted} style={styles.inputIcon} />
+                            <AppText style={[styles.inputLabel, { color: textMuted }]}>Date of Birth</AppText>
                         </View>
-                        {showDatePicker && <DateTimePicker value={dateValue} mode="date" display="default" onChange={onDateChange} maximumDate={new Date()} />}
-                        {renderInput('Blood Group', 'bloodGroup', 'water-outline', 'e.g., O+')}
-                        {renderInput('Permanent Address', 'address', 'map-marker-outline', 'Full home address', 'default', true)}
+                        <Pressable onPress={() => setShowDatePicker(true)} style={({ pressed }) => [styles.dateInputWrapper, pressed && { opacity: 0.5 }]}>
+                            <AppText style={[styles.input, { color: formData.dob ? textMain : inputPlaceholder, borderColor: borderSubtle }]}>{formData.dob || 'Select Date'}</AppText>
+                        </Pressable>
                     </View>
-
-                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>FAMILY DETAILS</AppText>
-                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        {renderInput("Father's Name", 'fatherName', 'account-outline', "Enter father's name")}
-                        {renderInput("Father's Phone", 'fatherPhone', 'phone-outline', "Enter father's phone", 'phone-pad')}
-                        {renderInput("Mother's Name", 'motherName', 'face-woman-outline', "Enter mother's name")}
-                        {renderInput("Mother's Phone", 'motherPhone', 'phone-outline', "Enter mother's phone", 'phone-pad')}
-                    </View>
-
-                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 24 }]}>MEDICAL & EMERGENCY</AppText>
-                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        {renderInput("Emergency Contact", 'emergencyContactName', 'account-alert-outline', "Name of contact person")}
-                        {renderInput("Emergency Phone", 'emergencyContactPhone', 'phone-alert-outline', "Emergency phone number", 'phone-pad')}
-                        {renderInput('Medical History', 'medicalHistory', 'medical-bag', 'Any allergies or conditions?', 'default', true)}
-                    </View>
-
-                    <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
-                        {saving ? <ActivityIndicator color="#fff" /> : <><MaterialCommunityIcons name="check-decagram-outline" size={22} color="#fff" /><AppText style={styles.saveBtnText}>Save Profile Changes</AppText></>}
-                    </TouchableOpacity>
+                    {showDatePicker && <DateTimePicker value={dateValue} mode="date" display="default" onChange={onDateChange} maximumDate={new Date()} />}
+                    {renderInput('Blood Group', 'bloodGroup', 'water-outline', 'e.g., O+')}
+                    {renderInput('Permanent Address', 'address', 'map-marker-outline', 'Full home address', 'default', true)}
                 </View>
+
+                <View style={styles.section}>
+                    <AppText style={styles.sectionTitle}>FAMILY DETAILS</AppText>
+                    {renderInput("Father's Name", 'fatherName', 'account-outline', "Enter father's name")}
+                    {renderInput("Father's Phone", 'fatherPhone', 'phone-outline', "Enter father's phone", 'phone-pad')}
+                    {renderInput("Mother's Name", 'motherName', 'face-woman-outline', "Enter mother's name")}
+                    {renderInput("Mother's Phone", 'motherPhone', 'phone-outline', "Enter mother's phone", 'phone-pad')}
+                </View>
+
+                <View style={styles.section}>
+                    <AppText style={styles.sectionTitle}>MEDICAL & EMERGENCY</AppText>
+                    {renderInput("Emergency Contact", 'emergencyContactName', 'account-alert-outline', "Name of contact person")}
+                    {renderInput("Emergency Phone", 'emergencyContactPhone', 'phone-alert-outline', "Emergency phone number", 'phone-pad')}
+                    {renderInput('Medical History', 'medicalHistory', 'medical-bag', 'Any allergies or conditions?', 'default', true)}
+                </View>
+
+                <Pressable 
+                    style={({ pressed }) => [styles.saveBtn, { backgroundColor: primaryBtnBg }, saving && { opacity: 0.7 }, pressed && !saving && { opacity: 0.8 }]} 
+                    onPress={handleSave} disabled={saving}
+                >
+                    {saving ? <ActivityIndicator color={primaryBtnText} /> : (<>
+                        <MaterialCommunityIcons name="check" size={24} color={primaryBtnText} />
+                        <AppText style={[styles.saveBtnText, { color: primaryBtnText }]}>Save Changes</AppText>
+                    </>)}
+                </Pressable>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -273,27 +206,23 @@ export default function EditProfile() {
 
 const styles = StyleSheet.create({
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerContainer: { position: 'relative', marginBottom: 10 },
-    headerGradient: { paddingBottom: 60, alignItems: 'center', borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerContent: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
-    backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-    profileCard: { alignItems: 'center', gap: 10 },
-    avatarContainer: { position: 'relative' },
-    avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', borderWidth: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 8 },
-    avatarText: { fontSize: 48, fontWeight: '700', color: '#004e92' },
-    cameraButton: { position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 5, zIndex: 20 },
-    cameraButtonInner: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-    studentName: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
-    curveBlock: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 30, borderTopLeftRadius: 35, borderTopRightRadius: 35 },
-    scrollContent: { paddingHorizontal: 20 },
-    sectionTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.2, marginBottom: 12, marginLeft: 4 },
-    card: { borderRadius: 24, padding: 20, borderWidth: 1, gap: 16, shadowColor: '#004e92', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-    inputGroup: { gap: 6 },
-    inputLabel: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-    inputContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 16, paddingHorizontal: 14 },
-    inputIcon: { marginRight: 12 },
-    input: { flex: 1, fontSize: 15, fontWeight: '600' },
-    saveBtn: { backgroundColor: '#004e92', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 18, borderRadius: 20, gap: 10, marginTop: 32, marginBottom: 20, shadowColor: '#004e92', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
-    saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+    header: { paddingHorizontal: 24, paddingBottom: 24 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+    hero: { alignItems: 'flex-start', marginBottom: 48 },
+    avatarContainer: { position: 'relative', marginBottom: 24 },
+    avatar: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center' },
+    avatarText: { fontSize: 40, fontWeight: '700' },
+    cameraButton: { position: 'absolute', bottom: -4, right: -4, width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+    heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 8 },
+    studentName: { fontSize: 18, fontWeight: '700' },
+    section: { marginBottom: 48 },
+    sectionTitle: { fontSize: 11, fontWeight: '700', color: '#666666', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 24 },
+    inputGroup: { marginBottom: 24 },
+    inputLabelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    inputIcon: { marginRight: 8 },
+    inputLabel: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+    input: { fontSize: 16, fontWeight: '600', paddingVertical: 12, borderBottomWidth: 1 },
+    dateInputWrapper: { justifyContent: 'center' },
+    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 18, borderRadius: 100, gap: 12, marginTop: 16 },
+    saveBtnText: { fontSize: 18, fontWeight: '700' },
 });

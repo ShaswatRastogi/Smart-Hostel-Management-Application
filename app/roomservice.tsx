@@ -1,9 +1,8 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
 import { roomServices } from '../utils/busTimingsUtils';
@@ -12,21 +11,31 @@ import { requestService, ServiceRequest, subscribeToStudentRequests } from '../u
 import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
-// ... (rest of imports)
-
-// ... (rest of component code)
-
-// ... (removed duplicate styles)
-
 export default function RoomService() {
     const router = useRouter();
-    const { colors, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
     const { showAlert } = useAlert();
+    const { isDark } = useTheme();
     const [requests, setRequests] = useState<ServiceRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    
+    // Dynamic Theme Map
+    const themeBg = isDark ? '#000000' : '#F8FAFC';
+    const textMain = isDark ? '#FFFFFF' : '#111111';
+    const textMuted = isDark ? '#888888' : '#64748B';
+    const textSecondary = isDark ? '#CCCCCC' : '#475569';
+    const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+    const infoBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    const iconBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    const modalBg = isDark ? '#111111' : '#FFFFFF';
+    const modalOverlay = isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.4)';
+    const primaryBtnBg = isDark ? '#FFFFFF' : '#111111';
+    const primaryBtnText = isDark ? '#000000' : '#FFFFFF';
+    const inputBg = isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF';
+    const inputBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+
     const { refreshing, onRefresh } = useRefresh(async () => {
-        // Subscriptions handle data, just a visual refresh delay
         await new Promise(resolve => setTimeout(resolve, 1000));
     });
 
@@ -38,7 +47,6 @@ export default function RoomService() {
         return () => unsubscribe();
     }, []);
 
-    // State for Service Request Modal
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedService, setSelectedService] = useState<{ id: string, name: string } | null>(null);
     const [description, setDescription] = useState('');
@@ -51,471 +59,149 @@ export default function RoomService() {
 
     const confirmRequest = async () => {
         if (!selectedService) return;
-
         try {
             setSubmitting(true);
             const userData = await fetchUserData();
-            if (!userData) {
-                showAlert("Error", "Could not fetch user profile.", [], 'error');
-                return;
-            }
-
+            if (!userData) { showAlert("Error", "Could not fetch user profile.", [], 'error'); return; }
             await requestService(selectedService.name, description, userData.fullName, userData.roomNo);
             setModalVisible(false);
             showAlert('Success', `Your request for ${selectedService.name} has been submitted!`, [], 'success');
-        } catch (error) {
-            showAlert('Error', "Failed to submit request.", [], 'error');
-        } finally {
-            setSubmitting(false);
-        }
+        } catch (error) { showAlert('Error', "Failed to submit request.", [], 'error'); } finally { setSubmitting(false); }
     };
 
     const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending': return '#F59E0B';
-            case 'approved': return '#3B82F6';
-            case 'completed': return '#10B981';
-            case 'rejected': return '#EF4444';
-            default: return '#999';
-        }
+        switch (status) { case 'pending': return '#F59E0B'; case 'approved': return '#3B82F6'; case 'completed': return '#10B981'; case 'rejected': return '#EF4444'; default: return '#888888'; }
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
+            <View style={[styles.headerActions, { paddingTop: insets.top + 16 }]}>
+                <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+                    <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+                </Pressable>
+            </View>
 
-            {/* Header */}
-            <LinearGradient
-                colors={['#000428', '#004e92']}
-                style={[styles.header, { zIndex: 10 }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <SafeAreaView edges={['top', 'left', 'right']}>
-                    <View style={styles.headerContent}>
-                        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                            <MaterialIcons name="arrow-back" size={24} color="#fff" />
-                        </Pressable>
-                        <View>
-                            <AppText style={styles.headerTitle}>Room Services</AppText>
-                            <AppText style={styles.headerSubtitle}>Housekeeping & Maintenance</AppText>
-                        </View>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />} showsVerticalScrollIndicator={false}>
+                <View style={styles.hero}>
+                    <AppText style={[styles.heroTitle, { color: textMain }]}>Services</AppText>
+                    <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Housekeeping & Maintenance</AppText>
+                </View>
 
-            <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#004e92']} tintColor="#004e92" />}
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={{ padding: 20 }}>
-                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>AVAILABLE SERVICES</AppText>
-
-                    {submitting && !modalVisible && <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: 20 }} />}
-
+                <View style={{ paddingHorizontal: 24 }}>
+                    <AppText style={styles.sectionTitle}>AVAILABLE SERVICES</AppText>
+                    {submitting && !modalVisible && <ActivityIndicator size="large" color={textMain} style={{ marginBottom: 20 }} />}
                     <View style={styles.servicesGrid}>
                         {roomServices.map((service) => (
-                            <Pressable
-                                key={service.id}
-                                style={[
-                                    styles.serviceCard,
-                                    { backgroundColor: colors.card, borderColor: colors.border },
-                                    !service.available && [styles.serviceCardDisabled, { backgroundColor: isDark ? '#1e293b' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]
-                                ]}
-                                onPress={() => service.available && handleServiceRequest(service)}
-                                disabled={!service.available || submitting}
-                            >
-                                <LinearGradient
-                                    colors={
-                                        service.available
-                                            ? (isDark ? ['#1e3a8a', '#172554'] : ['#e0f2fe', '#dbeafe'])
-                                            : (isDark ? ['#334155', '#1e293b'] : ['#f1f5f9', '#e2e8f0'])
-                                    }
-                                    style={[styles.iconBox]}
-                                >
-                                    <MaterialCommunityIcons
-                                        name={service.icon as any}
-                                        size={32}
-                                        color={service.available ? (isDark ? '#60A5FA' : '#004e92') : (isDark ? '#64748B' : '#94A3B8')}
-                                    />
-                                </LinearGradient>
-
-                                <View style={styles.cardContent}>
-                                    <AppText style={[
-                                        styles.serviceName,
-                                        { color: colors.text },
-                                        !service.available && [styles.serviceNameDisabled, { color: colors.textSecondary }]
-                                    ]}>
-                                        {service.name}
-                                    </AppText>
-
-                                    <AppText style={[styles.serviceDescription, { color: colors.textSecondary }]}>
-                                        {service.description}
-                                    </AppText>
-
-                                    {!service.available && (
-                                        <View style={[styles.unavailableBadge, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]}>
-                                            <AppText style={[styles.unavailableText, { color: colors.textSecondary }]}>Coming Soon</AppText>
-                                        </View>
-                                    )}
+                            <Pressable key={service.id} style={({ pressed }) => [styles.serviceRow, { borderColor: borderSubtle }, !service.available && { opacity: 0.5 }, pressed && service.available && { opacity: 0.7 }]} onPress={() => service.available && handleServiceRequest(service)} disabled={!service.available || submitting}>
+                                <View style={[styles.serviceIconContainer, { backgroundColor: iconBg, borderColor: borderSubtle }]}>
+                                    <MaterialCommunityIcons name={service.icon as any} size={24} color={textMain} />
                                 </View>
-
-                                {service.available && (
-                                    <View style={[styles.actionBtn, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#f0f9ff' }]}>
-                                        <MaterialIcons
-                                            name="arrow-forward"
-                                            size={20}
-                                            color={colors.primary}
-                                        />
+                                <View style={styles.serviceContent}>
+                                    <View style={styles.serviceHeader}>
+                                        <AppText style={[styles.serviceName, { color: textMain }]}>{service.name}</AppText>
+                                        {!service.available && <View style={[styles.unavailableBadge, { backgroundColor: borderSubtle }]}><AppText style={styles.unavailableText}>SOON</AppText></View>}
                                     </View>
-                                )}
+                                    <AppText style={[styles.serviceDescription, { color: textMuted }]}>{service.description}</AppText>
+                                </View>
+                                {service.available && <MaterialIcons name="arrow-forward" size={20} color={textMuted} />}
                             </Pressable>
                         ))}
                     </View>
 
-                    <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>MY REQUESTS</AppText>
-                    {loading ? (
-                        <ActivityIndicator size="small" color={colors.primary} />
-                    ) : requests.length === 0 ? (
-                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginBottom: 20 }}>No active requests</AppText>
+                    <AppText style={[styles.sectionTitle, { marginTop: 32 }]}>MY REQUESTS</AppText>
+                    {loading ? <ActivityIndicator size="small" color={textMain} /> : requests.length === 0 ? (
+                        <View style={styles.emptyState}><AppText style={styles.emptyText}>No active requests</AppText></View>
                     ) : (
                         <View style={styles.historyList}>
                             {requests.map(req => (
-                                <View key={req.id} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                                    <View style={styles.historyHeader}>
-                                        <AppText style={[styles.historyTitle, { color: colors.text }]}>{req.serviceType}</AppText>
-                                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(req.status) + '20' }]}>
-                                            <AppText style={[styles.statusText, { color: getStatusColor(req.status) }]}>{req.status.toUpperCase()}</AppText>
+                                <View key={req.id} style={[styles.historyRow, { borderColor: borderSubtle }]}>
+                                    <View style={{ flex: 1 }}>
+                                        <AppText style={[styles.historyTitle, { color: textMain }]}>{req.serviceType}</AppText>
+                                        {req.description ? <AppText style={[styles.historyDesc, { color: textSecondary }]}>"{req.description}"</AppText> : null}
+                                        <View style={styles.historyFooter}>
+                                            <AppText style={styles.historyDate}>{req.createdAt instanceof Date ? req.createdAt.toLocaleDateString() : ''}</AppText>
+                                            {req.estimatedTime && <><MaterialCommunityIcons name="circle-small" size={16} color="#666666" /><AppText style={[styles.etaText, { color: textMain }]}>ETA: {req.estimatedTime}</AppText></>}
                                         </View>
                                     </View>
-                                    {req.description ? (
-                                        <AppText style={[styles.historyDesc, { color: colors.textSecondary, fontStyle: 'italic', marginBottom: 4 }]}>"{req.description}"</AppText>
-                                    ) : null}
-                                    <AppText style={[styles.historyDate, { color: colors.textSecondary }]}>{req.createdAt instanceof Date ? req.createdAt.toLocaleDateString() : ''}</AppText>
-                                    {req.estimatedTime && (
-                                        <AppText style={[styles.etaText, { color: colors.primary }]}>ETA: {req.estimatedTime}</AppText>
-                                    )}
+                                    <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        <AppText style={[styles.statusText, { color: getStatusColor(req.status) }]}>{req.status.toUpperCase()}</AppText>
+                                    </View>
                                 </View>
                             ))}
                         </View>
                     )}
 
-                    <View style={[styles.infoCard, {
-                        backgroundColor: isDark ? '#172554' : '#EFF6FF',
-                        borderColor: isDark ? '#1e40af' : '#DBEAFE'
-                    }]}>
-                        <View style={[styles.infoIconBox, { backgroundColor: isDark ? '#1e40af' : '#3B82F6' }]}>
-                            <MaterialCommunityIcons name="phone-in-talk" size={20} color="#fff" />
+                    <View style={[styles.infoCard, { backgroundColor: infoBg, borderColor: borderSubtle }]}>
+                        <View style={styles.infoContent}>
+                            <AppText style={[styles.infoTitle, { color: textMain }]}>URGENT ASSISTANCE</AppText>
+                            <AppText style={[styles.infoText, { color: textMuted }]}>For emergencies, call hostel office directly at +91 98765 43210</AppText>
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <AppText style={[styles.infoTitle, { color: isDark ? '#93c5fd' : '#1E3A8A' }]}>Urgent Assistance</AppText>
-                            <AppText style={[styles.infoText, { color: isDark ? '#bfdbfe' : '#1E40AF' }]}>
-                                For emergencies, call hostel office directly at +91 98765 43210
-                            </AppText>
-                        </View>
+                        <MaterialCommunityIcons name="phone-in-talk" size={24} color={textMain} />
                     </View>
                 </View>
             </ScrollView>
 
-            {/* Description Modal */}
-            {modalVisible && (
-                <Modal transparent animationType="fade" visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        style={styles.modalOverlay}
-                    >
-                        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                            <AppText style={[styles.modalTitle, { color: colors.text }]}>Request {selectedService?.name}</AppText>
-                            <AppText style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Add a description (optional)</AppText>
-
-                            <TextInput
-                                style={[styles.input, { backgroundColor: isDark ? '#1e293b' : '#F1F5F9', color: colors.text, borderColor: colors.border }]}
-                                placeholder="e.g. Tap is leaking, light bulb fused..."
-                                placeholderTextColor={colors.textSecondary}
-                                value={description}
-                                onChangeText={setDescription}
-                                multiline
-                                textAlignVertical="top"
-                                autoFocus
-                                blurOnSubmit={true}
-                            />
-
-                            <View style={styles.modalButtons}>
-                                <Pressable style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                                    <AppText style={styles.cancelText}>Cancel</AppText>
-                                </Pressable>
-
-                                <Pressable
-                                    style={[styles.modalBtn, styles.confirmBtn, submitting && { opacity: 0.7 }]}
-                                    onPress={confirmRequest}
-                                    disabled={submitting}
-                                >
-                                    {submitting ? <ActivityIndicator color="#fff" size="small" /> : <AppText style={styles.confirmText}>Submit Request</AppText>}
-                                </Pressable>
-                            </View>
+            <Modal transparent animationType="fade" visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.modalOverlay, { backgroundColor: modalOverlay }]}>
+                    <View style={[styles.modalContainer, { backgroundColor: modalBg, borderColor: borderSubtle }]}>
+                        <AppText style={[styles.modalTitle, { color: textMain }]}>Request {selectedService?.name}</AppText>
+                        <AppText style={[styles.modalSubtitle, { color: textMuted }]}>Add a description (optional)</AppText>
+                        <TextInput style={[styles.inputBox, { backgroundColor: inputBg, borderColor: inputBorder, color: textMain }]} placeholder="e.g. Tap is leaking, light bulb fused..." placeholderTextColor={textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top" autoFocus blurOnSubmit={true} />
+                        <View style={styles.modalButtons}>
+                            <Pressable style={[styles.modalBtn, styles.cancelBtn, { borderColor: inputBorder }]} onPress={() => setModalVisible(false)}>
+                                <AppText style={[styles.cancelText, { color: textMain }]}>CANCEL</AppText>
+                            </Pressable>
+                            <Pressable style={[styles.modalBtn, { backgroundColor: primaryBtnBg, borderColor: primaryBtnBg }, submitting && { opacity: 0.7 }]} onPress={confirmRequest} disabled={submitting}>
+                                {submitting ? <ActivityIndicator color={primaryBtnText} size="small" /> : <AppText style={[styles.confirmText, { color: primaryBtnText }]}>SUBMIT</AppText>}
+                            </Pressable>
                         </View>
-                    </KeyboardAvoidingView>
-                </Modal>
-            )}
-
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        paddingBottom: 24,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-        shadowColor: "#004e92",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    headerContent: {
-        paddingHorizontal: 24,
-        paddingTop: 12,
-        paddingBottom: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    backBtn: {
-        width: 40,
-        height: 40,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#fff',
-        letterSpacing: 0.5,
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
-        fontWeight: '500',
-    },
-    content: {
-        padding: 24,
-        paddingBottom: 40,
-    },
-    sectionTitle: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#64748B',
-        marginBottom: 16,
-        marginTop: 8,
-        letterSpacing: 1,
-    },
-    servicesGrid: {
-        gap: 16,
-        marginBottom: 24,
-    },
-    serviceCard: {
-        borderRadius: 24,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        padding: 16,
-        borderWidth: 1,
-        shadowColor: '#64748B',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 4,
-    },
-    serviceCardDisabled: {
-        opacity: 0.8,
-        shadowOpacity: 0,
-        elevation: 0,
-    },
-    iconBox: {
-        width: 64,
-        height: 64,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    iconBoxDisabled: {
-        backgroundColor: '#E2E8F0',
-    },
-    cardContent: {
-        flex: 1,
-    },
-    serviceName: {
-        fontSize: 17,
-        fontWeight: '800',
-        color: '#1E293B',
-        marginBottom: 4,
-        letterSpacing: -0.5,
-    },
-    serviceNameDisabled: {
-        color: '#64748B',
-    },
-    serviceDescription: {
-        fontSize: 13,
-        color: '#64748B',
-        lineHeight: 18,
-    },
-    unavailableBadge: {
-        backgroundColor: '#E2E8F0',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-        alignSelf: 'flex-start',
-        marginTop: 8,
-    },
-    unavailableText: {
-        color: '#64748B',
-        fontSize: 11,
-        fontWeight: '600',
-    },
-    actionBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    infoCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#EFF6FF',
-        borderRadius: 20,
-        gap: 16,
-        borderWidth: 1,
-        borderColor: '#DBEAFE',
-        marginTop: 20,
-    },
-    infoIconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#3B82F6',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    infoTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#1E3A8A',
-        marginBottom: 2,
-    },
-    infoText: {
-        fontSize: 12,
-        color: '#1E40AF',
-        lineHeight: 18,
-    },
-    historyList: {
-        gap: 12,
-    },
-    historyCard: {
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-    },
-    historyHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    historyTitle: {
-        fontWeight: '600',
-        color: '#1E293B',
-    },
-    statusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    historyDate: {
-        fontSize: 12,
-        color: '#94A3B8',
-    },
-    etaText: {
-        marginTop: 6,
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#004e92',
-    },
-    historyDesc: {
-        fontSize: 13,
-        marginBottom: 4,
-    },
-    // Modal Styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        padding: 20,
-    },
-    modalContent: {
-        padding: 24,
-        borderRadius: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        marginBottom: 8,
-    },
-    modalSubtitle: {
-        fontSize: 14,
-        marginBottom: 20,
-    },
-    input: {
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        fontSize: 15,
-        minHeight: 100,
-        marginBottom: 24,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    modalBtn: {
-        flex: 1,
-        padding: 16,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    cancelBtn: {
-        backgroundColor: '#F1F5F9',
-    },
-    confirmBtn: {
-        backgroundColor: '#004e92',
-    },
-    cancelText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#64748B',
-    },
-    confirmText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-    }
+    container: { flex: 1 },
+    headerActions: { paddingHorizontal: 24, paddingBottom: 16 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+    hero: { paddingHorizontal: 24, marginBottom: 48 },
+    heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 8 },
+    heroSubtitle: { fontSize: 16, fontWeight: '600' },
+    sectionTitle: { fontSize: 11, fontWeight: '700', color: '#666666', letterSpacing: 1.5, marginBottom: 24 },
+    servicesGrid: {},
+    serviceRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, gap: 16 },
+    serviceIconContainer: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+    serviceContent: { flex: 1 },
+    serviceHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+    serviceName: { fontSize: 16, fontWeight: '700' },
+    serviceDescription: { fontSize: 13, lineHeight: 18 },
+    unavailableBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+    unavailableText: { color: '#888888', fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+    historyList: {},
+    historyRow: { flexDirection: 'row', paddingVertical: 20, borderBottomWidth: 1, justifyContent: 'space-between' },
+    historyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+    historyDesc: { fontSize: 14, fontStyle: 'italic', marginBottom: 8 },
+    historyFooter: { flexDirection: 'row', alignItems: 'center' },
+    historyDate: { fontSize: 12, color: '#666666', fontWeight: '600' },
+    etaText: { fontSize: 12, fontWeight: '700' },
+    statusText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+    emptyState: { alignItems: 'flex-start', paddingTop: 8 },
+    emptyText: { color: '#666666', fontStyle: 'italic', fontSize: 14 },
+    infoCard: { flexDirection: 'row', alignItems: 'center', padding: 24, borderRadius: 16, borderWidth: 1, marginTop: 48, justifyContent: 'space-between' },
+    infoContent: { flex: 1, paddingRight: 16 },
+    infoTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 8 },
+    infoText: { fontSize: 13, lineHeight: 20 },
+    modalOverlay: { flex: 1, justifyContent: 'center', padding: 24 },
+    modalContainer: { padding: 24, borderRadius: 24, borderWidth: 1 },
+    modalTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
+    modalSubtitle: { fontSize: 14, marginBottom: 24 },
+    inputBox: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 16, minHeight: 120, marginBottom: 32 },
+    modalButtons: { flexDirection: 'row', gap: 12 },
+    modalBtn: { flex: 1, padding: 18, borderRadius: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+    cancelBtn: { backgroundColor: 'transparent' },
+    cancelText: { fontSize: 14, fontWeight: '800', letterSpacing: 1 },
+    confirmText: { fontSize: 14, fontWeight: '800', letterSpacing: 1 }
 });

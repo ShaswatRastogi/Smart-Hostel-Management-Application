@@ -1,20 +1,101 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Modal } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Modal,
+  Pressable,
+} from 'react-native';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
-import * as SecureStore from 'expo-secure-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomAlert, { AlertType } from '../components/CustomAlert';
 import { useAuth } from '../context/AuthContext';
 import { setStoredUser, isAdmin } from '../utils/authUtils';
 import AppText from '../components/AppText';
 
+// ─── Shimmer line component for input fields ───
+function ShimmerLine() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  const [lineWidth, setLineWidth] = useState(0);
 
+  useEffect(() => {
+    // Smooth ping-pong sweep
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmer, {
+          toValue: 0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        })
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
 
+  // Beam width is 40% of line width.
+  const beamWidth = lineWidth * 0.4;
+  const maxTranslate = Math.max(0, lineWidth - beamWidth);
+
+  // Animate strictly within the bounds of the line
+  const translateX = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, maxTranslate],
+  });
+
+  return (
+    <View 
+      style={shimmerStyles.track}
+      onLayout={(e) => setLineWidth(e.nativeEvent.layout.width)}
+    >
+      {lineWidth > 0 && (
+        <Animated.View
+          style={[
+            shimmerStyles.beam,
+            {
+              width: beamWidth,
+              transform: [{ translateX }],
+            },
+          ]}
+        />
+      )}
+    </View>
+  );
+}
+
+const shimmerStyles = StyleSheet.create({
+  track: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+    borderRadius: 1,
+  },
+  beam: {
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 1,
+  },
+});
+
+// ─── Main Login Component ───
 export default function Login() {
   const router = useRouter();
   const { refreshUser } = useAuth();
@@ -27,6 +108,18 @@ export default function Login() {
   const [tempToken, setTempToken] = useState('');
   const [twoFactorMethod, setTwoFactorMethod] = useState<'app' | 'sms' | 'both'>('app');
   const [twoFactorCode, setTwoFactorCode] = useState('');
+
+  // Entrance animation for form
+  const formOpacity = useRef(new Animated.Value(0)).current;
+  const formTranslateY = useRef(new Animated.Value(20)).current;
+
+  // Inline info box states
+  const [showEmailInfo, setShowEmailInfo] = useState(false);
+  const [showPasswordInfo, setShowPasswordInfo] = useState(false);
+
+  // Input focus state for border highlight
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   // Custom Alert State
   const [alertVisible, setAlertVisible] = useState(false);
@@ -42,6 +135,22 @@ export default function Login() {
   };
 
   useEffect(() => {
+    // Trigger entrance animation
+    Animated.parallel([
+      Animated.timing(formOpacity, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(formTranslateY, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      })
+    ]).start();
+
     console.log('📡 Google Sign-In Config:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? 'Loaded' : 'MISSING');
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -120,18 +229,21 @@ export default function Login() {
       }
     } catch (e: any) {
       if (e.code === statusCodes.SIGN_IN_CANCELLED) {
-        // user cancelled the login flow
         console.log('User cancelled login');
         showAlert('Login Cancelled', 'Google Sign-In was cancelled.', 'warning');
       } else if (e.code === statusCodes.IN_PROGRESS) {
-        // operation (e.g. sign in) is in progress already
         console.log('Login in progress');
       } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        // play services not available or outdated
         showAlert('Error', 'Google Play Services not available', 'error');
       } else {
         console.log('Google Login Failed:', e.message);
-        const message = e.response?.data?.error || 'Google Sign-In failed. Please try again.';
+        let message = e.response?.data?.error || 'Google Sign-In failed. Please try again.';
+        
+        // Ensure the exact requested phrasing is used if the backend says the user is not found
+        if (e.response?.status === 404 || message.toLowerCase().includes('not found') || message.toLowerCase().includes('does not exist')) {
+            message = 'Account not found for Google Sign-In.';
+        }
+
         showAlert('Error', message, 'error');
       }
     } finally {
@@ -274,151 +386,220 @@ export default function Login() {
         onClose={() => setAlertVisible(false)}
       />
 
-      {/* Deep Dark Navy Background */}
-      <View style={styles.bgContainer}>
-        <LinearGradient
-          colors={['#0F172A', '#0B1121']} // Very dark navy matching the image
-          style={StyleSheet.absoluteFillObject}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-
-        {/* Top Left Glow (Cyan) */}
-        <View style={[styles.glowOrb, styles.glowOrbTop]} />
-      </View>
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }
+            { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 40 },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo Section */}
+          {/* Invisible Backdrop for closing tooltips when tapping outside */}
+          {(showEmailInfo || showPasswordInfo) && (
+            <Pressable
+              style={[StyleSheet.absoluteFill, { zIndex: 5 }]}
+              onPress={() => {
+                setShowEmailInfo(false);
+                setShowPasswordInfo(false);
+              }}
+            />
+          )}
+
+          {/* ── Header ── */}
           <View style={styles.header}>
-            <View style={styles.logoIconContainer}>
-              {/* Cyan building icon matching the design */}
-              <MaterialCommunityIcons name="domain" size={32} color="#fff" />
-            </View>
-            <View style={styles.logoTextRow}>
-              <AppText style={styles.logoTextWhite}>Smart </AppText>
-              <AppText style={styles.logoTextCyan}>Hostel</AppText>
-            </View>
-            <AppText style={styles.logoSubtitle}>PREMIUM LIVING</AppText>
+            <AppText style={styles.brand}>SmartStay</AppText>
+            <View style={styles.dividerAccent} />
+            <AppText style={styles.tagline}>Sign in to continue</AppText>
           </View>
 
-          {/* Login Card */}
-          <View style={styles.glassCard}>
-            <AppText style={styles.welcomeText}>Welcome Back</AppText>
-            <AppText style={styles.subtitleText}>Access your premium hostel dashboard</AppText>
-
-            {/* Email Input */}
-            <View style={styles.inputGroup}>
-              <AppText style={styles.inputLabel}>Email Address</AppText>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="email-outline" size={20} color="#64748B" style={styles.inputIcon} />
+          {/* ── Form ── */}
+          <Animated.View style={[styles.form, { opacity: formOpacity, transform: [{ translateY: formTranslateY }] }]}>
+            {/* Email */}
+            <View style={styles.fieldGroup}>
+              <View style={[styles.labelRow, { zIndex: showEmailInfo ? 10 : 1 }]}>
+                <AppText style={styles.label}>Email</AppText>
+                <View style={{ position: 'relative', justifyContent: 'center' }}>
+                  <TouchableOpacity 
+                    onPress={() => setShowEmailInfo(!showEmailInfo)}
+                    style={styles.infoIcon}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialCommunityIcons name="help-circle-outline" size={14} color={showEmailInfo ? '#ffffff' : '#555555'} />
+                  </TouchableOpacity>
+                  {showEmailInfo && (
+                    <View style={styles.tooltipWrapper}>
+                      <View style={styles.tooltipArrow} />
+                      <View style={styles.tooltipBox}>
+                        <AppText style={styles.tooltipText}>
+                          Your email is provided by your warden. Contact them if you need assistance.
+                        </AppText>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.inputRow,
+                  emailFocused && styles.inputRowFocused,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={18}
+                  color={emailFocused ? '#ffffff' : '#555555'}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
-                  placeholder="name@example.com"
-                  placeholderTextColor="#64748B"
+                  placeholder="you@example.com"
+                  placeholderTextColor="#444444"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
                 />
               </View>
+              {!emailFocused && <ShimmerLine />}
             </View>
 
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <View style={styles.passwordHeader}>
-                <AppText style={styles.inputLabel}>Password</AppText>
+            {/* Password */}
+            <View style={styles.fieldGroup}>
+              <View style={[styles.labelRow, { zIndex: showPasswordInfo ? 10 : 1 }]}>
+                <AppText style={styles.label}>Password</AppText>
+                <View style={{ position: 'relative', justifyContent: 'center' }}>
+                  <TouchableOpacity 
+                    onPress={() => setShowPasswordInfo(!showPasswordInfo)}
+                    style={styles.infoIcon}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialCommunityIcons name="help-circle-outline" size={14} color={showPasswordInfo ? '#ffffff' : '#555555'} />
+                  </TouchableOpacity>
+                  {showPasswordInfo && (
+                    <View style={styles.tooltipWrapper}>
+                      <View style={styles.tooltipArrow} />
+                      <View style={styles.tooltipBox}>
+                        <AppText style={styles.tooltipText}>
+                          Your password is provided by your warden. Contact them if you need assistance.
+                        </AppText>
+                      </View>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#64748B" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputRow,
+                  passwordFocused && styles.inputRowFocused,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="lock-outline"
+                  size={18}
+                  color={passwordFocused ? '#ffffff' : '#555555'}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor="#444444"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  <MaterialCommunityIcons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#64748B" />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeBtn}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color="#555555"
+                  />
                 </TouchableOpacity>
               </View>
+              {!passwordFocused && <ShimmerLine />}
             </View>
 
-            {/* Primary Login Button */}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity
-                style={[styles.loginBtnContainer, { flex: 1 }]}
-                onPress={() => handleLogin()}
-                disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#2CB4FF', '#2563EB']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.loginBtn}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <AppText style={styles.loginBtnText}>Log In</AppText>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+            {/* Login Button */}
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={() => handleLogin()}
+              disabled={isLoading}
+              activeOpacity={0.7}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#000000" size="small" />
+              ) : (
+                <AppText style={styles.loginBtnText}>Log In</AppText>
+              )}
+            </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
+            <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <AppText style={styles.dividerText}>OR CONTINUE WITH</AppText>
+              <AppText style={styles.dividerText}>or</AppText>
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Google Sign In logic implemented here directly without separate component to match design perfectly */}
+            {/* Google Sign In */}
             <TouchableOpacity
               style={styles.googleBtn}
               onPress={handleGoogleLogin}
               disabled={isLoading}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
-              <MaterialCommunityIcons name="google" size={20} color="#EA4335" style={{ marginRight: 12 }} />
-              <AppText style={styles.googleBtnText}>Sign in with Google</AppText>
+              <MaterialCommunityIcons
+                name="google"
+                size={18}
+                color="#ffffff"
+                style={{ marginRight: 10 }}
+              />
+              <AppText style={styles.googleBtnText}>
+                Continue with Google
+              </AppText>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* 2FA Modal */}
-      <Modal visible={show2FA} transparent animationType="slide">
+      {/* ── 2FA Modal ── */}
+      <Modal visible={show2FA} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <MaterialCommunityIcons name={twoFactorMethod === 'sms' ? "message-processing-outline" : "shield-lock-outline"} size={48} color="#2CB4FF" style={{ marginBottom: 16 }} />
+            <MaterialCommunityIcons
+              name={
+                twoFactorMethod === 'sms'
+                  ? 'message-processing-outline'
+                  : 'shield-lock-outline'
+              }
+              size={40}
+              color="#ffffff"
+              style={{ marginBottom: 16 }}
+            />
             <AppText style={styles.modalTitle}>Two-Factor Auth</AppText>
             <AppText style={styles.modalDesc}>
-              {twoFactorMethod === 'sms' 
-                ? 'Enter the 6-digit code sent to your phone.' 
-                : twoFactorMethod === 'both' 
-                  ? 'Enter the 6-digit code from your authenticator app or phone.' 
-                  : 'Enter the 6-digit code from your authenticator app.'}
+              {twoFactorMethod === 'sms'
+                ? 'Enter the 6-digit code sent to your phone.'
+                : twoFactorMethod === 'both'
+                ? 'Enter the 6-digit code from your authenticator app or phone.'
+                : 'Enter the 6-digit code from your authenticator app.'}
             </AppText>
 
             <TextInput
               style={styles.modalInput}
               placeholder="000000"
-              placeholderTextColor="#64748B"
+              placeholderTextColor="#444444"
               keyboardType="number-pad"
               maxLength={6}
               value={twoFactorCode}
@@ -426,17 +607,27 @@ export default function Login() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShow2FA(false)}>
-                <AppText style={styles.modalBtnTextCancel}>Cancel</AppText>
+              <TouchableOpacity
+                style={styles.modalBtnCancel}
+                onPress={() => setShow2FA(false)}
+              >
+                <AppText style={styles.modalBtnCancelText}>Cancel</AppText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnPrimary} onPress={handleVerify2FA} disabled={isLoading}>
-                {isLoading ? <ActivityIndicator color="#fff" /> : <AppText style={styles.modalBtnTextPrimary}>Verify</AppText>}
+              <TouchableOpacity
+                style={styles.modalBtnVerify}
+                onPress={handleVerify2FA}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <AppText style={styles.modalBtnVerifyText}>Verify</AppText>
+                )}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
@@ -444,218 +635,213 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  bgContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  glowOrb: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-  },
-  glowOrbTop: {
-    backgroundColor: 'rgba(37, 192, 244, 0.15)', // Neon Cyan glow
-    top: -100,
-    left: '50%',
-    transform: [{ translateX: -150 }],
+    backgroundColor: '#000000',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 28,
   },
+
+  // ── Header ──
   header: {
-    alignItems: 'center',
-    marginBottom: 40,
-    marginTop: 20,
+    marginBottom: 52,
   },
-  logoIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#2CB4FF', // Cyan building background
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#2CB4FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+  brand: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 1,
   },
-  logoTextRow: {
+  dividerAccent: {
+    width: 32,
+    height: 2,
+    backgroundColor: '#ffffff',
+    marginTop: 12,
+    marginBottom: 12,
+    borderRadius: 1,
+  },
+  tagline: {
+    fontSize: 15,
+    color: '#666666',
+    letterSpacing: 0.3,
+  },
+
+  // ── Form ──
+  form: {
+    gap: 0,
+  },
+  fieldGroup: {
+    marginBottom: 28,
+  },
+  labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  logoTextWhite: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFF',
-    letterSpacing: -0.5,
-  },
-  logoTextCyan: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#2CB4FF', // High-contrast cyan
-    letterSpacing: -0.5,
-  },
-  logoSubtitle: {
+  label: {
     fontSize: 12,
-    color: '#94A3B8',
+    fontWeight: '600',
+    color: '#888888',
     letterSpacing: 1.5,
-    marginTop: 6,
-    fontWeight: '600',
+    textTransform: 'uppercase',
   },
-  glassCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.5)', // Dark frosted glass
-    borderRadius: 32,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+  infoIcon: {
+    marginLeft: 6,
+    padding: 2,
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFF',
-    marginBottom: 6,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: '#94A3B8',
-    marginBottom: 32,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#F1F5F9',
-    marginBottom: 8,
-  },
-  inputWrapper: {
+  tooltipWrapper: {
+    position: 'absolute',
+    left: 28, // Places it to the right of the icon
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)', // Very dark input background
-    borderRadius: 16,
-    height: 56,
+    width: 220, // Fixed width so it wraps text neatly
+    zIndex: 999, // Ensure it floats above the inputs below
+  },
+  tooltipArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderTopWidth: 6,
+    borderBottomWidth: 6,
+    borderRightWidth: 8,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: '#111111', // Matches tooltip background
+  },
+  tooltipBox: {
+    backgroundColor: '#111111',
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: '#333333',
+    flex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  tooltipText: {
+    fontSize: 11,
+    color: '#888888',
+    lineHeight: 16,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  inputRowFocused: {
+    borderBottomColor: '#ffffff',
   },
   inputIcon: {
-    marginLeft: 16,
     marginRight: 12,
   },
   input: {
     flex: 1,
-    color: '#F8FAFC',
-    fontSize: 15,
+    color: '#ffffff',
+    fontSize: 16,
     height: '100%',
+    letterSpacing: 0.3,
   },
-  eyeIcon: {
-    paddingHorizontal: 16,
+  eyeBtn: {
+    paddingLeft: 12,
     height: '100%',
     justifyContent: 'center',
   },
-  loginBtnContainer: {
-    marginTop: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 6,
-  },
+
+  // ── Login Button ──
   loginBtn: {
-    height: 56,
+    height: 52,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 36,
   },
   loginBtnText: {
-    color: '#FFF',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  dividerContainer: {
+
+  // ── Divider ──
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 28,
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#333333',
   },
   dividerText: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    paddingHorizontal: 12,
+    color: '#555555',
+    fontSize: 12,
+    paddingHorizontal: 16,
     letterSpacing: 0.5,
   },
+
+  // ── Google Button ──
   googleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 16,
+    height: 52,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: '#222222',
   },
   googleBtnText: {
-    color: '#F8FAFC',
+    color: '#cccccc',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
+
+  // ── 2FA Modal ──
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 28,
   },
   modalContent: {
     width: '100%',
-    backgroundColor: '#1E293B',
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: '#111111',
+    borderRadius: 20,
+    padding: 28,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#222222',
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffffff',
     marginBottom: 8,
   },
   modalDesc: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#888888',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   modalInput: {
     width: '100%',
-    height: 56,
-    backgroundColor: '#0F172A',
-    borderRadius: 16,
+    height: 52,
+    backgroundColor: '#000000',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    color: '#FFF',
-    fontSize: 24,
+    borderColor: '#333333',
+    color: '#ffffff',
+    fontSize: 22,
     letterSpacing: 8,
     textAlign: 'center',
     marginBottom: 24,
@@ -666,28 +852,29 @@ const styles = StyleSheet.create({
   },
   modalBtnCancel: {
     flex: 1,
-    height: 50,
+    height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
-  modalBtnTextCancel: {
-    color: '#94A3B8',
-    fontSize: 16,
+  modalBtnCancelText: {
+    color: '#888888',
+    fontSize: 15,
     fontWeight: '600',
   },
-  modalBtnPrimary: {
+  modalBtnVerify: {
     flex: 1,
-    height: 50,
+    height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#ffffff',
   },
-  modalBtnTextPrimary: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  }
+  modalBtnVerifyText: {
+    color: '#000000',
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });

@@ -1,239 +1,143 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../utils/ThemeContext';
 import { Facility, getAllFacilities } from '../utils/facilityUtils';
 import { HostelInfo, getHostelInfo as fetchHostelInfo } from '../utils/hostelUtils';
+import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
 export default function AboutPage() {
-    const { colors, theme } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isDark } = useTheme();
+
     const [facilities, setFacilities] = useState<Facility[]>([]);
     const [hostelInfo, setHostelInfo] = useState<HostelInfo | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useFocusEffect(
-        useCallback(() => {
-            loadData();
-        }, [])
-    );
+    // Dynamic Theme Map
+    const themeBg = isDark ? '#000000' : '#F8FAFC';
+    const textMain = isDark ? '#FFFFFF' : '#111111';
+    const textMuted = isDark ? '#888888' : '#64748B';
+    const textSecondary = isDark ? '#CCCCCC' : '#475569';
+    const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+    const dotBg = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)';
+
+    useFocusEffect(useCallback(() => { loadData(); }, []));
 
     const loadData = async () => {
         try {
-            // console.log('Loading About Data...');
-            const [facilitiesData, infoData] = await Promise.all([
-                getAllFacilities(),
-                fetchHostelInfo()
-            ]);
-            setFacilities(facilitiesData);
-            setHostelInfo(infoData);
-        } catch (error) {
-            console.error('Error loading data:', error);
-        } finally {
-            setLoading(false);
-        }
+            const [facilitiesData, infoData] = await Promise.all([getAllFacilities(), fetchHostelInfo()]);
+            setFacilities(facilitiesData); setHostelInfo(infoData);
+        } catch (error) {} finally { setLoading(false); }
     };
 
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-            backgroundColor: colors.background,
-        },
-        heroContainer: {
-            height: 250,
-            overflow: 'hidden',
-        },
-        heroImage: {
-            width: '100%',
-            height: '100%',
-        },
-        heroOverlay: {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 150,
-            justifyContent: 'flex-end',
-            padding: 20,
-        },
-        heroTitle: {
-            fontSize: 32,
-            fontWeight: '800',
-            color: '#fff',
-            marginBottom: 4,
-            textShadowColor: 'rgba(0,0,0,0.3)',
-            textShadowOffset: { width: 0, height: 2 },
-            textShadowRadius: 4,
-        },
-        heroSubtitle: {
-            fontSize: 16,
-            color: 'rgba(255,255,255,0.9)',
-            fontWeight: '600',
-        },
-        content: {
-            flex: 1,
-            padding: 20,
-        },
-        sectionTitle: {
-            fontSize: 20,
-            fontWeight: '700',
-            color: colors.text,
-            marginBottom: 16,
-        },
-        introText: {
-            fontSize: 15,
-            color: colors.textSecondary,
-            lineHeight: 24,
-            marginBottom: 24,
-        },
-        facilityCard: {
-            backgroundColor: colors.card,
-            borderRadius: 16,
-            marginBottom: 20,
-            overflow: 'hidden',
-            borderWidth: 1,
-            borderColor: colors.border,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 8,
-            elevation: 2,
-        },
-        facilityImage: {
-            width: '100%',
-            height: 180,
-            backgroundColor: theme === 'dark' ? '#1E293B' : '#E2E8F0',
-        },
-        facilityContent: {
-            padding: 16,
-        },
-        facilityTitle: {
-            fontSize: 18,
-            fontWeight: '700',
-            color: colors.text,
-            marginBottom: 6,
-        },
-        facilityDesc: {
-            fontSize: 14,
-            color: colors.textSecondary,
-            lineHeight: 20,
-        },
-    });
-
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
+            <View style={[styles.headerActions, { paddingTop: insets.top + 16 }]}>
+                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+                    <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+                </TouchableOpacity>
+            </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Custom Hero Header */}
-                <View style={styles.heroContainer}>
-                    {!loading ? (
-                        <Image
-                            source={{ uri: hostelInfo?.image_url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}
-                            style={styles.heroImage}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <View style={[styles.heroImage, { backgroundColor: theme === 'dark' ? '#1E293B' : '#E2E8F0' }]} />
-                    )}
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.heroOverlay}
-                    >
-                        <AppText style={styles.heroTitle}>
-                            {loading ? 'Loading...' : (hostelInfo?.name || 'Smart Hostel')}
-                        </AppText>
-                        <AppText style={styles.heroSubtitle}>
-                            {loading ? 'Please wait' : (hostelInfo?.subtitle || 'no detail added right now')}
-                        </AppText>
-                    </LinearGradient>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+                <View style={styles.heroSection}>
+                    <AppText style={[styles.heroTitle, { color: textMain }]}>{loading ? 'Loading...' : (hostelInfo?.name || 'Smart Hostel')}</AppText>
+                    <AppText style={[styles.heroSubtitle, { color: textMuted }]}>{loading ? 'Please wait' : (hostelInfo?.subtitle || 'no detail added right now')}</AppText>
 
-                    {/* Back Button Overlay */}
-                    <TouchableOpacity
-                        style={{ position: 'absolute', top: insets.top + 10, left: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' }}
-                        onPress={() => router.back()}
-                    >
-                        <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.content}>
-                    {!loading && hostelInfo?.location && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, padding: 12, backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
-                            <MaterialCommunityIcons name="map-marker" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                            <AppText style={{ color: colors.text, fontSize: 14, fontWeight: '500', flex: 1 }}>
-                                {hostelInfo.location}
-                            </AppText>
+                    {!loading && (
+                        <View style={[styles.heroImageContainer, { borderColor: borderSubtle }]}>
+                            <Image source={{ uri: hostelInfo?.image_url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }} style={styles.heroImage} resizeMode="cover" />
                         </View>
                     )}
+                </View>
 
-                    <AppText style={styles.introText}>
-                        {loading ? 'Loading description...' : (hostelInfo?.description || 'no detail added right now')}
-                    </AppText>
+                <View style={styles.infoSection}>
+                    {!loading && hostelInfo?.location && (
+                        <View style={[styles.locationBlock, { borderColor: borderSubtle }]}>
+                            <MaterialCommunityIcons name="map-marker-outline" size={20} color={textMuted} />
+                            <AppText style={[styles.locationText, { color: textMain }]}>{hostelInfo.location}</AppText>
+                        </View>
+                    )}
+                    <AppText style={[styles.introText, { color: textSecondary }]}>{loading ? 'Loading description...' : (hostelInfo?.description || 'no detail added right now')}</AppText>
+                </View>
 
-                    <AppText style={styles.sectionTitle}>Our Facilities</AppText>
-
+                <View style={styles.facilitiesSection}>
+                    <AppText style={styles.sectionTitle}>OUR FACILITIES</AppText>
                     {loading ? (
-                        <ActivityIndicator color={colors.primary} size="large" />
+                        <ActivityIndicator color={textMain} size="large" />
                     ) : (
                         facilities.map((item) => (
-                            <View key={item.id} style={styles.facilityCard}>
+                            <View key={item.id} style={[styles.facilityRow, { borderColor: borderSubtle }]}>
+                                <View style={styles.facilityContent}>
+                                    <AppText style={[styles.facilityTitle, { color: textMain }]}>{item.title}</AppText>
+                                    <AppText style={[styles.facilityDesc, { color: textMuted }]}>{item.description}</AppText>
+                                </View>
+
                                 {item.images && item.images.length > 0 ? (
-                                    <View>
-                                        <ScrollView
-                                            horizontal
-                                            pagingEnabled
-                                            showsHorizontalScrollIndicator={false}
-                                            style={{ width: '100%', height: 180 }}
-                                        >
-                                            {item.images.map((img, index) => (
-                                                <Image
-                                                    key={index}
-                                                    source={{ uri: img }}
-                                                    style={{ width: Dimensions.get('window').width - 42, height: 180 }} // width - padding (40) - border (2)
-                                                    resizeMode="cover"
-                                                />
-                                            ))}
+                                    <View style={[styles.facilityImageGallery, { borderColor: borderSubtle }]}>
+                                        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.galleryScroll}>
+                                            {item.images.map((img, index) => <Image key={index} source={{ uri: img }} style={styles.facilityGalleryImage} resizeMode="cover" />)}
                                         </ScrollView>
                                         {item.images.length > 1 && (
-                                            <View style={{ position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
-                                                {item.images.map((_, index) => (
-                                                    <View key={index} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.8)' }} />
-                                                ))}
+                                            <View style={styles.galleryDots}>
+                                                {item.images.map((_, index) => <View key={index} style={[styles.dot, { backgroundColor: dotBg }]} />)}
                                             </View>
                                         )}
                                     </View>
                                 ) : item.image_url ? (
-                                    <Image source={{ uri: item.image_url }} style={styles.facilityImage} resizeMode="cover" />
+                                    <Image source={{ uri: item.image_url }} style={[styles.facilitySingleImage, { borderColor: borderSubtle }]} resizeMode="cover" />
                                 ) : null}
-                                <View style={styles.facilityContent}>
-                                    <AppText style={styles.facilityTitle}>{item.title}</AppText>
-                                    <AppText style={styles.facilityDesc}>{item.description}</AppText>
-                                </View>
                             </View>
                         ))
                     )}
-
                     {!loading && facilities.length === 0 && (
-                        <AppText style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 20 }}>
-                            no detail added right now
-                        </AppText>
-                    )}
-
-                    {!loading && hostelInfo?.footer_text && (
-                        <View style={{ marginTop: 24, marginBottom: 40 }}>
-                            <AppText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 15, lineHeight: 24 }}>
-                                {hostelInfo.footer_text}
-                            </AppText>
-                        </View>
+                        <View style={styles.emptyState}><AppText style={styles.emptyText}>No facilities added yet.</AppText></View>
                     )}
                 </View>
+
+                {!loading && hostelInfo?.footer_text && (
+                    <View style={styles.footerSection}>
+                        <AppText style={styles.footerText}>{hostelInfo.footer_text}</AppText>
+                    </View>
+                )}
             </ScrollView>
         </View>
     );
 }
+
+const { width } = Dimensions.get('window');
+
+const styles = StyleSheet.create({
+    container: { flex: 1 },
+    headerActions: { paddingHorizontal: 24, paddingBottom: 16 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+    heroSection: { paddingHorizontal: 24, marginBottom: 40 },
+    heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 8 },
+    heroSubtitle: { fontSize: 16, fontWeight: '600', marginBottom: 32 },
+    heroImageContainer: { width: '100%', height: 240, borderRadius: 16, overflow: 'hidden', borderWidth: 1 },
+    heroImage: { width: '100%', height: '100%' },
+    infoSection: { paddingHorizontal: 24, marginBottom: 48 },
+    locationBlock: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, marginBottom: 24, gap: 8 },
+    locationText: { fontSize: 14, fontWeight: '600', flex: 1 },
+    introText: { fontSize: 15, lineHeight: 24 },
+    facilitiesSection: { paddingHorizontal: 24, marginBottom: 48 },
+    sectionTitle: { fontSize: 11, fontWeight: '700', color: '#666666', letterSpacing: 1.5, marginBottom: 24 },
+    facilityRow: { marginBottom: 40, borderBottomWidth: 1, paddingBottom: 40 },
+    facilityContent: { marginBottom: 20 },
+    facilityTitle: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 8 },
+    facilityDesc: { fontSize: 14, lineHeight: 22 },
+    facilityImageGallery: { width: '100%', height: 200, borderRadius: 12, overflow: 'hidden', borderWidth: 1 },
+    galleryScroll: { width: '100%', height: '100%' },
+    facilityGalleryImage: { width: width - 48, height: 200 },
+    galleryDots: { position: 'absolute', bottom: 12, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    facilitySingleImage: { width: '100%', height: 200, borderRadius: 12, borderWidth: 1 },
+    emptyState: { paddingVertical: 24 },
+    emptyText: { color: '#666666', fontStyle: 'italic', fontSize: 14 },
+    footerSection: { paddingHorizontal: 24, alignItems: 'center' },
+    footerText: { fontSize: 12, color: '#666666', textAlign: 'center', lineHeight: 18 }
+});

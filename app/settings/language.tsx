@@ -1,27 +1,32 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../utils/ThemeContext';
 import { useAlert } from '../../context/AlertContext';
+import { useTheme } from '../../utils/ThemeContext';
 import AppText from '../../components/AppText';
 
 const LANGUAGES = [
   { id: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
   { id: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
-  { id: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-  { id: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
 ];
 
 export default function AppLanguage() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
+  const { isDark } = useTheme();
   const [selectedLang, setSelectedLang] = useState('en');
+
+  // Dynamic Theme Map
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const pressedBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const radioSelectedIcon = isDark ? '#000000' : '#FFFFFF';
 
   useEffect(() => {
     AsyncStorage.getItem('app_language').then(lang => {
@@ -36,79 +41,43 @@ export default function AppLanguage() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+        </Pressable>
+      </View>
 
-      <LinearGradient
-        colors={['#000428', '#004e92']}
-        style={[styles.header, { paddingTop: insets.top + 10 }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
-          </TouchableOpacity>
-          <AppText style={styles.headerTitle}>App Language</AppText>
-          <View style={{ width: 40 }} />
-        </View>
-      </LinearGradient>
-
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <View style={[styles.heroIconWrap, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF' }]}>
-            <LinearGradient colors={['#004e92', '#000428']} style={styles.heroIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <MaterialCommunityIcons name="translate" size={32} color="#fff" />
-            </LinearGradient>
-          </View>
-          <AppText style={[styles.heroTitle, { color: colors.text }]}>Choose Language</AppText>
-          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
-            Select your preferred language for the application interface.
-          </AppText>
+          <AppText style={[styles.heroTitle, { color: textMain }]}>App{"\n"}Language</AppText>
+          <AppText style={[styles.heroSub, { color: textMuted }]}>Select your preferred language for the application interface.</AppText>
         </View>
 
-        {/* Language List */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {LANGUAGES.map((lang, index) => {
+        <View style={styles.section}>
+          <AppText style={styles.secTitle}>AVAILABLE LANGUAGES</AppText>
+          {LANGUAGES.map((lang) => {
             const isSelected = selectedLang === lang.id;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={lang.id}
-                style={[
-                  styles.langRow,
-                  index !== LANGUAGES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                  isSelected && { backgroundColor: isDark ? 'rgba(96,165,250,0.06)' : 'rgba(0,78,146,0.04)' },
-                ]}
+                style={({ pressed }) => [styles.langRow, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
                 onPress={() => handleSelect(lang.id)}
-                activeOpacity={0.6}
               >
                 <AppText style={styles.flag}>{lang.flag}</AppText>
-                <View style={{ flex: 1 }}>
-                  <AppText style={[styles.langName, { color: colors.text }]}>{lang.name}</AppText>
-                  <AppText style={[styles.langNative, { color: colors.textSecondary }]}>{lang.nativeName}</AppText>
+                <View style={styles.langInfo}>
+                  <AppText style={[styles.langName, { color: textMain }, isSelected && { color: '#10B981' }]}>{lang.name}</AppText>
+                  <AppText style={[styles.langNative, { color: textMuted }]}>{lang.nativeName}</AppText>
                 </View>
-                <View style={[styles.radioOuter, {
-                  borderColor: isSelected ? '#004e92' : colors.border,
-                  backgroundColor: isSelected ? '#004e92' : 'transparent',
-                }]}>
-                  {isSelected && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
+                <View style={[styles.radioOuter, isSelected ? styles.radioSelected : styles.radioUnselected]}>
+                  {isSelected && <MaterialCommunityIcons name="check" size={14} color={radioSelectedIcon} />}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
-
-        {/* Info Note */}
-        <View style={[styles.noteCard, {
-          backgroundColor: isDark ? '#0c2d48' : '#EFF6FF',
-          borderColor: isDark ? '#1e3a5f' : '#BFDBFE',
-        }]}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-          <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
-            Language changes will take full effect after restarting the application.
-          </AppText>
-        </View>
+        <AppText style={[styles.infoFooter, { color: textMuted }]}>Language changes will take full effect after restarting the application.</AppText>
       </ScrollView>
     </View>
   );
@@ -116,41 +85,20 @@ export default function AppLanguage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
-  backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  hero: { alignItems: 'center', marginBottom: 24, gap: 8 },
-  heroIconWrap: {
-    width: 80, height: 80, borderRadius: 24,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 4,
-  },
-  heroIcon: {
-    width: 64, height: 64, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  heroTitle: { fontSize: 22, fontWeight: '800', letterSpacing: 0.3 },
-  heroSub: { fontSize: 14, textAlign: 'center', lineHeight: 21 },
-  card: {
-    borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 20,
-    shadowColor: '#004e92', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
-  langRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-  flag: { fontSize: 28 },
-  langName: { fontSize: 16, fontWeight: '600' },
-  langNative: { fontSize: 13, marginTop: 2 },
-  radioOuter: {
-    width: 24, height: 24, borderRadius: 12, borderWidth: 2,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  noteCard: {
-    borderRadius: 16, borderWidth: 1, padding: 14,
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-  },
-  noteText: { fontSize: 13, lineHeight: 19, flex: 1 },
+  header: { paddingHorizontal: 24, paddingBottom: 24 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  hero: { marginBottom: 48 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
+  heroSub: { fontSize: 15, lineHeight: 22 },
+  section: { marginBottom: 40 },
+  secTitle: { fontSize: 11, fontWeight: '700', color: '#888888', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16 },
+  langRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1 },
+  flag: { fontSize: 28, marginRight: 16 },
+  langInfo: { flex: 1 },
+  langName: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
+  langNative: { fontSize: 14 },
+  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  radioSelected: { borderColor: '#10B981', backgroundColor: '#10B981' },
+  radioUnselected: { borderColor: 'rgba(128,128,128,0.3)', backgroundColor: 'transparent' },
+  infoFooter: { fontSize: 13, lineHeight: 20, marginTop: 16 },
 });

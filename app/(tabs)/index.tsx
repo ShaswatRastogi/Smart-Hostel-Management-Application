@@ -10,9 +10,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
   Extrapolate,
   interpolate,
+  interpolateColor,
   useAnimatedStyle,
   useDerivedValue,
-  withSpring
+  withSpring,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+  cancelAnimation
 } from 'react-native-reanimated';
 import { useRefresh } from '../../hooks/useRefresh';
 import api, { API_BASE_URL } from '../../utils/api';
@@ -20,6 +27,7 @@ import { fetchLaundrySettings, subscribeToLaundry } from '../../utils/laundrySyn
 import { fetchMenu, subscribeToMenu } from '../../utils/messSyncUtils';
 
 import PagerView from 'react-native-pager-view';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import StudentNotificationOverlay from '../../components/StudentNotificationOverlay';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { subscribeToBusTimings } from '../../utils/busTimingsSyncUtils';
@@ -42,7 +50,7 @@ const toggleStyles = StyleSheet.create({
   }
 });
 
-const AnimatedThemeToggle = ({ isDark, toggleTheme }: { isDark: boolean, toggleTheme: () => void }) => {
+const AnimatedThemeToggle = ({ isDark, toggleTheme, textMain }: { isDark: boolean, toggleTheme: () => void, textMain: string }) => {
   const progress = useDerivedValue(() => {
     return isDark ? withSpring(1) : withSpring(0);
   }, [isDark]);
@@ -63,7 +71,7 @@ const AnimatedThemeToggle = ({ isDark, toggleTheme }: { isDark: boolean, toggleT
     <TouchableOpacity
       style={[
         toggleStyles.toggleBtn,
-        { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)' }
+        { backgroundColor: 'transparent', borderWidth: 0 }
       ]}
       onPress={toggleTheme}
       activeOpacity={0.8}
@@ -72,7 +80,7 @@ const AnimatedThemeToggle = ({ isDark, toggleTheme }: { isDark: boolean, toggleT
         <MaterialCommunityIcons
           name={isDark ? "weather-sunny" : "weather-night"}
           size={24}
-          color={isDark ? "#fbbf24" : "#004e92"}
+          color={textMain}
         />
       </Animated.View>
     </TouchableOpacity>
@@ -80,40 +88,85 @@ const AnimatedThemeToggle = ({ isDark, toggleTheme }: { isDark: boolean, toggleT
 };
 
 const { width } = Dimensions.get('window');
-const SPACING = 20;
+
+const CustomBusIcon = () => (
+  <Svg width="36" height="36" viewBox="0 0 24 24">
+    {/* Bus Body */}
+    <Path 
+      d="M4 6H16C18.2 6 20 7.8 20 10V17H2C2 17 2 17 2 17V8C2 6.9 2.9 6 4 6Z" 
+      fill="#FACC15" 
+    />
+    {/* Windows */}
+    <Rect x="3.5" y="8" width="4" height="4" rx="0.5" fill="#3B82F6" />
+    <Rect x="8.5" y="8" width="5" height="4" rx="0.5" fill="#3B82F6" />
+    <Rect x="14.5" y="8" width="4" height="4" rx="0.5" fill="#3B82F6" />
+    {/* Headlight */}
+    <Rect x="19.5" y="14" width="1" height="1.5" fill="#FEF08A" />
+    {/* Taillight */}
+    <Rect x="1.5" y="14" width="1" height="1.5" fill="#EF4444" />
+    {/* Bumpers */}
+    <Rect x="1.5" y="16.5" width="19" height="1.5" fill="#111111" />
+    {/* Wheels */}
+    <Circle cx="6" cy="18" r="2.5" fill="#111111" />
+    <Circle cx="6" cy="18" r="1" fill="#94A3B8" />
+    <Circle cx="16" cy="18" r="2.5" fill="#111111" />
+    <Circle cx="16" cy="18" r="1" fill="#94A3B8" />
+  </Svg>
+);
 
 export default function Index() {
   const router = useRouter();
   const { colors, isDark, toggleTheme } = useTheme();
 
-  // Dashboard Store
+  // Dynamic Theme Colors
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const themeGradient = isDark ? ['#000000', '#0a0a0a'] : ['#F8FAFC', '#F1F5F9'];
+  const heroGradient = isDark ? ['#000000', '#000000'] : ['#F8FAFC', '#E2E8F0'];
+  const cardBg = isDark ? '#000000' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const textAccent = isDark ? '#A1A1AA' : '#475569';
+  const overlayGlass = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+  const skylineOpacity = isDark ? 0.15 : 0.05;
+
+  // Bus driving animation
+  const driftX = useSharedValue(-width * 2);
+  const busScale = useSharedValue(1);
+  
+  const skylineX = useSharedValue(0);
+  const cardIconRotation = useSharedValue(0);
+
+  React.useEffect(() => {
+    driftX.value = -width * 2;
+    skylineX.value = 0;
+    busScale.value = 1;
+    cardIconRotation.value = 0;
+
+    driftX.value = withRepeat(withTiming(0, { duration: 8000, easing: Easing.linear }), -1, false);
+    busScale.value = withRepeat(withSequence(withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }), withTiming(0.95, { duration: 1000, easing: Easing.inOut(Easing.ease) })), -1, true);
+    skylineX.value = withRepeat(withTiming(-width * 2, { duration: 14000, easing: Easing.linear }), -1, false);
+    cardIconRotation.value = withRepeat(withSequence(withTiming(12, { duration: 3000, easing: Easing.inOut(Easing.ease) }), withTiming(-12, { duration: 6000, easing: Easing.inOut(Easing.ease) }), withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })), -1, false);
+
+    return () => {
+      cancelAnimation(driftX); cancelAnimation(busScale); cancelAnimation(skylineX); cancelAnimation(cardIconRotation);
+    };
+  }, []);
+
+  const driftStyle = useAnimatedStyle(() => ({ transform: [{ translateX: driftX.value }] }));
+  const busBreathingStyle = useAnimatedStyle(() => ({ transform: [{ scale: busScale.value }] }));
+  const skylineStyle = useAnimatedStyle(() => ({ transform: [{ translateX: skylineX.value }] }));
+  
+  const cardIconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${cardIconRotation.value}deg` }] }));
+
   const {
-    studentData: student,
-    messMenu: fullMenu,
-    laundrySettings: laundry,
-    busRoutes,
-    dashboardCounts,
-    setStudentData,
-    setMessMenu,
-    setLaundrySettings,
-    setBusRoutes,
-    setDashboardCounts,
-    setLastSynced
+    studentData: student, messMenu: fullMenu, laundrySettings: laundry, busRoutes, dashboardCounts,
+    setStudentData, setMessMenu, setLaundrySettings, setBusRoutes, setDashboardCounts, setLastSynced
   } = useDashboardStore();
 
-  const {
-    complaints: pendingComplaints,
-    totalComplaints,
-    visitors: pendingVisitors,
-    totalVisitors,
-    roomServices: pendingRoomServices,
-    totalRoomServices,
-    leaves: pendingLeaves,
-    totalLeaves,
-    facilities: totalFacilities
-  } = dashboardCounts;
+  const { totalComplaints, totalVisitors, totalLeaves, facilities: totalFacilities } = dashboardCounts;
 
-  const [loading, setLoading] = useState(!student); // Only show loader if we have NO cached data
+  const [loading, setLoading] = useState(!student);
   const pagerRef = useRef<PagerView>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationVisible, setNotificationVisible] = useState(false);
@@ -122,21 +175,8 @@ export default function Index() {
   const fetchDashboardCounts = useCallback(async () => {
     try {
       const res = await api.get('/students/dashboard/counts');
-      const data = res.data;
-      setDashboardCounts({
-        complaints: data.complaints || 0,
-        totalComplaints: data.totalComplaints || 0,
-        visitors: data.visitors || 0,
-        totalVisitors: data.totalVisitors || 0,
-        roomServices: data.roomServices || 0,
-        totalRoomServices: data.totalRoomServices || 0,
-        leaves: data.leaves || 0,
-        totalLeaves: data.totalLeaves || 0,
-        facilities: data.facilities || 0,
-      });
-    } catch (e) {
-      console.error("Failed to fetch dashboard counts:", e);
-    }
+      setDashboardCounts(res.data);
+    } catch (e) { }
   }, [setDashboardCounts]);
 
   const loadUserData = useCallback(async () => {
@@ -145,64 +185,30 @@ export default function Index() {
       setStudentData(data);
       setLastSynced(Date.now());
       fetchDashboardCounts();
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) {} finally { setLoading(false); }
   }, [setStudentData, setLastSynced, fetchDashboardCounts]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get('/notifications/student');
       setUnreadCount(res.data.length);
-    } catch (error) {
-      console.error('Failed to fetch notification count:', error);
-    }
+    } catch (error) {}
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadUserData();
-      fetchUnreadCount();
-
-      const unsubscribeLaundry = subscribeToLaundry(setLaundrySettings);
-      const unsubscribeMenu = subscribeToMenu(setMessMenu);
-      const unsubscribeBus = subscribeToBusTimings(setBusRoutes);
-
-      const updateListener = DeviceEventEmitter.addListener('profileUpdated', () => {
-        loadUserData();
-      });
-
-      return () => {
-        unsubscribeLaundry();
-        unsubscribeMenu();
-        unsubscribeBus();
-        updateListener.remove();
-      };
+      loadUserData(); fetchUnreadCount();
+      const unsubLaundry = subscribeToLaundry(setLaundrySettings);
+      const unsubMenu = subscribeToMenu(setMessMenu);
+      const unsubBus = subscribeToBusTimings(setBusRoutes);
+      const updateListener = DeviceEventEmitter.addListener('profileUpdated', loadUserData);
+      return () => { unsubLaundry(); unsubMenu(); unsubBus(); updateListener.remove(); };
     }, [loadUserData, fetchUnreadCount, setLaundrySettings, setMessMenu, setBusRoutes])
   );
 
   const { refreshing, onRefresh } = useRefresh(async () => {
-    await Promise.all([
-      loadUserData(),
-      fetchLaundrySettings().then(setLaundrySettings),
-      fetchMenu().then(setMessMenu),
-      fetchUnreadCount(),
-      fetchDashboardCounts()
-    ]);
+    await Promise.all([ loadUserData(), fetchLaundrySettings().then(setLaundrySettings), fetchMenu().then(setMessMenu), fetchUnreadCount(), fetchDashboardCounts() ]);
   });
-
-  const handleClearNotifications = async () => {
-    try {
-      const res = await api.post('/students/profile/notifications/clear');
-      if (res.data.success) {
-        setStudentData(student ? ({ ...student, lastNotificationsClearedAt: res.data.timestamp }) : null);
-      }
-    } catch (e) {
-      console.error("Failed to clear notifications", e);
-    }
-  };
 
   const getGreeting = () => {
     const hour = getCurrentTimeInCountry().getHours();
@@ -216,18 +222,10 @@ export default function Index() {
     const nowCountry = getCurrentTimeInCountry();
     const today = nowCountry.toLocaleDateString('en-US', { weekday: 'long' });
     const dayMenu = fullMenu?.[today];
-
     if (!dayMenu) return { type: 'Menu', foodItems: [], soon: false, time: '' };
 
     const currentMinutes = nowCountry.getHours() * 60 + nowCountry.getMinutes();
-
-    const defaultTimings: Record<string, string> = {
-      breakfast: '8:00 AM - 9:30 AM',
-      lunch: '12:30 PM - 2:30 PM',
-      snacks: '5:30 PM - 6:30 PM',
-      dinner: '8:30 PM - 9:30 PM'
-    };
-
+    const defaultTimings: Record<string, string> = { breakfast: '8:00 AM - 9:30 AM', lunch: '12:30 PM - 2:30 PM', snacks: '5:30 PM - 6:30 PM', dinner: '8:30 PM - 9:30 PM' };
     const timings = dayMenu.timings || defaultTimings;
 
     const parseToMinutes = (timeStr: string) => {
@@ -240,186 +238,127 @@ export default function Index() {
     };
 
     const meals = [
-      { type: 'Breakfast', key: 'breakfast', food: dayMenu.breakfast },
-      { type: 'Lunch', key: 'lunch', food: dayMenu.lunch },
-      { type: 'Snacks', key: 'snacks', food: dayMenu.snacks },
-      { type: 'Dinner', key: 'dinner', food: dayMenu.dinner }
+      { type: 'Breakfast', key: 'breakfast', food: dayMenu.breakfast }, { type: 'Lunch', key: 'lunch', food: dayMenu.lunch },
+      { type: 'Snacks', key: 'snacks', food: dayMenu.snacks }, { type: 'Dinner', key: 'dinner', food: dayMenu.dinner }
     ];
 
     for (const meal of meals) {
       const timingRange = (timings as any)[meal.key] || (defaultTimings as any)[meal.key];
       const [startStr, endStr] = timingRange.split('-').map((s: string) => s.trim());
       const endMinutes = parseToMinutes(endStr);
-      const startMinutes = parseToMinutes(startStr);
-
       if (currentMinutes < endMinutes) {
-        return {
-          type: meal.type,
-          foodItems: meal.food || [],
-          soon: currentMinutes >= startMinutes - 60 && currentMinutes < startMinutes,
-          time: timingRange
-        };
+        return { type: meal.type, foodItems: meal.food || [], soon: currentMinutes >= parseToMinutes(startStr) - 60 && currentMinutes < parseToMinutes(startStr), time: timingRange };
       }
     }
-
-    return {
-      type: 'Breakfast',
-      foodItems: dayMenu.breakfast || [],
-      soon: false,
-      time: timings.breakfast || defaultTimings.breakfast
-    };
+    return { type: 'Breakfast', foodItems: dayMenu.breakfast || [], soon: false, time: timings.breakfast || defaultTimings.breakfast };
   };
-
-  const getNextDeparture = (times: string[]) => {
-    if (!times || times.length === 0) return '--:--';
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    const futureTimes = times
-      .map(t => {
-        const [h, m] = t.split(':').map(Number);
-        return { original: t, minutes: h * 60 + m };
-      })
-      .filter(t => t.minutes > currentMinutes)
-      .sort((a, b) => a.minutes - b.minutes);
-
-    if (futureTimes.length > 0) return futureTimes[0].original;
-    return times.sort()[0];
-  };
-
-  const getInitial = (name?: string) => name ? name.charAt(0).toUpperCase() : 'S';
 
   if (loading && !student) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <AppText style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Dashboard...</AppText>
+      <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
+        <ActivityIndicator size="large" color={textMain} />
+        <AppText style={[styles.loadingText, { color: textMuted }]}>Loading Dashboard...</AppText>
       </View>
     );
   }
 
   if (!student && !loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <MaterialCommunityIcons name="wifi-off" size={48} color={isDark ? '#94a3b8' : '#64748b'} />
-        <AppText style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
-          Connection Failed
-        </AppText>
-        <AppText style={{ color: colors.textSecondary, marginBottom: 24, textAlign: 'center', maxWidth: '80%' }}>
-          Could not reach the server. Please check your WiFi connection.
-        </AppText>
-        <TouchableOpacity
-          onPress={loadUserData}
-          style={{
-            backgroundColor: colors.primary,
-            paddingHorizontal: 24,
-            paddingVertical: 12,
-            borderRadius: 12,
-          }}
-        >
-          <AppText style={{ color: '#fff', fontWeight: '600' }}>Retry</AppText>
+      <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
+        <MaterialCommunityIcons name="wifi-off" size={48} color={textMuted} />
+        <AppText style={[styles.loadingText, { color: textMain, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>Connection Failed</AppText>
+        <AppText style={{ color: textMuted, marginBottom: 24, textAlign: 'center', maxWidth: '80%' }}>Could not reach the server. Please check your WiFi connection.</AppText>
+        <TouchableOpacity onPress={loadUserData} style={{ backgroundColor: isDark ? '#FFFFFF' : '#111111', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+          <AppText style={{ color: isDark ? '#000000' : '#FFFFFF', fontWeight: '600' }}>Retry</AppText>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Removed overlapping diamond QuickAction in favor of Bento grid inline blocks.
-
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={busRoutes.length > 0
-          ? (isDark ? ['#1E293B', '#334155'] : ['#F8FAFC', '#F1F5F9'])
-          : [colors.background, colors.background]}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-      />
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
+      <LinearGradient colors={themeGradient as any} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 60 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : colors.primary} colors={[colors.primary]} />}
-      >
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />}>
         {/* TOP HERO SECTION */}
-        {/* TOP HERO SECTION */}
-        <View style={[styles.heroWrapper, { backgroundColor: isDark ? '#451A03' : '#FBBF24', paddingBottom: 0 }]}>
+        <View style={[styles.heroWrapper, { backgroundColor: themeBg, paddingBottom: 0, zIndex: 10 }]}>
+          <Animated.View style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: '12.5%', backgroundColor: themeBg, borderBottomLeftRadius: 32, borderBottomRightRadius: 32,
+            shadowColor: isDark ? '#FFD700' : '#000000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: isDark ? 0.8 : 0.1, shadowRadius: isDark ? 24 : 20, elevation: isDark ? 24 : 10
+          }} />
           <LinearGradient
-            colors={isDark ? ['#020617', '#0F172A', '#1E1B4B'] : ['#000B18', '#003366', '#004e92']}
-            style={[styles.heroGradient, { paddingBottom: 12, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 }]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            colors={heroGradient as any}
+            style={[styles.heroGradient, { paddingBottom: 12, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           >
-            {/* Subtle Top-Down Shimmer Overlay */}
-            <LinearGradient
-              colors={['rgba(255,255,255,0.05)', 'transparent']}
-              style={StyleSheet.absoluteFill}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 0.5 }}
-            />
+            <LinearGradient colors={[overlayGlass, 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.5 }} />
+
+            <Animated.View style={[{ position: 'absolute', bottom: 0, width: width * 4, height: 40, flexDirection: 'row', opacity: skylineOpacity }, skylineStyle]}>
+              <View style={{ width: width * 2, height: '100%', position: 'absolute', left: 0 }}>
+                <MaterialCommunityIcons name="city" size={38} color={textMain} style={{ position: 'absolute', bottom: 2, left: '2%' }} />
+                <MaterialCommunityIcons name="home" size={16} color={textMain} style={{ position: 'absolute', bottom: 2, left: '8%' }} />
+                <MaterialCommunityIcons name="pine-tree" size={24} color={textMain} style={{ position: 'absolute', bottom: 2, left: '18%' }} />
+                <MaterialCommunityIcons name="office-building" size={34} color={textMain} style={{ position: 'absolute', bottom: 2, left: '22%' }} />
+                <MaterialCommunityIcons name="home-group" size={22} color={textMain} style={{ position: 'absolute', bottom: 2, left: '35%' }} />
+                <MaterialCommunityIcons name="city-variant" size={44} color={textMain} style={{ position: 'absolute', bottom: 2, left: '46%' }} />
+                <MaterialCommunityIcons name="home-city" size={28} color={textMain} style={{ position: 'absolute', bottom: 2, left: '53%' }} />
+              </View>
+              <View style={{ width: width * 2, height: '100%', position: 'absolute', left: width * 2 }}>
+                <MaterialCommunityIcons name="city" size={38} color={textMain} style={{ position: 'absolute', bottom: 2, left: '2%' }} />
+                <MaterialCommunityIcons name="home" size={16} color={textMain} style={{ position: 'absolute', bottom: 2, left: '8%' }} />
+                <MaterialCommunityIcons name="pine-tree" size={24} color={textMain} style={{ position: 'absolute', bottom: 2, left: '18%' }} />
+                <MaterialCommunityIcons name="office-building" size={34} color={textMain} style={{ position: 'absolute', bottom: 2, left: '22%' }} />
+                <MaterialCommunityIcons name="home-group" size={22} color={textMain} style={{ position: 'absolute', bottom: 2, left: '35%' }} />
+                <MaterialCommunityIcons name="city-variant" size={44} color={textMain} style={{ position: 'absolute', bottom: 2, left: '46%' }} />
+                <MaterialCommunityIcons name="home-city" size={28} color={textMain} style={{ position: 'absolute', bottom: 2, left: '53%' }} />
+              </View>
+            </Animated.View>
+
             <SafeAreaView edges={['top']} style={styles.safeArea}>
               <View style={[styles.headerTop, { width: '100%' }]}>
                 <View style={[styles.topRow, { width: '100%', alignItems: 'center' }]}>
-                  <Pressable onPress={() => router.push('/profile')} style={styles.premiumProfileFrame}>
+                  <Pressable onPress={() => router.push('/profile')} style={[styles.premiumProfileFrame, { borderColor: cardBorder, backgroundColor: overlayGlass }]}>
                     <View style={styles.avatar}>
                       {student?.profilePhoto ? (
-                        <Image
-                          source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
-                          style={{ width: '100%', height: '100%', borderRadius: 28 }}
-                          contentFit="cover"
-                          cachePolicy="none"
-                        />
+                        <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 28 }} contentFit="cover" cachePolicy="none" />
                       ) : (
-                        <AppText style={styles.avatarText}>{getInitial(student?.fullName)}</AppText>
+                        <AppText style={styles.avatarText}>{student?.fullName ? student.fullName.charAt(0).toUpperCase() : 'S'}</AppText>
                       )}
                     </View>
                   </Pressable>
 
                   <View style={{ flex: 1, marginLeft: 12, gap: 0 }}>
-                    <AppText style={styles.greetingText}>{getGreeting()},</AppText>
-                    <AppText style={[styles.userNameText, { fontSize: 24, marginBottom: 0 }]} numberOfLines={1} adjustsFontSizeToFit>
-                      {student?.fullName?.split(' ')[0]}
-                    </AppText>
+                    <AppText style={[styles.greetingText, { color: textMuted }]}>{getGreeting()},</AppText>
+                    <AppText style={[styles.userNameText, { color: textMain }]} numberOfLines={1} adjustsFontSizeToFit>{student?.fullName?.split(' ')[0]}</AppText>
                   </View>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <AnimatedThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+                    <AnimatedThemeToggle isDark={isDark} toggleTheme={toggleTheme} textMain={textMain} />
                     <Pressable style={styles.glassHeaderBtn} onPress={() => setNotificationVisible(true)}>
-                      <Ionicons name="notifications" size={20} color="#fff" />
-                      {unreadCount > 0 && (
-                        <View style={styles.premiumNotificationBadge} />
-                      )}
+                      <Ionicons name="notifications-outline" size={20} color={textMain} />
+                      {unreadCount > 0 && <View style={[styles.premiumNotificationBadge, { backgroundColor: textMain, borderColor: themeBg }]} />}
                     </Pressable>
                   </View>
                 </View>
 
-                {/* Identity Block Indented under Name */}
                 <View style={{ marginLeft: 72, marginTop: -2 }}>
                   {student?.hostelName && (
                     <View style={styles.inlineHostelRow}>
-                      <MaterialCommunityIcons name="office-building" size={14} color="#BAE6FD" />
-                      <AppText style={styles.inlineHostelName} numberOfLines={1} adjustsFontSizeToFit>
-                        {student.hostelName}
-                      </AppText>
+                      <MaterialCommunityIcons name="office-building" size={14} color={textMain} />
+                      <AppText style={[styles.inlineHostelName, { color: textMain }]} numberOfLines={1} adjustsFontSizeToFit>{student.hostelName}</AppText>
                     </View>
                   )}
-
                   <View style={styles.leftStatusRow}>
                     <View style={styles.leftStatusItem}>
-                      <MaterialCommunityIcons name="door-closed" size={14} color="#BAE6FD" />
-                      <AppText style={styles.leftStatusText}>Room {student?.roomNo || '--'}</AppText>
+                      <MaterialCommunityIcons name="door-closed" size={14} color={textMuted} />
+                      <AppText style={[styles.leftStatusText, { color: textMuted }]}>Room {student?.roomNo || '--'}</AppText>
                     </View>
-                    <View style={styles.leftStatusDivider} />
+                    <View style={[styles.leftStatusDivider, { backgroundColor: cardBorder }]} />
                     <View style={styles.leftStatusItem}>
-                      <MaterialCommunityIcons
-                        name="check-decagram"
-                        size={14}
-                        color={student?.status === 'active' ? '#4ADE80' : '#EF4444'}
-                      />
-                      <AppText style={[styles.leftStatusText, {
-                        color: student?.status === 'active' ? '#86EFAC' : '#FCA5A5',
-                      }]}>
-                        {student?.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
-                      </AppText>
+                      <MaterialCommunityIcons name="check-decagram" size={14} color={student?.status === 'active' ? textMain : textMuted} />
+                      <AppText style={[styles.leftStatusText, { color: student?.status === 'active' ? textMain : textMuted }]}>{student?.status === 'active' ? 'ACTIVE' : 'INACTIVE'}</AppText>
                     </View>
                   </View>
                 </View>
@@ -429,123 +368,70 @@ export default function Index() {
         </View>
 
         {/* LIVE STATUS CARDS */}
-        {/* LIVE STATUS CARDS */}
-        {/* DAILY ESSENTIALS - BLUE THEME */}
         <View style={[styles.essentialsSectionWrapper, { marginTop: 0 }]}>
           <View style={styles.essentialsGrid}>
-            {/* BUS CARD - 3D Floating Interactive Card */}
+            {/* BUS CARD */}
             {busRoutes.length > 0 ? (() => {
-              const loopedRoutes = busRoutes.length > 1
-                ? [busRoutes[busRoutes.length - 1], ...busRoutes, busRoutes[0]]
-                : busRoutes;
-
+              const loopedRoutes = busRoutes.length > 1 ? [busRoutes[busRoutes.length - 1], ...busRoutes, busRoutes[0]] : busRoutes;
               return (
-                <View style={{ marginHorizontal: -20, marginBottom: 16, position: 'relative', elevation: 12, shadowColor: isDark ? '#000000' : '#D97706', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.3 : 0.2, shadowRadius: 16, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, backgroundColor: isDark ? '#451A03' : '#FBBF24' }}>
+                <Animated.View style={{ marginHorizontal: -20, marginBottom: 16, position: 'relative', elevation: isDark ? 24 : 10, shadowColor: isDark ? '#00E5FF' : '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: isDark ? 0.8 : 0.1, shadowRadius: isDark ? 24 : 16, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, backgroundColor: cardBg, overflow: 'hidden' }}>
+                  <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 40, overflow: 'hidden' }} pointerEvents="none">
+                    <Animated.View style={[{ position: 'absolute', bottom: 0, width: width * 4, height: '100%', flexDirection: 'row' }, driftStyle]}>
+                      <View style={{ width: width * 2, height: '100%', justifyContent: 'flex-end' }}><Animated.View style={[{ paddingBottom: 0, marginBottom: -4, paddingLeft: width * 1.5 }, busBreathingStyle]}><CustomBusIcon /></Animated.View></View>
+                      <View style={{ width: width * 2, height: '100%', justifyContent: 'flex-end' }}><Animated.View style={[{ paddingBottom: 0, marginBottom: -4, paddingLeft: width * 1.5 }, busBreathingStyle]}><CustomBusIcon /></Animated.View></View>
+                    </Animated.View>
+                  </View>
                   <PagerView
-                    ref={pagerRef}
-                    style={{ height: 110 }}
-                    initialPage={busRoutes.length > 1 ? 1 : 0}
+                    ref={pagerRef} style={{ height: 110 }} initialPage={busRoutes.length > 1 ? 1 : 0}
                     onPageSelected={(e: any) => {
-                      const position = e.nativeEvent.position;
+                      const pos = e.nativeEvent.position;
                       if (busRoutes.length > 1) {
-                        if (position === 0) {
-                          setActiveBusPage(busRoutes.length - 1);
-                        } else if (position === loopedRoutes.length - 1) {
-                          setActiveBusPage(0);
-                        } else {
-                          setActiveBusPage(position - 1);
-                        }
-                      } else {
-                        setActiveBusPage(position);
-                      }
+                        if (pos === 0) setActiveBusPage(busRoutes.length - 1);
+                        else if (pos === loopedRoutes.length - 1) setActiveBusPage(0);
+                        else setActiveBusPage(pos - 1);
+                      } else setActiveBusPage(pos);
                     }}
                     onPageScrollStateChanged={(e: any) => {
                       if (e.nativeEvent.pageScrollState === 'idle' && busRoutes.length > 1) {
-                        // Silent snap back to actual elements when hitting the cloned edges
-                        if (activeBusPage === busRoutes.length - 1) {
-                          pagerRef.current?.setPageWithoutAnimation(busRoutes.length);
-                        } else if (activeBusPage === 0) {
-                          pagerRef.current?.setPageWithoutAnimation(1);
-                        }
+                        if (activeBusPage === busRoutes.length - 1) pagerRef.current?.setPageWithoutAnimation(busRoutes.length);
+                        else if (activeBusPage === 0) pagerRef.current?.setPageWithoutAnimation(1);
                       }
                     }}
                   >
                     {loopedRoutes.map((route: any, index: number) => {
                       const todayStr = new Date().toLocaleDateString('en-CA');
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
+                      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
                       const routeDateStr = route.valid_date ? new Date(route.valid_date).toLocaleDateString('en-CA') : null;
                       const isFuture = routeDateStr && routeDateStr > todayStr;
-
-                      const now = new Date();
-                      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                      const now = new Date(); const currentMinutes = now.getHours() * 60 + now.getMinutes();
                       const sortedTimes = (route.times || []).sort();
-                      const futureTimes = sortedTimes.filter((t: string) => {
-                        const [h, m] = t.split(':').map(Number);
-                        return (h * 60 + m) > currentMinutes;
-                      });
-
+                      const futureTimes = sortedTimes.filter((t: string) => { const [h, m] = t.split(':').map(Number); return (h * 60 + m) > currentMinutes; });
                       const mainTime = isFuture ? sortedTimes[0] : (futureTimes[0] || sortedTimes[0]);
-
                       const frequencyLabel = route.schedule_type?.toLowerCase() === 'everyday' ? 'DAILY' : (routeDateStr === todayStr ? 'TODAY' : (routeDateStr === tomorrowStr ? 'TOMORROW' : (route.schedule_type ? route.schedule_type.toUpperCase() : 'SERVICE')));
-
                       return (
                         <View key={index} style={{ paddingHorizontal: 0, paddingVertical: 0 }}>
-                          <Pressable
-                            style={({ pressed }) => [
-                              {
-                                overflow: 'hidden',
-                                borderBottomLeftRadius: 32,
-                                borderBottomRightRadius: 32,
-                              },
-                              pressed && { opacity: 0.95 }
-                            ]}
-                            onPress={() => router.push('/bustimings')}
-                          >
-                            <View
-                              style={{
-                                paddingHorizontal: 46,
-                                paddingVertical: 10,
-                                height: 110,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: 'transparent'
-                              }}
-                            >
+                          <Pressable style={({ pressed }) => [{ overflow: 'hidden', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }, pressed && { opacity: 0.95 }]} onPress={() => router.push('/bustimings')}>
+                            <View style={{ paddingHorizontal: 46, paddingVertical: 10, height: 110, flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent' }}>
                               <View style={{ flex: 1 }}>
-                                <AppText style={{ fontSize: 10, fontWeight: '900', color: isDark ? '#FCD34D' : '#92400E', letterSpacing: 1.2, marginBottom: 4 }}>BUS SCHEDULE</AppText>
+                                <AppText style={{ fontSize: 10, fontWeight: '900', color: textAccent, letterSpacing: 1.2, marginBottom: 4 }}>BUS SCHEDULE</AppText>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                  <View style={{ backgroundColor: isDark ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.6)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                                    <AppText style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FCD34D' : '#B45309', letterSpacing: 1 }}>
-                                      {frequencyLabel}
-                                    </AppText>
+                                  <View style={{ backgroundColor: overlayGlass, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                    <AppText style={{ fontSize: 9, fontWeight: '800', color: textMain, letterSpacing: 1 }}>{frequencyLabel}</AppText>
                                   </View>
-                                  {futureTimes.length === 0 && !isFuture && (
-                                    <AppText style={{ fontSize: 9, fontWeight: '700', color: '#DC2626' }}>ENDED</AppText>
-                                  )}
+                                  {futureTimes.length === 0 && !isFuture && <AppText style={{ fontSize: 9, fontWeight: '700', color: '#EF4444' }}>ENDED</AppText>}
                                 </View>
-                                <AppText style={{ fontSize: 18, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', lineHeight: 20 }}>
-                                  {route.route}
-                                </AppText>
-                                {!!route.message && (
-                                  <AppText style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#FDE68A' : '#B45309', marginTop: 2, opacity: 0.9 }} numberOfLines={1}>
-                                    <MaterialCommunityIcons name="information" size={10} /> {route.message}
-                                  </AppText>
-                                )}
+                                <AppText style={{ fontSize: 18, fontWeight: '800', color: textMain, lineHeight: 20 }}>{route.route}</AppText>
+                                {!!route.message && <AppText style={{ fontSize: 10, fontWeight: '700', color: textMuted, marginTop: 2 }} numberOfLines={1}><MaterialCommunityIcons name="information" size={10} /> {route.message}</AppText>}
                               </View>
-
                               <View style={{ alignItems: 'flex-end', gap: 2, justifyContent: 'center' }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', opacity: 0.6, marginBottom: 8 }}>
-                                  <AppText style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#FFFBEB' : '#78350F', textTransform: 'uppercase' }}>Tap for Details </AppText>
-                                  <MaterialCommunityIcons name="gesture-tap" size={10} color={isDark ? '#FFFBEB' : '#78350F'} />
+                                  <AppText style={{ fontSize: 8, fontWeight: '800', color: textMuted, textTransform: 'uppercase' }}>Tap for Details </AppText>
+                                  <MaterialCommunityIcons name="gesture-tap" size={10} color={textMuted} />
                                 </View>
-                                <AppText style={{ fontSize: 9, fontWeight: '800', color: isDark ? '#FDE68A' : '#92400E', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Departure</AppText>
+                                <AppText style={{ fontSize: 9, fontWeight: '800', color: textAccent, textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Departure</AppText>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                  <MaterialCommunityIcons name="clock-outline" size={16} color={isDark ? '#FCD34D' : '#B45309'} />
-                                  <AppText style={{ fontSize: 24, fontWeight: '900', color: isDark ? '#FFFBEB' : '#78350F' }}>
-                                    {mainTime || '--:--'}
-                                  </AppText>
+                                  <MaterialCommunityIcons name="clock-outline" size={16} color={textMain} />
+                                  <AppText style={{ fontSize: 24, fontWeight: '900', color: textMain }}>{mainTime || '--:--'}</AppText>
                                 </View>
                               </View>
                             </View>
@@ -558,144 +444,70 @@ export default function Index() {
                     <>
                       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 4, marginBottom: 12 }}>
                         {busRoutes.map((_: any, i: number) => (
-                          <View
-                            key={i}
-                            style={{
-                              width: i === activeBusPage ? 14 : 6,
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: isDark ? '#FCD34D' : '#FFFBEB',
-                              opacity: i === activeBusPage ? 1 : 0.4
-                            }}
-                          />
+                          <View key={i} style={{ width: i === activeBusPage ? 14 : 6, height: 6, borderRadius: 3, backgroundColor: textMain, opacity: i === activeBusPage ? 1 : 0.2 }} />
                         ))}
                       </View>
-
-                      {/* Navigation Arrows (Cyclic) */}
-                      {busRoutes.length > 1 && (
-                        <Pressable
-                          style={{ position: 'absolute', left: 4, top: 42, backgroundColor: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)', borderRadius: 20, padding: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}
-                          onPress={() => {
-                            const targetVisualPage = activeBusPage === 0 ? busRoutes.length : activeBusPage;
-                            pagerRef.current?.setPage(targetVisualPage - 1);
-                          }}
-                        >
-                          <MaterialCommunityIcons name="chevron-left" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
-                        </Pressable>
-                      )}
-                      {busRoutes.length > 1 && (
-                        <Pressable
-                          style={{ position: 'absolute', right: 4, top: 42, backgroundColor: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)', borderRadius: 20, padding: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}
-                          onPress={() => {
-                            const targetVisualPage = activeBusPage + 1;
-                            pagerRef.current?.setPage(targetVisualPage + 1);
-                          }}
-                        >
-                          <MaterialCommunityIcons name="chevron-right" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
-                        </Pressable>
-                      )}
+                      <Pressable style={{ position: 'absolute', left: 4, top: 42, backgroundColor: overlayGlass, borderRadius: 20, padding: 4 }} onPress={() => pagerRef.current?.setPage((activeBusPage === 0 ? busRoutes.length : activeBusPage) - 1)}>
+                        <MaterialCommunityIcons name="chevron-left" size={24} color={textMain} />
+                      </Pressable>
+                      <Pressable style={{ position: 'absolute', right: 4, top: 42, backgroundColor: overlayGlass, borderRadius: 20, padding: 4 }} onPress={() => pagerRef.current?.setPage(activeBusPage === busRoutes.length - 1 ? 1 : activeBusPage + 2)}>
+                        <MaterialCommunityIcons name="chevron-right" size={24} color={textMain} />
+                      </Pressable>
                     </>
                   )}
-                </View>
+                </Animated.View>
               )
             })() : (
               <Pressable
-                style={({ pressed }) => [
-                  {
-                    marginHorizontal: -20, marginBottom: 16, height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#451A03' : '#FBBF24', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, elevation: 12, shadowColor: isDark ? '#000000' : '#D97706', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.3 : 0.2, shadowRadius: 16
-                  },
-                  pressed && { opacity: 0.95 }
-                ]}
+                style={({ pressed }) => [{ marginHorizontal: -20, marginBottom: 16, height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: cardBg, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, elevation: 6, shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }, pressed && { opacity: 0.95 }]}
                 onPress={() => router.push('/bustimings')}
               >
-                <MaterialCommunityIcons name="bus-alert" size={36} color={isDark ? '#FCD34D' : '#92400E'} style={{ opacity: 0.7, marginBottom: 12 }} />
-                <AppText style={{ fontSize: 16, fontWeight: '900', color: isDark ? '#FDE68A' : '#92400E', letterSpacing: 0.5 }}>NO ROUTES ADDED</AppText>
-                <AppText style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#FCD34D' : '#B45309', opacity: 0.7, marginTop: 4 }}>Tap to view full bus schedule</AppText>
+                <MaterialCommunityIcons name="bus-alert" size={36} color={textMuted} style={{ opacity: 0.7, marginBottom: 12 }} />
+                <AppText style={{ fontSize: 16, fontWeight: '900', color: textMain, letterSpacing: 0.5 }}>NO ROUTES ADDED</AppText>
+                <AppText style={{ fontSize: 12, fontWeight: '600', color: textMuted, opacity: 0.7, marginTop: 4 }}>Tap to view full bus schedule</AppText>
               </Pressable>
             )}
 
-            {/* GRID CONTROLS: MESS & LAUNDRY */}
+            {/* MESS & LAUNDRY CARDS */}
             <View style={[styles.gridRow, { marginTop: -4 }]}>
-              {/* MESS CARD - Grid Style */}
               <View style={styles.gridItemFlexible}>
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.premiumServiceCard,
-                    { backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', paddingHorizontal: 16, paddingVertical: 14, overflow: 'hidden' },
-                    pressed && styles.premiumCardPressed
-                  ]}
-                  onPress={() => {
-                    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-                    router.push({
-                      pathname: '/mess',
-                      params: {
-                        tab: 'menu',
-                        day: today,
-                        target: getUpcomingMeal().type.toLowerCase()
-                      }
-                    });
-                  }}
+                  style={({ pressed }) => [styles.premiumServiceCard, { backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, overflow: 'hidden' }, pressed && styles.premiumCardPressed]}
+                  onPress={() => router.push({ pathname: '/mess', params: { tab: 'menu', day: new Date().toLocaleDateString('en-US', { weekday: 'long' }), target: getUpcomingMeal().type.toLowerCase() } })}
                 >
-                  {/* Background Watermark Icon */}
-                  <MaterialCommunityIcons
-                    name="silverware-fork-knife"
-                    size={90}
-                    color={isDark ? '#FDBA74' : '#EA580C'}
-                    style={{ position: 'absolute', right: -15, bottom: -15, opacity: isDark ? 0.08 : 0.06 }}
-                  />
+                  <Animated.View style={[{ position: 'absolute', right: -20, bottom: -20, opacity: 0.12 }, cardIconStyle]}>
+                    <MaterialCommunityIcons name="silverware-fork-knife" size={110} color={'#FDBA74'} />
+                  </Animated.View>
                   <View style={{ gap: 4 }}>
-                    <AppText style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Mess Menu</AppText>
+                    <AppText style={[styles.serviceLabel, { color: textMain, fontSize: 17, marginBottom: 0 }]}>Mess Menu</AppText>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-                      <AppText style={[styles.modernBadgeText, { color: isDark ? '#FDBA74' : '#EA580C', fontSize: 10, fontWeight: '900' }]}>
-                        {getUpcomingMeal().type.toUpperCase()}
-                      </AppText>
-                      <AppText style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
-                        • {getUpcomingMeal().time}
-                      </AppText>
+                      <AppText style={[styles.modernBadgeText, { color: textMuted, fontSize: 10, fontWeight: '900' }]}>{getUpcomingMeal().type.toUpperCase()}</AppText>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: textAccent }}>• {getUpcomingMeal().time}</AppText>
                     </View>
-                    <AppText style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
-                      {getUpcomingMeal().foodItems?.length > 0 ? (
-                        getUpcomingMeal().foodItems.map((item: any, idx: number, arr: any[]) => (
-                          <AppText key={idx} style={item.highlight ? { color: isDark ? '#FDE047' : '#D97706', fontWeight: 'bold' } : {}}>
-                            {item.dish}{idx < arr.length - 1 ? ', ' : ''}
-                          </AppText>
-                        ))
-                      ) : 'Not Available'}
+                    <AppText style={{ color: textMuted, fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
+                      {getUpcomingMeal().foodItems?.length > 0 ? getUpcomingMeal().foodItems.map((item: any, idx: number, arr: any[]) => (
+                        <AppText key={idx} style={item.highlight ? { color: textMain, fontWeight: 'bold' } : {}}>{item.dish}{idx < arr.length - 1 ? ', ' : ''}</AppText>
+                      )) : 'Not Available'}
                     </AppText>
                   </View>
                 </Pressable>
               </View>
 
-              {/* LAUNDRY CARD - Grid Style */}
               <View style={styles.gridItemFlexible}>
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.premiumServiceCard,
-                    { backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', paddingHorizontal: 16, paddingVertical: 14, overflow: 'hidden' },
-                    pressed && styles.premiumCardPressed
-                  ]}
+                  style={({ pressed }) => [styles.premiumServiceCard, { backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, overflow: 'hidden' }, pressed && styles.premiumCardPressed]}
                   onPress={() => router.push('/laundry-request')}
                 >
-                  {/* Background Watermark Icon */}
-                  <MaterialCommunityIcons
-                    name="washing-machine"
-                    size={90}
-                    color={isDark ? '#67E8F9' : '#0891B2'}
-                    style={{ position: 'absolute', right: -15, bottom: -15, opacity: isDark ? 0.08 : 0.06 }}
-                  />
+                  <Animated.View style={[{ position: 'absolute', right: -20, bottom: -20, opacity: 0.12 }, cardIconStyle]}>
+                    <MaterialCommunityIcons name="washing-machine" size={110} color={'#67E8F9'} />
+                  </Animated.View>
                   <View style={{ gap: 4 }}>
-                    <AppText style={[styles.serviceLabel, { color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 17, marginBottom: 0 }]}>Laundry</AppText>
+                    <AppText style={[styles.serviceLabel, { color: textMain, fontSize: 17, marginBottom: 0 }]}>Laundry</AppText>
                     <View style={{ gap: 2 }}>
-                      <AppText style={[styles.modernBadgeText, { color: isDark ? '#67E8F9' : '#0891B2', fontSize: 10, fontWeight: '900', alignSelf: 'flex-start' }]}>
-                        {(laundry?.status === 'On Schedule' ? 'On Time' : (laundry?.status || 'Active')).toUpperCase()}
-                      </AppText>
-                      <AppText style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>
-                        {laundry?.pickupTime ? `${laundry.pickupTime} ${laundry.pickupPeriod.slice(0, 2)} ` : '--:--'}
-                      </AppText>
+                      <AppText style={[styles.modernBadgeText, { color: textMuted, fontSize: 10, fontWeight: '900', alignSelf: 'flex-start' }]}>{(laundry?.status === 'On Schedule' ? 'On Time' : (laundry?.status || 'Active')).toUpperCase()}</AppText>
+                      <AppText style={{ fontSize: 11, fontWeight: '700', color: textAccent }}>{laundry?.pickupTime ? `${laundry.pickupTime} ${laundry.pickupPeriod.slice(0, 2)} ` : '--:--'}</AppText>
                     </View>
-                    <AppText style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
-                      Next: {laundry?.pickupDay || 'TBD'}
-                    </AppText>
+                    <AppText style={{ color: textMuted, fontSize: 12, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>Next: {laundry?.pickupDay || 'TBD'}</AppText>
                   </View>
                 </Pressable>
               </View>
@@ -703,66 +515,79 @@ export default function Index() {
           </View>
         </View>
 
-        {/* CAMPUS SERVICES - BLUE SPECTRUM */}
+        {/* CAMPUS SERVICES */}
         <View style={styles.servicesSectionWrapper}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12, paddingHorizontal: 16 }}>
-            <View style={{ width: 4, height: 16, backgroundColor: isDark ? '#60A5FA' : '#1E40AF', borderRadius: 2, marginRight: 8 }} />
-            <AppText style={{ fontSize: 16, fontWeight: '900', letterSpacing: 0.5, color: isDark ? '#F1F5F9' : '#0F172A', textTransform: 'uppercase' }}>
-              Campus Services
-            </AppText>
+            <View style={{ width: 4, height: 16, backgroundColor: textMain, borderRadius: 2, marginRight: 8 }} />
+            <AppText style={{ fontSize: 16, fontWeight: '900', letterSpacing: 0.5, color: textMain, textTransform: 'uppercase' }}>Campus Services</AppText>
           </View>
 
           <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
             <View style={{ flexDirection: 'column', gap: 10 }}>
               {/* ROW 1 */}
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable
-                  style={({ pressed }) => [{ flex: 1, aspectRatio: 1, backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderWidth: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]}
-                  onPress={() => router.push('/complaints')}
-                >
-                  <MaterialCommunityIcons name="alert-circle-outline" size={80} color={isDark ? '#F43F5E' : '#E11D48'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Complaints</AppText>
-                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalComplaints} total</AppText>
-                </Pressable>
+                <Animated.View style={{ flex: 1, aspectRatio: 1, backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                  <Pressable style={({ pressed }) => [{ flex: 1, justifyContent: 'center', alignItems: 'center' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]} onPress={() => router.push('/complaints')}>
+                    {({ pressed }) => (
+                      <>
+                        <MaterialCommunityIcons name="alert-circle-outline" size={80} color={'#EF4444'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15, transform: [{ scale: pressed ? 1.2 : 1 }] }} />
+                        <AppText style={{ color: textMain, fontSize: 14, fontWeight: '700' }}>Complaints</AppText>
+                        <AppText style={{ color: textMuted, fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalComplaints} total</AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </Animated.View>
 
-                <Pressable
-                  style={({ pressed }) => [{ flex: 1, aspectRatio: 1, backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderWidth: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]}
-                  onPress={() => router.push('/leave-request')}
-                >
-                  <MaterialCommunityIcons name="wallet-travel" size={80} color={isDark ? '#34D399' : '#10B981'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Leaves</AppText>
-                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalLeaves} total</AppText>
-                </Pressable>
+                <Animated.View style={{ flex: 1, aspectRatio: 1, backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                  <Pressable style={({ pressed }) => [{ flex: 1, justifyContent: 'center', alignItems: 'center' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]} onPress={() => router.push('/leave-request')}>
+                    {({ pressed }) => (
+                      <>
+                        <MaterialCommunityIcons name="wallet-travel" size={80} color={'#10B981'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15, transform: [{ scale: pressed ? 1.2 : 1 }] }} />
+                        <AppText style={{ color: textMain, fontSize: 14, fontWeight: '700' }}>Leaves</AppText>
+                        <AppText style={{ color: textMuted, fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalLeaves} total</AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </Animated.View>
 
-                <Pressable
-                  style={({ pressed }) => [{ flex: 1, aspectRatio: 1, backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderWidth: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]}
-                  onPress={() => router.push('/my-visitors')}
-                >
-                  <MaterialCommunityIcons name="account-group" size={80} color={isDark ? '#A78BFA' : '#8B5CF6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Visitors</AppText>
-                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalVisitors} total</AppText>
-                </Pressable>
+                <Animated.View style={{ flex: 1, aspectRatio: 1, backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                  <Pressable style={({ pressed }) => [{ flex: 1, justifyContent: 'center', alignItems: 'center' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]} onPress={() => router.push('/my-visitors')}>
+                    {({ pressed }) => (
+                      <>
+                        <MaterialCommunityIcons name="account-group" size={80} color={'#8B5CF6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15, transform: [{ scale: pressed ? 1.2 : 1 }] }} />
+                        <AppText style={{ color: textMain, fontSize: 14, fontWeight: '700' }}>Visitors</AppText>
+                        <AppText style={{ color: textMuted, fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalVisitors} total</AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </Animated.View>
               </View>
 
               {/* ROW 2 */}
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable
-                  style={({ pressed }) => [{ flex: 1, aspectRatio: 1, backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderWidth: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]}
-                  onPress={() => router.push('/roomservice')}
-                >
-                  <MaterialCommunityIcons name="broom" size={80} color={isDark ? '#FBBF24' : '#F59E0B'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>Services</AppText>
-                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>Cleanup</AppText>
-                </Pressable>
+                <Animated.View style={{ flex: 1, aspectRatio: 1, backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                  <Pressable style={({ pressed }) => [{ flex: 1, justifyContent: 'center', alignItems: 'center' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]} onPress={() => router.push('/roomservice')}>
+                    {({ pressed }) => (
+                      <>
+                        <MaterialCommunityIcons name="broom" size={80} color={'#EAB308'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15, transform: [{ scale: pressed ? 1.2 : 1 }] }} />
+                        <AppText style={{ color: textMain, fontSize: 14, fontWeight: '700' }}>Services</AppText>
+                        <AppText style={{ color: textMuted, fontSize: 11, fontWeight: '500', marginTop: 4 }}>Cleanup</AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </Animated.View>
 
-                <Pressable
-                  style={({ pressed }) => [{ flex: 1, aspectRatio: 1, backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderWidth: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]}
-                  onPress={() => router.push('/about')}
-                >
-                  <MaterialCommunityIcons name="office-building" size={80} color={isDark ? '#60A5FA' : '#3B82F6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: isDark ? 0.08 : 0.06 }} />
-                  <AppText style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontSize: 14, fontWeight: '700' }}>About</AppText>
-                  <AppText style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalFacilities} facilities</AppText>
-                </Pressable>
+                <Animated.View style={{ flex: 1, aspectRatio: 1, backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                  <Pressable style={({ pressed }) => [{ flex: 1, justifyContent: 'center', alignItems: 'center' }, pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] }]} onPress={() => router.push('/about')}>
+                    {({ pressed }) => (
+                      <>
+                        <MaterialCommunityIcons name="office-building" size={80} color={'#3B82F6'} style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15, transform: [{ scale: pressed ? 1.2 : 1 }] }} />
+                        <AppText style={{ color: textMain, fontSize: 14, fontWeight: '700' }}>About</AppText>
+                        <AppText style={{ color: textMuted, fontSize: 11, fontWeight: '500', marginTop: 4 }}>{totalFacilities} facilities</AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </Animated.View>
 
                 <View style={{ flex: 1 }} />
               </View>
@@ -770,22 +595,19 @@ export default function Index() {
           </View>
         </View>
 
-
-      </ScrollView >
-
-
+      </ScrollView>
 
       {/* Floating Action Button for AI Chat */}
       <TouchableOpacity 
-        style={[styles.aiFab, { backgroundColor: isDark ? '#4F46E5' : '#4338CA' }]}
+        style={[styles.aiFab, { backgroundColor: textMain }]}
         onPress={() => router.push('/ai-chat')}
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={isDark ? ['#6366F1', '#4338CA'] : ['#818CF8', '#4F46E5']}
+          colors={isDark ? ['#333333', '#1a1a1a'] : ['#E2E8F0', '#FFFFFF']}
           style={styles.aiFabGradient}
         >
-          <MaterialCommunityIcons name="robot-outline" size={28} color="#FFFFFF" />
+          <MaterialCommunityIcons name="robot-outline" size={28} color={isDark ? "#FFFFFF" : "#000000"} />
         </LinearGradient>
       </TouchableOpacity>
 
@@ -793,14 +615,13 @@ export default function Index() {
         visible={notificationVisible}
         onClose={() => setNotificationVisible(false)}
       />
-    </View >
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   aiFab: {
     position: 'absolute',
@@ -826,23 +647,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#64748B',
     fontWeight: '500',
   },
   heroWrapper: {
     paddingBottom: 20,
-    backgroundColor: '#F8FAFC',
   },
   heroGradient: {
     paddingBottom: 12,
     borderBottomLeftRadius: 36,
     borderBottomRightRadius: 36,
-    overflow: 'hidden', // Ensure corners clip shimmer and content
+    overflow: 'hidden',
   },
   safeArea: {
     paddingHorizontal: 24,
@@ -857,21 +675,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerBottomDetails: {
-    marginLeft: 4, // slight indent to align with content above
-  },
-  headerLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
   premiumProfileFrame: {
     borderRadius: 32,
     padding: 3,
-    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
     elevation: 4,
   },
   avatar: {
@@ -883,20 +690,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    color: '#004e92',
+    color: '#000000',
     fontSize: 22,
     fontWeight: '800',
   },
   greetingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginBottom: 0,
   },
   userNameText: {
-    color: '#fff',
     fontSize: 32,
     fontWeight: '800',
     letterSpacing: -0.8,
@@ -905,13 +710,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  hostelNameText: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   inlineHostelName: {
-    color: '#BAE6FD',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.1,
@@ -921,24 +720,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 2,
-  },
-  prominentHostelName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-    textShadowColor: 'rgba(0,0,0,0.15)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  standaloneHostelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 4,
-    marginBottom: 2,
-    width: '100%',
   },
   leftStatusRow: {
     flexDirection: 'row',
@@ -952,216 +733,51 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   leftStatusText: {
-    color: '#F0F9FF',
     fontSize: 13,
     fontWeight: '800',
   },
   leftStatusDivider: {
     width: 1,
     height: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 14, // Increased from 13
-    fontWeight: '800',
-    letterSpacing: 0.5,
   },
   glassHeaderBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 0,
   },
   premiumNotificationBadge: {
     position: 'absolute',
     top: 10,
-    right: 10,
+    right: 12,
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#F43F5E',
     borderWidth: 2,
-    borderColor: '#004e92',
     elevation: 4,
-  },
-  glassStatusHub: {
-    paddingVertical: 8,
-    marginTop: 4,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glassCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    marginTop: 8, // Reduced from 18
-    shadowColor: '#004e92', // Brand Shadow
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-    padding: 16, // Reduced from 24
-    borderWidth: 1,
-    borderColor: '#E6EEF5',
-  },
-  locationBlock: {
-    position: 'relative',
-  },
-  connectorLine: {
-    position: 'absolute',
-    left: 20,
-    top: 40,
-    bottom: 40,
-    width: 2,
-    backgroundColor: '#D1E0F0', // Light tint of Royal Blue
-    zIndex: -1,
-  },
-  locItem: {
-    flexDirection: 'row',
-    gap: 12, // Reduced from 16
-    alignItems: 'flex-start',
-  },
-  locIcon: {
-    width: 36, // Reduced from 40
-    height: 36, // Reduced from 40
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    backgroundColor: '#F8FAFC',
-  },
-  locContent: {
-    flex: 1,
-    paddingTop: 0,
-    justifyContent: 'center',
-    minHeight: 36, // Reduced
-  },
-  locLabel: {
-    fontSize: 10, // Reduced from 11
-    color: '#64748B',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 2, // Reduced
-  },
-  locValue: {
-    fontSize: 14, // Reduced from 16
-    color: '#0F172A',
-    fontWeight: '700',
-    lineHeight: 20, // Reduced from 22
-  },
-  curveOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 40,
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    marginTop: -40,
-  },
-  essentialsSection: {
-    paddingHorizontal: 24,
-    marginTop: -20, // Overlap curve
-    marginBottom: 24,
   },
   essentialsSectionWrapper: {
     paddingHorizontal: 20,
-    marginTop: -28, // Aggressive pull up to header
+    marginTop: -28,
     zIndex: 1,
   },
   servicesSectionWrapper: {
     paddingHorizontal: 20,
-    marginTop: 24, // Clear separation from Essentials
-    paddingBottom: 0, // No bottom padding
-  },
-  sectionHeaderContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 0,
-  },
-  sectionHeader: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#1E40AF',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 100, // Pill shape
-    overflow: 'hidden',
+    marginTop: 24,
+    paddingBottom: 0,
   },
   essentialsGrid: {
     flexDirection: 'column',
     gap: 8,
-  },
-  modernRowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 24,
-    padding: 16,
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.5)', // Extremely subtle border
-  },
-  cardPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.9,
-  },
-  modernIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modernRowContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  modernRowTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  modernBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
   },
   modernBadgeText: {
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  modernRowValue: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  modernChevron: {
-    paddingLeft: 4,
-  },
-  servicesGrid: {
-    gap: 14,
   },
   gridRow: {
     flexDirection: 'row',
@@ -1174,10 +790,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    shadowColor: '#1E293B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     elevation: 2,
     minHeight: 110,
     justifyContent: 'flex-start',
@@ -1187,72 +799,9 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   serviceLabel: {
-    fontSize: 16, // Slightly smaller than Essentials Value to fit layout
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
     letterSpacing: -0.3,
     marginBottom: 2,
-  },
-  serviceDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  serviceIconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  fullWidthCardWrapper: {
-    width: '100%',
-  },
-  fullWidthCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  actionSubtext: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  bannerSection: {
-    paddingHorizontal: 24,
-    marginTop: 10,
-  },
-  financeBanner: {
-    borderRadius: 28,
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  bannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
   }
 });
-
-

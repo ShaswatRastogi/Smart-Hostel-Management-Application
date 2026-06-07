@@ -27,7 +27,6 @@ const AnimatedIcon = ({ name, focused, color }: { name: any, focused: boolean, c
       transform: [
         { scale: withSpring(focused ? 1.2 : 1, { mass: 0.5, damping: 10, stiffness: 150 }) }
       ],
-      // No opacity change effectively, letting the color handle focus state visibility clearly
     };
   });
 
@@ -44,9 +43,15 @@ const _layout = () => {
   const router = useRouter();
   const segments = useSegments();
 
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const tabBg = isDark ? '#000000' : '#FFFFFF';
+  const tabActiveText = isDark ? '#FFFFFF' : '#111111';
+  const tabInactiveText = isDark ? '#555555' : '#A1A1AA';
+  const tabShadow = isDark ? '#000000' : '#E2E8F0';
+  const tabBorder = isDark ? 'transparent' : 'rgba(0,0,0,0.05)';
+
   useEffect(() => {
     if (!isLoading) {
-      // Check if we are trying to access tabs
       const inTabs = segments[0] === '(tabs)';
       if (inTabs && (!user || user.role !== 'student')) {
         router.replace('/login');
@@ -55,29 +60,31 @@ const _layout = () => {
   }, [user, isLoading, segments, router]);
 
   if (isLoading || (!user || user.role !== 'student')) {
-    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+    return <View style={{ flex: 1, backgroundColor: themeBg }} />;
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: themeBg }}>
       <MaterialTopTabs
         tabBarPosition="bottom"
         screenOptions={{
-          tabBarActiveTintColor: colors.primary, // Brand Color for active
-          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarActiveTintColor: tabActiveText,
+          tabBarInactiveTintColor: tabInactiveText,
           tabBarStyle: {
-            backgroundColor: isDark ? '#1e293b' : '#ffffff', // Clean capsule
+            backgroundColor: tabBg,
             position: 'absolute',
-            bottom: 10,
-            left: 30, // Increased margin
-            right: 30, // Increased margin
-            borderRadius: 35,
-            height: 55, // Reduced height
-            borderTopWidth: 0,
-            elevation: 4,
-            shadowColor: '#000',
-            shadowOpacity: 0.1,
-            shadowRadius: 10,
+            bottom: 16,
+            left: 24,
+            right: 24,
+            borderRadius: 32,
+            height: 60,
+            borderTopWidth: isDark ? 0 : 1,
+            borderWidth: isDark ? 0 : 1,
+            borderColor: tabBorder,
+            elevation: isDark ? 8 : 4,
+            shadowColor: tabShadow,
+            shadowOpacity: isDark ? 0.4 : 1,
+            shadowRadius: isDark ? 16 : 8,
             shadowOffset: { width: 0, height: 4 },
             justifyContent: 'center',
             paddingBottom: 0,
@@ -90,8 +97,9 @@ const _layout = () => {
             fontSize: 9,
             fontWeight: '600',
             textTransform: 'capitalize',
-            marginTop: -4,
-            marginBottom: 2,
+            marginTop: -3,
+            marginBottom: 3,
+            letterSpacing: 0.2,
           },
           swipeEnabled: true,
           animationEnabled: true,

@@ -1,9 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Switch, View } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { Dimensions, Pressable, StyleSheet, Switch, View, Image, Animated, Easing } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/useAuthStore';
@@ -15,11 +14,10 @@ import { isAdmin } from '../utils/authUtils';
 const { width, height } = Dimensions.get('window');
 
 const SLIDES = [
-    { title: 'Welcome to SmartStay', subtitle: 'Experience the future of hostel living with digitized management and real-time alerts.', icon: 'home-variant', type: 'welcome' },
+    { title: 'Welcome to SmartStay', subtitle: 'Experience the future of hostel living with digitized management and real-time alerts.', useImage: true, type: 'welcome' },
     { title: 'Select Language', subtitle: 'Choose your preferred language for the application interface.', type: 'language' },
-    { title: 'Pick Your Theme', subtitle: 'Dark mode or Light mode? Choose what suits you best.', type: 'theme' },
-    { title: 'Stay Updated', subtitle: 'Enable notifications to get real-time alerts for mess, laundry, and notices.', icon: 'bell-ring', type: 'notifications' },
-    { title: 'All Ready!', subtitle: 'Your SmartStay experience is personalized and ready for use.', icon: 'check-decagram', type: 'finish' },
+    { title: 'Stay Updated', subtitle: 'Enable notifications to get real-time alerts for mess, laundry, and notices.', icon: 'bell-outline', type: 'notifications' },
+    { title: 'All Ready!', subtitle: 'Your SmartStay experience is personalized and ready for use.', icon: 'check-decagram-outline', type: 'finish' },
 ];
 
 export default function Onboarding() {
@@ -30,7 +28,32 @@ export default function Onboarding() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
     const { language, setLanguage, completeOnboarding } = useSettingsStore();
-    const { theme, setTheme, colors, isDark } = useThemeStore();
+    // Keep theme hook but we force the UI to black & white aesthetic
+    const { setTheme } = useThemeStore();
+
+    // Entrance Animation
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
+
+    // Default force dark mode since user wants black & white aesthetic globally
+    useEffect(() => {
+        setTheme('dark');
+        
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 800,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            })
+        ]).start();
+    }, []);
 
     const handleNext = async () => {
         if (currentPage < SLIDES.length - 1) {
@@ -63,54 +86,46 @@ export default function Onboarding() {
             case 'language':
                 return (
                     <View style={styles.optionContainer}>
-                        {(['en', 'hi'] as Language[]).map((lang) => (
-                            <Pressable
-                                key={lang}
-                                style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: language === lang ? colors.primary : colors.border }]}
-                                onPress={() => setLanguage(lang)}
-                            >
-                                <AppText style={[styles.choiceText, { color: language === lang ? colors.primary : colors.text }]}>
-                                    {lang === 'en' ? 'English' : 'हिन्दी (Hindi)'}
-                                </AppText>
-                                {language === lang && <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />}
-                            </Pressable>
-                        ))}
-                    </View>
-                );
-            case 'theme':
-                return (
-                    <View style={styles.optionContainer}>
-                        {(['light', 'dark'] as const).map((t) => (
-                            <Pressable
-                                key={t}
-                                style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: theme === t ? colors.primary : colors.border }]}
-                                onPress={() => setTheme(t)}
-                            >
-                                <MaterialCommunityIcons name={t === 'dark' ? 'weather-night' : 'weather-sunny'} size={24} color={theme === t ? colors.primary : colors.textSecondary} />
-                                <AppText style={[styles.choiceText, { color: theme === t ? colors.primary : colors.text }]}>
-                                    {t.charAt(0).toUpperCase() + t.slice(1)} Mode
-                                </AppText>
-                                {theme === t && <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />}
-                            </Pressable>
-                        ))}
+                        {(['en', 'hi'] as Language[]).map((lang) => {
+                            const isSelected = language === lang;
+                            return (
+                                <Pressable
+                                    key={lang}
+                                    style={({ pressed }) => [
+                                        styles.choiceCard,
+                                        { 
+                                            borderColor: isSelected ? '#ffffff' : '#333333',
+                                            backgroundColor: isSelected ? '#111111' : '#000000',
+                                            transform: [{ scale: pressed ? 0.98 : 1 }]
+                                        }
+                                    ]}
+                                    onPress={() => setLanguage(lang)}
+                                >
+                                    <AppText style={[styles.choiceText, { color: isSelected ? '#ffffff' : '#888888' }]}>
+                                        {lang === 'en' ? 'English' : 'हिन्दी (Hindi)'}
+                                    </AppText>
+                                    {isSelected && <MaterialCommunityIcons name="check-circle" size={20} color="#ffffff" />}
+                                </Pressable>
+                            );
+                        })}
                     </View>
                 );
             case 'notifications':
                 return (
                     <View style={styles.notificationToggleContainer}>
-                        <View style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: notificationsEnabled ? colors.primary : colors.border, width: '100%' }]}>
+                        <View style={[styles.choiceCard, { borderColor: notificationsEnabled ? '#ffffff' : '#333333', backgroundColor: notificationsEnabled ? '#111111' : '#000000', width: '100%' }]}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <MaterialCommunityIcons name="bell-outline" size={24} color={notificationsEnabled ? colors.primary : colors.textSecondary} />
-                                <AppText style={[styles.choiceText, { color: colors.text }]}>Enable Notifications</AppText>
+                                <MaterialCommunityIcons name="bell-outline" size={24} color={notificationsEnabled ? '#ffffff' : '#888888'} />
+                                <AppText style={[styles.choiceText, { color: notificationsEnabled ? '#ffffff' : '#888888' }]}>Enable Notifications</AppText>
                             </View>
                             <Switch
                                 value={notificationsEnabled}
                                 onValueChange={toggleNotifications}
-                                trackColor={{ false: '#767577', true: colors.primary + '80' }}
-                                thumbColor={notificationsEnabled ? colors.primary : '#f4f3f4'}
+                                trackColor={{ false: '#333333', true: '#555555' }}
+                                thumbColor={notificationsEnabled ? '#ffffff' : '#888888'}
                             />
                         </View>
-                        <AppText style={[styles.infoText, { color: colors.textSecondary }]}>
+                        <AppText style={styles.infoText}>
                             You can always change this later in settings.
                         </AppText>
                     </View>
@@ -118,20 +133,22 @@ export default function Onboarding() {
             default:
                 return (
                     <View style={styles.iconContainer}>
-                        <MaterialCommunityIcons name={(slide.icon as any) || 'rocket-launch'} size={120} color={colors.primary} />
+                        {slide.useImage ? (
+                            <Image 
+                                source={require('../assets/smartstay_logo.png')} 
+                                style={styles.appIconImage} 
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <MaterialCommunityIcons name={(slide.icon as any) || 'rocket-launch-outline'} size={100} color="#ffffff" />
+                        )}
                     </View>
                 );
         }
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Dynamic Background Gradient */}
-            <LinearGradient
-                colors={isDark ? ['#000310', '#000924', '#001e50'] : ['#F8FAFC', '#F1F5F9', '#E2E8F0']}
-                style={StyleSheet.absoluteFill}
-            />
-
+        <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <PagerView
                 style={styles.pagerView}
                 initialPage={0}
@@ -141,9 +158,10 @@ export default function Onboarding() {
             >
                 {SLIDES.map((slide, index) => (
                     <View key={index} style={styles.slide}>
-                        <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
-                            <AppText style={[styles.title, { color: colors.text }]}>{slide.title}</AppText>
-                            <AppText style={[styles.subtitle, { color: colors.textSecondary }]}>{slide.subtitle}</AppText>
+                        <View style={[styles.content, { paddingTop: insets.top + 80 }]}>
+                            <AppText style={styles.title}>{slide.title}</AppText>
+                            <View style={styles.dividerAccent} />
+                            <AppText style={styles.subtitle}>{slide.subtitle}</AppText>
                             {renderSlideContent(slide)}
                         </View>
                     </View>
@@ -151,30 +169,40 @@ export default function Onboarding() {
             </PagerView>
 
             {/* Pagination Dots & Next Button */}
-            <View style={styles.footer}>
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 20, 40) }]}>
                 <View style={styles.dotContainer}>
                     {SLIDES.map((_, i) => (
-                        <View key={i} style={[styles.dot, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }, i === currentPage && { width: 24, backgroundColor: colors.primary }]} />
+                        <View 
+                            key={i} 
+                            style={[
+                                styles.dot, 
+                                i === currentPage ? styles.dotActive : styles.dotInactive
+                            ]} 
+                        />
                     ))}
                 </View>
 
                 <Pressable
-                    style={[styles.nextButton, { backgroundColor: colors.primary }]}
+                    style={({ pressed }) => [
+                        styles.nextButton,
+                        { transform: [{ scale: pressed ? 0.97 : 1 }], opacity: pressed ? 0.8 : 1 }
+                    ]}
                     onPress={handleNext}
                 >
                     <AppText style={styles.nextButtonText}>
                         {currentPage === SLIDES.length - 1 ? 'Get Started' : 'Next Step'}
                     </AppText>
-                    <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
+                    <MaterialCommunityIcons name="arrow-right" size={20} color="#000000" />
                 </Pressable>
             </View>
-        </View>
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#000000',
     },
     pagerView: {
         flex: 1,
@@ -185,23 +213,47 @@ const styles = StyleSheet.create({
     },
     content: {
         width: '100%',
-        paddingHorizontal: 40,
+        paddingHorizontal: 32,
         alignItems: 'center',
     },
     title: {
         fontSize: 32,
         fontWeight: '700',
+        color: '#ffffff',
         textAlign: 'center',
+        letterSpacing: 0.5,
+    },
+    dividerAccent: {
+        width: 40,
+        height: 2,
+        backgroundColor: '#ffffff',
+        marginTop: 16,
         marginBottom: 16,
+        borderRadius: 1,
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 15,
+        color: '#888888',
         textAlign: 'center',
-        lineHeight: 24,
+        lineHeight: 22,
         marginBottom: 60,
     },
     iconContainer: {
-        marginTop: 40,
+        marginTop: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        borderWidth: 1,
+        borderColor: '#333333',
+        backgroundColor: '#111111',
+        overflow: 'hidden',
+    },
+    appIconImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 80, // Match parent
     },
     optionContainer: {
         width: '100%',
@@ -211,13 +263,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 20,
-        borderRadius: 20,
-        borderWidth: 2,
+        paddingHorizontal: 24,
+        paddingVertical: 18,
+        borderRadius: 16,
+        borderWidth: 1,
     },
     choiceText: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
+        letterSpacing: 0.5,
     },
     notificationToggleContainer: {
         width: '100%',
@@ -225,16 +279,18 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     infoText: {
-        fontSize: 14,
+        fontSize: 13,
+        color: '#666666',
         textAlign: 'center',
+        marginTop: 8,
     },
     footer: {
         position: 'absolute',
-        bottom: 50,
+        bottom: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 40,
-        gap: 24,
+        paddingHorizontal: 32,
+        gap: 32,
     },
     dotContainer: {
         flexDirection: 'row',
@@ -242,21 +298,30 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        height: 4,
+        borderRadius: 2,
+    },
+    dotActive: {
+        width: 24,
+        backgroundColor: '#ffffff',
+    },
+    dotInactive: {
+        width: 12,
+        backgroundColor: '#333333',
     },
     nextButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 18,
-        borderRadius: 20,
-        gap: 8,
+        backgroundColor: '#ffffff',
+        paddingVertical: 16,
+        borderRadius: 16,
+        gap: 12,
     },
     nextButtonText: {
-        color: '#fff',
-        fontSize: 18,
+        color: '#000000',
+        fontSize: 16,
         fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });

@@ -1,14 +1,13 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
-import { useTheme } from '../../utils/ThemeContext';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
+import { useTheme } from '../../utils/ThemeContext';
 import AppText from '../../components/AppText';
 
 const DATA_CATEGORIES = [
@@ -23,53 +22,46 @@ const DATA_CATEGORIES = [
 
 export default function DownloadData() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<Record<string, boolean>>(
-    Object.fromEntries(DATA_CATEGORIES.map(c => [c.id, true]))
-  );
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, boolean>>(Object.fromEntries(DATA_CATEGORIES.map(c => [c.id, true])));
+
+  // Dynamic Theme Map
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const pressedBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const btnBg = isDark ? '#FFFFFF' : '#111111';
+  const btnText = isDark ? '#000000' : '#FFFFFF';
 
   const toggleCategory = (id: string) => setSelectedCategories(prev => ({ ...prev, [id]: !prev[id] }));
   const selectedCount = Object.values(selectedCategories).filter(Boolean).length;
 
   const handleDownload = async () => {
-    if (selectedCount === 0) { showAlert('Select Data', 'Please select at least one category.'); return; }
+    if (selectedCount === 0) return showAlert('Select Data', 'Please select at least one category.');
     setLoading(true);
     try {
       const api = (await import('../../utils/api')).default;
-
       const categories = Object.entries(selectedCategories).filter(([, v]) => v).map(([k]) => k);
       const response = await api.post('/students/export-data', { categories });
-      
       if (response.data?.success && response.data?.data) {
         const exportData = response.data.data;
         const fileName = `SmartStay_Data_Export_${new Date().getTime()}.pdf`;
-        
-        let html = `<html><body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h1 style="color: #004e92;">Smart Hostel Data Export</h1>
-            <p>Generated on: ${new Date().toLocaleString()}</p>
-            <hr/>
-        `;
-        
+        let html = `<html><body style="font-family: Arial, sans-serif; padding: 20px;"><h1 style="color: #000000;">Smart Hostel Data Export</h1><p>Generated on: ${new Date().toLocaleString()}</p><hr/>`;
         for (const [key, val] of Object.entries(exportData)) {
-            html += `<h2 style="text-transform: capitalize; color: #2563EB;">${key}</h2>`;
+            html += `<h2 style="text-transform: capitalize; color: #333333;">${key}</h2>`;
             if (Array.isArray(val)) {
-                if (val.length === 0) {
-                    html += `<p>No records found.</p>`;
-                } else {
-                    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">`;
-                    html += `<tr style="background-color: #f1f5f9;">`;
-                    Object.keys(val[0] as any).forEach(k => {
-                        html += `<th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">${k}</th>`;
-                    });
+                if (val.length === 0) html += `<p>No records found.</p>`;
+                else {
+                    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;"><tr style="background-color: #f1f5f9;">`;
+                    Object.keys(val[0] as any).forEach(k => { html += `<th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">${k}</th>`; });
                     html += `</tr>`;
                     val.forEach(row => {
                         html += `<tr>`;
-                        Object.values(row as any).forEach(v => {
-                            html += `<td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td>`;
-                        });
+                        Object.values(row as any).forEach(v => { html += `<td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td>`; });
                         html += `</tr>`;
                     });
                     html += `</table>`;
@@ -78,105 +70,74 @@ export default function DownloadData() {
                 html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">`;
                 for (const [k, v] of Object.entries(val)) {
                     if (k === 'profilePhoto' || k === 'profile_photo') continue;
-                    html += `<tr><td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; width: 30%; background-color: #f8fafc;">${k}</td>`;
-                    html += `<td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td></tr>`;
+                    html += `<tr><td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; width: 30%; background-color: #f8fafc;">${k}</td><td style="border: 1px solid #cbd5e1; padding: 8px;">${v !== null && typeof v !== 'object' ? v : JSON.stringify(v)}</td></tr>`;
                 }
                 html += `</table>`;
-            } else {
-                html += `<p>${val}</p>`;
-            }
+            } else { html += `<p>${val}</p>`; }
         }
-        
         html += `</body></html>`;
-
         const { uri: pdfUri } = await Print.printToFileAsync({ html });
-        
         if (Platform.OS === 'android') {
           const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
           if (permissions.granted) {
             const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/pdf');
-            // Read PDF as base64 and write it using SAF
             const base64Data = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
-            await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-              encoding: FileSystem.EncodingType.Base64
-            });
+            await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
             showAlert('Download Complete', 'Your PDF export has been saved successfully.', [], 'success');
-          } else {
-            showAlert('Permission Denied', 'Storage permission is required to save the file.', [], 'error');
-          }
+          } else showAlert('Permission Denied', 'Storage permission is required to save the file.', [], 'error');
         } else {
-          // iOS Fallback
-          const isAvailable = await Sharing.isAvailableAsync();
-          if (isAvailable) {
-            await Sharing.shareAsync(pdfUri, {
-              mimeType: 'application/pdf',
-              dialogTitle: 'Save your data export',
-              UTI: 'com.adobe.pdf'
-            });
-          } else {
-            showAlert('Download Complete', `Your PDF export has been generated.`, [], 'success');
-          }
+          if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(pdfUri, { mimeType: 'application/pdf', dialogTitle: 'Save your data export', UTI: 'com.adobe.pdf' });
+          else showAlert('Download Complete', `Your PDF export has been generated.`, [], 'success');
         }
-      } else {
-        throw new Error('Invalid response from server');
-      }
-    } catch (error: any) {
-      console.error('Export error:', error);
-      showAlert('Export Failed', 'There was an error generating your data export. Please try again.', [], 'error');
-    } finally { setLoading(false); }
+      } else throw new Error('Invalid response from server');
+    } catch (error: any) { showAlert('Export Failed', 'There was an error generating your data export. Please try again.', [], 'error'); } finally { setLoading(false); }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <AppText style={styles.headerTitle}>Download My Data</AppText>
-          <View style={{ width: 40 }} />
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+        </Pressable>
+      </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <View style={[styles.heroIconWrap, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF' }]}>
-            <LinearGradient colors={['#004e92', '#000428']} style={styles.heroIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <MaterialCommunityIcons name="download-circle-outline" size={32} color="#fff" />
-            </LinearGradient>
+          <AppText style={[styles.heroTitle, { color: textMain }]}>Download{"\n"}Data</AppText>
+          <AppText style={[styles.heroSub, { color: textMuted }]}>Select the categories below and we'll generate a downloadable copy of your data directly to your device.</AppText>
+        </View>
+
+        <View style={styles.section}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <AppText style={styles.secTitle}>DATA CATEGORIES</AppText>
+            <Pressable onPress={() => { const allSelected = selectedCount === DATA_CATEGORIES.length; setSelectedCategories(Object.fromEntries(DATA_CATEGORIES.map(c => [c.id, !allSelected]))); }} style={({ pressed }) => [pressed && { opacity: 0.5 }]}>
+              <AppText style={styles.selectAllText}>{selectedCount === DATA_CATEGORIES.length ? 'Deselect All' : 'Select All'}</AppText>
+            </Pressable>
           </View>
-          <AppText style={[styles.heroTitle, { color: colors.text }]}>Your Data, Your Rights</AppText>
-          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>Select the categories below and we'll generate a downloadable copy of your data directly to your device.</AppText>
-        </View>
 
-        {/* Select All */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <AppText style={[styles.secTitle, { color: colors.textSecondary, marginBottom: 0, marginTop: 0 }]}>SELECT DATA CATEGORIES</AppText>
-          <TouchableOpacity onPress={() => { const allSelected = selectedCount === DATA_CATEGORIES.length; setSelectedCategories(Object.fromEntries(DATA_CATEGORIES.map(c => [c.id, !allSelected]))); }}>
-            <AppText style={{ fontSize: 14, fontWeight: '600', color: '#004e92' }}>{selectedCount === DATA_CATEGORIES.length ? 'Deselect All' : 'Select All'}</AppText>
-          </TouchableOpacity>
-        </View>
-
-        {/* Categories */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {DATA_CATEGORIES.map((cat, i) => (
-            <View key={cat.id} style={[styles.catRow, i < DATA_CATEGORIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-              <View style={[styles.catIcon, { backgroundColor: cat.color + '15' }]}><MaterialCommunityIcons name={cat.icon as any} size={22} color={cat.color} /></View>
-              <View style={{ flex: 1 }}><AppText style={[styles.catLabel, { color: colors.text }]}>{cat.label}</AppText><AppText style={[styles.catDesc, { color: colors.textSecondary }]}>{cat.desc}</AppText></View>
-              <Switch value={selectedCategories[cat.id]} onValueChange={() => toggleCategory(cat.id)} trackColor={{ false: colors.border, true: '#60A5FA' }} thumbColor={selectedCategories[cat.id] ? '#004e92' : '#f4f3f4'} />
-            </View>
+          {DATA_CATEGORIES.map((cat) => (
+            <Pressable key={cat.id} style={({ pressed }) => [styles.catRow, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]} onPress={() => toggleCategory(cat.id)}>
+              <View style={[styles.catIcon, { backgroundColor: cat.color + '20' }]}>
+                <MaterialCommunityIcons name={cat.icon as any} size={22} color={cat.color} />
+              </View>
+              <View style={styles.catInfo}>
+                <AppText style={[styles.catLabel, { color: textMain }]}>{cat.label}</AppText>
+                <AppText style={styles.catDesc}>{cat.desc}</AppText>
+              </View>
+              <Switch value={selectedCategories[cat.id]} onValueChange={() => toggleCategory(cat.id)} trackColor={{ false: '#333333', true: '#10B981' }} thumbColor="#FFFFFF" />
+            </Pressable>
           ))}
         </View>
 
-        {/* Download Button */}
-        <TouchableOpacity style={[styles.downloadBtn, selectedCount === 0 && { opacity: 0.4 }]} onPress={handleDownload} disabled={loading || selectedCount === 0}>
-          {loading ? <ActivityIndicator color="#fff" /> : (<>
-            <MaterialCommunityIcons name="download" size={22} color="#fff" />
-            <AppText style={styles.downloadText}>Request Download ({selectedCount} {selectedCount === 1 ? 'category' : 'categories'})</AppText>
+        <Pressable style={({ pressed }) => [styles.downloadBtn, { backgroundColor: btnBg }, selectedCount === 0 && { opacity: 0.4 }, pressed && selectedCount > 0 && { opacity: 0.8 }]} onPress={handleDownload} disabled={loading || selectedCount === 0}>
+          {loading ? <ActivityIndicator color={btnText} /> : (<>
+            <MaterialCommunityIcons name="download" size={24} color={btnText} />
+            <AppText style={[styles.downloadText, { color: btnText }]}>Request Download ({selectedCount})</AppText>
           </>)}
-        </TouchableOpacity>
+        </Pressable>
 
-        <AppText style={[styles.footerNote, { color: colors.textSecondary }]}>Data will be generated and saved securely to your device in JSON format.</AppText>
+        <AppText style={[styles.footerNote, { color: textMuted }]}>Data will be generated and saved securely to your device in PDF format.</AppText>
       </ScrollView>
     </View>
   );
@@ -184,22 +145,20 @@ export default function DownloadData() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  hero: { alignItems: 'center', marginBottom: 24, gap: 8 },
-  heroIconWrap: { width: 80, height: 80, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  heroIcon: { width: 64, height: 64, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  heroTitle: { fontSize: 22, fontWeight: '800', letterSpacing: 0.3 },
-  heroSub: { fontSize: 14, textAlign: 'center', lineHeight: 21, paddingHorizontal: 10 },
-  secTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.1, marginLeft: 4 },
-  card: { borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 24, shadowColor: '#004e92', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-  catRow: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingHorizontal: 16, gap: 14 },
-  catIcon: { width: 42, height: 42, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  catLabel: { fontSize: 15, fontWeight: '600' },
-  catDesc: { fontSize: 12, marginTop: 1 },
-  downloadBtn: { backgroundColor: '#004e92', padding: 16, borderRadius: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16, shadowColor: '#004e92', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6 },
-  downloadText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  header: { paddingHorizontal: 24, paddingBottom: 24 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  hero: { marginBottom: 48 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
+  heroSub: { fontSize: 15, lineHeight: 22 },
+  section: { marginBottom: 32 },
+  secTitle: { fontSize: 11, fontWeight: '700', color: '#888888', letterSpacing: 1.5, textTransform: 'uppercase' },
+  selectAllText: { fontSize: 14, fontWeight: '600', color: '#10B981' },
+  catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
+  catIcon: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  catInfo: { flex: 1, paddingRight: 12 },
+  catLabel: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  catDesc: { fontSize: 13, color: '#888888' },
+  downloadBtn: { padding: 18, borderRadius: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 24 },
+  downloadText: { fontSize: 18, fontWeight: '700' },
   footerNote: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
 });

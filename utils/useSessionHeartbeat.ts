@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Alert, AppState, AppStateStatus } from 'react-native';
 
-const HEARTBEAT_INTERVAL_MS = 30 * 1000; // 30 seconds
+const HEARTBEAT_INTERVAL_MS = 10 * 1000; // 10 seconds
 
 /**
  * Performs a forced logout — clears all local auth state and navigates to login.

@@ -1,8 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../utils/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from './AppText';
 
 export type AlertButton = {
@@ -19,7 +18,7 @@ interface CustomAlertProps {
     message: string;
     buttons?: AlertButton[];
     type?: AlertType;
-    onClose: () => void; // Called when backdrop is pressed or standard close
+    onClose: () => void;
 }
 
 const CustomAlert: React.FC<CustomAlertProps> = ({
@@ -30,129 +29,177 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     type = 'info',
     onClose,
 }) => {
-    const { colors, theme } = useTheme();
-    const scaleValue = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(100)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
+    const shadowShimmer = useRef(new Animated.Value(0)).current;
+    const progressWidth = useRef(new Animated.Value(100)).current;
+    const insets = useSafeAreaInsets();
+
+    useEffect(() => {
+        if (visible) {
+            // Start shadow shimmer
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(shadowShimmer, {
+                        toValue: 1,
+                        duration: 1500,
+                        useNativeDriver: false, // shadow properties require JS driver
+                    }),
+                    Animated.timing(shadowShimmer, {
+                        toValue: 0,
+                        duration: 1500,
+                        useNativeDriver: false,
+                    })
+                ])
+            ).start();
+
+            // Auto-dismiss ONLY if no custom buttons are provided
+            let timer: NodeJS.Timeout | null = null;
+            if (!buttons || buttons.length === 0) {
+                progressWidth.setValue(100);
+                Animated.timing(progressWidth, {
+                    toValue: 0,
+                    duration: 3000,
+                    useNativeDriver: false,
+                }).start();
+
+                timer = setTimeout(() => {
+                    onClose();
+                }, 3000);
+            } else {
+                progressWidth.setValue(0);
+            }
+            
+            return () => {
+                if (timer) clearTimeout(timer);
+            };
+        } else {
+            shadowShimmer.setValue(0);
+        }
+    }, [visible, onClose, buttons]);
 
     const styles = React.useMemo(() => StyleSheet.create({
         overlay: {
             flex: 1,
-            justifyContent: 'center',
+            justifyContent: 'flex-end',
             alignItems: 'center',
+            paddingBottom: Math.max(insets.bottom + 20, 40),
             zIndex: 1000,
         },
-        backdrop: {
-            ...StyleSheet.absoluteFillObject,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-        },
         alertContainer: {
-            width: '85%',
-            maxWidth: 340,
-            backgroundColor: colors.card,
-            borderRadius: 24,
-            padding: 24,
+            width: '90%',
+            maxWidth: 400,
+            backgroundColor: '#000000',
+            borderRadius: 100, // Pill shape
+            paddingHorizontal: 20,
+            paddingVertical: 14,
+            flexDirection: 'row',
             alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: {
-                width: 0,
-                height: 10,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 20,
+            borderWidth: 1,
+            borderColor: '#222222',
+            shadowColor: '#ffffff',
+            shadowOffset: { width: 0, height: 0 },
             elevation: 10,
         },
         iconContainer: {
-            marginBottom: 16,
+            marginRight: 12,
         },
-        iconCircle: {
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            justifyContent: 'center',
-            alignItems: 'center',
+        textContainer: {
+            flex: 1,
+            marginRight: 12,
         },
         title: {
-            fontSize: 20,
-            fontWeight: '800',
-            color: colors.text,
-            textAlign: 'center',
-            marginBottom: 8,
-            letterSpacing: 0.5,
+            fontSize: 14,
+            fontWeight: '700',
+            color: '#ffffff',
+            marginBottom: 2,
         },
         message: {
-            fontSize: 15,
-            color: colors.textSecondary,
-            textAlign: 'center',
-            marginBottom: 24,
-            lineHeight: 22,
+            fontSize: 13,
+            color: '#888888',
+            lineHeight: 18,
         },
         buttonContainer: {
-            width: '100%',
-            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 8,
         },
         button: {
-            flex: 1,
-            paddingVertical: 14,
-            borderRadius: 14,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 20,
             justifyContent: 'center',
             alignItems: 'center',
-            overflow: 'hidden', // for gradient
         },
         buttonPrimary: {
-            backgroundColor: colors.primary, // fallback
+            backgroundColor: '#ffffff',
         },
         buttonCancel: {
-            backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: '#333333',
         },
         buttonDestructive: {
-            backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2',
+            backgroundColor: 'rgba(239,68,68,0.1)',
             borderWidth: 1,
-            borderColor: theme === 'dark' ? '#7F1D1D' : '#FAC7C7',
+            borderColor: 'rgba(239,68,68,0.3)',
         },
         textPrimary: {
-            color: '#fff',
+            color: '#000000',
             fontWeight: '700',
-            fontSize: 15,
+            fontSize: 13,
         },
         textCancel: {
-            color: colors.textSecondary,
+            color: '#888888',
             fontWeight: '600',
-            fontSize: 15,
+            fontSize: 13,
         },
         textDestructive: {
             color: '#EF4444',
             fontWeight: '700',
-            fontSize: 15,
+            fontSize: 13,
         },
-        buttonText: {
-            color: colors.text,
-            fontWeight: '600',
-            fontSize: 15,
+        progressTrack: {
+            height: 2,
+            backgroundColor: '#222222',
+            marginTop: 8,
+            borderRadius: 2,
+            overflow: 'hidden',
+            width: '100%',
         },
-    }), [colors, theme]);
+        progressFill: {
+            height: '100%',
+            backgroundColor: '#ffffff',
+        },
+    }), [insets]);
 
     useEffect(() => {
         if (visible) {
             Animated.parallel([
-                Animated.spring(scaleValue, {
-                    toValue: 1,
-                    friction: 6,
-                    tension: 50,
+                Animated.spring(translateY, {
+                    toValue: 0,
+                    friction: 8,
+                    tension: 60,
                     useNativeDriver: true,
                 }),
                 Animated.timing(opacityValue, {
                     toValue: 1,
-                    duration: 150,
+                    duration: 200,
                     useNativeDriver: true,
                 }),
             ]).start();
         } else {
-            Animated.timing(opacityValue, {
-                toValue: 0,
-                duration: 150,
-                useNativeDriver: true,
-            }).start();
-            scaleValue.setValue(0);
+            Animated.parallel([
+                Animated.timing(opacityValue, {
+                    toValue: 0,
+                    duration: 150,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(translateY, {
+                    toValue: 20,
+                    duration: 150,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }
     }, [visible]);
 
@@ -160,93 +207,100 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
     const getIcon = () => {
         switch (type) {
-            case 'success': return 'check-circle';
-            case 'error': return 'alert-circle';
-            case 'warning': return 'alert';
-            default: return 'information';
+            case 'success': return 'check-circle-outline';
+            case 'error': return 'alert-circle-outline';
+            case 'warning': return 'alert-outline';
+            default: return 'information-outline';
         }
     };
 
-    const getColor = () => {
-        switch (type) {
-            case 'success': return '#16A34A';
-            case 'error': return '#EF4444';
-            case 'warning': return '#F59E0B';
-            default: return '#004e92';
-        }
-    };
-
-    // If no buttons provided, show a default OK
     const actionButtons = buttons.length > 0 ? buttons : [{ text: 'OK', style: 'default', onPress: onClose }];
+
+    const hasCustomButtons = buttons && buttons.length > 0;
 
     return (
         <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-            <View style={styles.overlay}>
-                <Animated.View style={[styles.backdrop, { opacity: opacityValue }]} />
-
-                <Animated.View style={[
-                    styles.alertContainer,
-                    { transform: [{ scale: scaleValue }], opacity: opacityValue }
-                ]}>
-                    <View style={styles.iconContainer}>
-                        <View style={[styles.iconCircle, { backgroundColor: getColor() + '20' }]}>
-                            <MaterialIcons name={getIcon()} size={32} color={getColor()} />
-                        </View>
-                    </View>
-
-                    <AppText style={styles.title}>{title}</AppText>
-                    <AppText style={styles.message}>{message}</AppText>
-
-                    <View style={[
-                        styles.buttonContainer,
-                        actionButtons.length > 2 ? { flexDirection: 'column', gap: 12 } : { flexDirection: 'row', gap: 12 }
+            <View 
+                style={[styles.overlay, hasCustomButtons && { backgroundColor: 'rgba(0,0,0,0.5)' }]} 
+                pointerEvents={hasCustomButtons ? 'auto' : 'box-none'}
+            >
+                <Animated.View style={{ 
+                    transform: [{ translateY }], 
+                    opacity: opacityValue,
+                    width: '100%',
+                    alignItems: 'center'
+                }}>
+                    <Animated.View style={[
+                        styles.alertContainer,
+                        { 
+                            shadowOpacity: shadowShimmer.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.1, 0.4] 
+                            }),
+                            shadowRadius: shadowShimmer.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [6, 12]
+                            })
+                        }
                     ]}>
-                        {actionButtons.map((btn, index) => {
-                            const isCancel = btn.style === 'cancel';
-                            const isDestructive = btn.style === 'destructive';
-                            const isPrimary = !isCancel && !isDestructive;
+                        <View style={styles.iconContainer}>
+                            <MaterialIcons name={getIcon()} size={24} color="#ffffff" />
+                        </View>
 
-                            return (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={[
-                                        styles.button,
-                                        isCancel && styles.buttonCancel,
-                                        isDestructive && styles.buttonDestructive,
-                                        isPrimary && styles.buttonPrimary,
-                                        actionButtons.length > 2 && { width: '100%' }
-                                    ]}
-                                    onPress={() => {
-                                        if (btn.onPress) btn.onPress();
-                                        onClose();
-                                    }}
-                                >
-                                    {isPrimary ? (
-                                        <LinearGradient
-                                            colors={['#004e92', '#000428']}
-                                            style={StyleSheet.absoluteFillObject}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 0 }}
-                                        />
-                                    ) : null}
-                                    <AppText style={[
-                                        styles.buttonText,
-                                        isCancel && styles.textCancel,
-                                        isDestructive && styles.textDestructive,
-                                        isPrimary && styles.textPrimary
-                                    ]}>
-                                        {btn.text}
-                                    </AppText>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                        <View style={styles.textContainer}>
+                            <AppText style={styles.title} numberOfLines={1}>{title}</AppText>
+                            <AppText style={styles.message} numberOfLines={2}>{message}</AppText>
+                            
+                            {/* Animated Progress Track */}
+                            {!hasCustomButtons && (
+                                <View style={styles.progressTrack}>
+                                    <Animated.View 
+                                        style={[
+                                            styles.progressFill, 
+                                            { width: progressWidth.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) }
+                                        ]} 
+                                    />
+                                </View>
+                            )}
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            {actionButtons.map((btn, index) => {
+                                const isCancel = btn.style === 'cancel';
+                                const isDestructive = btn.style === 'destructive';
+                                const isPrimary = !isCancel && !isDestructive;
+
+                                return (
+                                    <TouchableOpacity
+                                        key={index}
+                                        style={[
+                                            styles.button,
+                                            isCancel && styles.buttonCancel,
+                                            isPrimary && styles.buttonPrimary,
+                                            isDestructive && styles.buttonDestructive,
+                                        ]}
+                                        onPress={() => {
+                                            if (btn.onPress) btn.onPress();
+                                            onClose();
+                                        }}
+                                        activeOpacity={0.7}
+                                    >
+                                        <AppText style={[
+                                            isCancel && styles.textCancel,
+                                            isPrimary && styles.textPrimary,
+                                            isDestructive && styles.textDestructive
+                                        ]}>
+                                            {btn.text}
+                                        </AppText>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </Animated.View>
                 </Animated.View>
             </View>
         </Modal>
     );
 };
-
-
 
 export default CustomAlert;

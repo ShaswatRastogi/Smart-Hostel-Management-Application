@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Modal, Pressable, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../utils/ThemeContext';
 import { formatDate, formatTime, Visitor } from '../utils/visitorUtils';
 import AppText from './AppText';
 
@@ -12,7 +11,6 @@ interface VisitorPassModalProps {
 }
 
 export default function VisitorPassModal({ visible, visitor, onClose }: VisitorPassModalProps) {
-    const { colors, isDark } = useTheme();
 
     const handleShare = async () => {
         try {
@@ -44,134 +42,6 @@ Please show this pass at the gate.
         }
     };
 
-    const styles = StyleSheet.create({
-        overlay: {
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 24
-        },
-        container: {
-            backgroundColor: colors.card,
-            borderRadius: 24,
-            width: '100%',
-            maxWidth: 400,
-            maxHeight: '90%',
-            overflow: 'hidden'
-        },
-        header: {
-            backgroundColor: '#004e92',
-            padding: 20,
-            alignItems: 'center'
-        },
-        headerTitle: {
-            fontSize: 20,
-            fontWeight: '700',
-            color: '#fff',
-            marginBottom: 4
-        },
-        headerSubtitle: {
-            fontSize: 14,
-            color: 'rgba(255,255,255,0.8)'
-        },
-        content: {
-            padding: 24
-        },
-        qrContainer: {
-            alignItems: 'center',
-            padding: 24,
-            backgroundColor: isDark ? '#1E293B' : '#F0F9FF',
-            borderRadius: 16,
-            marginBottom: 24,
-            borderWidth: 2,
-            borderColor: '#004e92',
-            borderStyle: 'dashed'
-        },
-        passCode: {
-            fontSize: 24,
-            fontWeight: '700',
-            color: '#004e92',
-            letterSpacing: 2,
-            fontFamily: 'monospace'
-        },
-        qrLabel: {
-            fontSize: 12,
-            color: colors.textSecondary,
-            marginTop: 12,
-            fontWeight: '600'
-        },
-        section: {
-            marginBottom: 20
-        },
-        sectionTitle: {
-            fontSize: 12,
-            fontWeight: '700',
-            color: colors.textSecondary,
-            marginBottom: 12,
-            letterSpacing: 1
-        },
-        infoRow: {
-            flexDirection: 'row',
-            marginBottom: 12
-        },
-        infoLabel: {
-            fontSize: 14,
-            color: colors.textSecondary,
-            width: 100,
-            fontWeight: '500'
-        },
-        infoValue: {
-            fontSize: 14,
-            color: colors.text,
-            flex: 1,
-            fontWeight: '600'
-        },
-        statusBadge: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: '#10B981',
-            paddingVertical: 12,
-            paddingHorizontal: 20,
-            borderRadius: 12,
-            marginBottom: 20
-        },
-        statusText: {
-            fontSize: 16,
-            fontWeight: '700',
-            color: '#fff'
-        },
-        actionsRow: {
-            flexDirection: 'row',
-            gap: 12,
-            marginTop: 8
-        },
-        actionButton: {
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            paddingVertical: 14,
-            borderRadius: 12,
-            borderWidth: 1
-        },
-        shareButton: {
-            backgroundColor: '#3B82F6',
-            borderColor: '#3B82F6'
-        },
-        closeButton: {
-            backgroundColor: 'transparent',
-            borderColor: colors.border
-        },
-        actionButtonText: {
-            fontSize: 14,
-            fontWeight: '600'
-        }
-    });
-
     return (
         <Modal
             visible={visible}
@@ -180,32 +50,24 @@ Please show this pass at the gate.
             onRequestClose={onClose}
         >
             <Pressable style={styles.overlay} onPress={onClose}>
-                <Pressable onPress={e => e.stopPropagation()}>
+                <Pressable onPress={e => e.stopPropagation()} style={{ width: '100%' }}>
                     <View style={styles.container}>
-                        {/* Header */}
                         <View style={styles.header}>
-                            <MaterialCommunityIcons name="ticket-confirmation" size={32} color="#fff" />
                             <AppText style={styles.headerTitle}>VISITOR PASS</AppText>
-                            <AppText style={styles.headerSubtitle}>Smart Hostel Management</AppText>
                         </View>
 
                         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                            {/* Pass Code */}
                             {visitor.qr_code && (
                                 <View style={styles.qrContainer}>
-                                    <MaterialCommunityIcons name="ticket-confirmation-outline" size={48} color="#004e92" />
                                     <AppText style={styles.passCode}>{visitor.qr_code}</AppText>
-                                    <AppText style={styles.qrLabel}>Show this code at gate</AppText>
+                                    <AppText style={styles.qrLabel}>SHOW AT GATE</AppText>
                                 </View>
                             )}
 
-                            {/* Status */}
                             <View style={styles.statusBadge}>
-                                <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-                                <AppText style={styles.statusText}>✓ APPROVED</AppText>
+                                <AppText style={styles.statusText}>APPROVED</AppText>
                             </View>
 
-                            {/* Visitor Details */}
                             <View style={styles.section}>
                                 <AppText style={styles.sectionTitle}>VISITOR DETAILS</AppText>
                                 <View style={styles.infoRow}>
@@ -216,15 +78,14 @@ Please show this pass at the gate.
                                     <AppText style={styles.infoLabel}>Phone:</AppText>
                                     <AppText style={styles.infoValue}>{visitor.visitor_phone}</AppText>
                                 </View>
-                                {visitor.visitor_relation && (
+                                {visitor.visitor_relation ? (
                                     <View style={styles.infoRow}>
                                         <AppText style={styles.infoLabel}>Relation:</AppText>
                                         <AppText style={styles.infoValue}>{visitor.visitor_relation}</AppText>
                                     </View>
-                                )}
+                                ) : null}
                             </View>
 
-                            {/* Visit Details */}
                             <View style={styles.section}>
                                 <AppText style={styles.sectionTitle}>VISIT DETAILS</AppText>
                                 <View style={styles.infoRow}>
@@ -253,21 +114,12 @@ Please show this pass at the gate.
                                 </View>
                             </View>
 
-                            {/* Actions */}
                             <View style={styles.actionsRow}>
-                                <TouchableOpacity
-                                    style={[styles.actionButton, styles.shareButton]}
-                                    onPress={handleShare}
-                                >
-                                    <MaterialCommunityIcons name="share-variant" size={18} color="#fff" />
-                                    <AppText style={[styles.actionButtonText, { color: '#fff' }]}>Share</AppText>
+                                <TouchableOpacity style={[styles.actionButton, styles.shareButton]} onPress={handleShare}>
+                                    <AppText style={styles.shareText}>SHARE</AppText>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.actionButton, styles.closeButton]}
-                                    onPress={onClose}
-                                >
-                                    <MaterialCommunityIcons name="close" size={18} color={colors.text} />
-                                    <AppText style={[styles.actionButtonText, { color: colors.text }]}>Close</AppText>
+                                <TouchableOpacity style={[styles.actionButton, styles.closeButton]} onPress={onClose}>
+                                    <AppText style={styles.closeText}>CLOSE</AppText>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>
@@ -277,3 +129,133 @@ Please show this pass at the gate.
         </Modal>
     );
 }
+
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24
+    },
+    container: {
+        backgroundColor: '#111111',
+        borderRadius: 24,
+        width: '100%',
+        maxWidth: 400,
+        maxHeight: '90%',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        overflow: 'hidden'
+    },
+    header: {
+        padding: 24,
+        paddingBottom: 0,
+        alignItems: 'center'
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: 1.5
+    },
+    content: {
+        padding: 24
+    },
+    qrContainer: {
+        alignItems: 'center',
+        padding: 24,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 16,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    passCode: {
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: 4,
+        fontFamily: 'monospace'
+    },
+    qrLabel: {
+        fontSize: 11,
+        color: '#888888',
+        marginTop: 12,
+        fontWeight: '700',
+        letterSpacing: 1.5
+    },
+    statusBadge: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginBottom: 32
+    },
+    statusText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#000000',
+        letterSpacing: 1
+    },
+    section: {
+        marginBottom: 24
+    },
+    sectionTitle: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#666666',
+        marginBottom: 16,
+        letterSpacing: 1.5
+    },
+    infoRow: {
+        flexDirection: 'row',
+        marginBottom: 12
+    },
+    infoLabel: {
+        fontSize: 13,
+        color: '#888888',
+        width: 100,
+        fontWeight: '600'
+    },
+    infoValue: {
+        fontSize: 13,
+        color: '#FFFFFF',
+        flex: 1,
+        fontWeight: '600'
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 16
+    },
+    actionButton: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        borderRadius: 100,
+        borderWidth: 1
+    },
+    shareButton: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#FFFFFF'
+    },
+    closeButton: {
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(255,255,255,0.2)'
+    },
+    shareText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#000000',
+        letterSpacing: 1
+    },
+    closeText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: 1
+    }
+});

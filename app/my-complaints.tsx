@@ -1,74 +1,58 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StudentComplaintListSkeleton } from '../components/SkeletonLists';
 import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
 export default function MyComplaints() {
   interface Complaint {
-    id: string;
-    title: string;
-    description: string;
+    id: string; title: string; description: string;
     status: 'open' | 'inProgress' | 'resolved' | 'closed';
-    createdAt: Date;
-    priority: 'low' | 'medium' | 'high' | 'emergency';
-    category?: string;
+    createdAt: Date; priority: 'low' | 'medium' | 'high' | 'emergency'; category?: string;
   }
 
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { isDark } = useTheme();
+  
   const [activeTab, setActiveTab] = useState<'active' | 'resolved'>('active');
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const pagerRef = useRef<PagerView>(null);
 
+  // Dynamic Theme Map
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const textSecondary = isDark ? '#CCCCCC' : '#475569';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const fabBg = isDark ? '#FFFFFF' : '#111111';
+  const fabText = isDark ? '#000000' : '#FFFFFF';
+
   const fetchComplaints = async () => {
     try {
       const { default: api } = await import('../utils/api');
       const response = await api.get('/services/complaints');
-
-      // Map DB to UI
       const mapped = response.data.map((c: any) => ({
-        id: c.id,
-        title: c.title,
-        description: c.description,
+        id: c.id, title: c.title, description: c.description,
         status: c.status === 'pending' ? 'open' : c.status,
-        createdAt: new Date(c.created_at),
-        priority: (c.category as any) || 'low',
-        category: c.category
+        createdAt: new Date(c.created_at), priority: (c.category as any) || 'low', category: c.category
       }));
-
       setComplaints(mapped);
-    } catch (error) {
-      console.error('Error fetching complaints:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    } catch (error) {} finally { setLoading(false); setRefreshing(false); }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchComplaints();
-  };
+  const onRefresh = () => { setRefreshing(true); fetchComplaints(); };
 
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
+  useEffect(() => { fetchComplaints(); }, []);
 
-  const activeComplaints = useMemo(() => {
-    return complaints.filter(c => ['open', 'inProgress'].includes(c.status));
-  }, [complaints]);
-
-  const resolvedComplaints = useMemo(() => {
-    return complaints.filter(c => ['resolved', 'closed'].includes(c.status));
-  }, [complaints]);
+  const activeComplaints = useMemo(() => complaints.filter(c => ['open', 'inProgress'].includes(c.status)), [complaints]);
+  const resolvedComplaints = useMemo(() => complaints.filter(c => ['resolved', 'closed'].includes(c.status)), [complaints]);
 
   const handleTabPress = (tab: 'active' | 'resolved') => {
     setActiveTab(tab);
@@ -80,357 +64,100 @@ export default function MyComplaints() {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: '#F59E0B',        // Amber
-      inProgress: '#3B82F6',  // Blue
-      resolved: '#10B981',    // Green
-      closed: '#64748B',      // Slate
-    };
+    const colors: Record<string, string> = { open: '#F59E0B', inProgress: '#3B82F6', resolved: '#10B981', closed: '#888888' };
     return colors[status] || colors.open;
-  };
-
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      low: '#10B981',
-      medium: '#F59E0B',
-      high: '#F97316',
-      emergency: '#EF4444'
-    };
-    return colors[priority] || colors.low;
   };
 
   const renderItem = ({ item }: { item: Complaint }) => {
     const isResolved = ['resolved', 'closed'].includes(item.status);
-
     return (
-      <View style={[styles.card, isResolved && styles.cardResolved, {
-        backgroundColor: colors.card,
-        borderColor: colors.border
-      }]}>
+      <View style={[styles.card, { borderColor: borderSubtle }, isResolved && styles.cardResolved]}>
         <View style={styles.cardHeader}>
-          <View style={[
-            styles.iconBox,
-            { backgroundColor: isDark ? '#1e3a8a' : '#EFF6FF' }
-          ]}>
-            <MaterialCommunityIcons
-              name={item.category?.toLowerCase().includes('wifi') ? 'wifi' :
-                item.category?.toLowerCase().includes('water') ? 'water' :
-                  item.category?.toLowerCase().includes('electric') ? 'lightning-bolt' : 'clipboard-text-outline'}
-              size={24}
-              color={colors.primary}
-            />
-          </View>
           <View style={{ flex: 1 }}>
-            <AppText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</AppText>
-            <AppText style={[styles.cardDate, { color: colors.textSecondary }]}>
-              {new Date(item.createdAt).toLocaleDateString()}
-            </AppText>
+            <AppText style={[styles.cardTitle, { color: textMain }]}>{item.title}</AppText>
+            <AppText style={[styles.cardDate, { color: textMuted }]}>{new Date(item.createdAt).toLocaleDateString()}</AppText>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <View style={[
-              styles.statusBadgeContainer,
-              { backgroundColor: getStatusColor(item.status) + '20' }
-            ]}>
-              <AppText style={[
-                styles.statusBadge,
-                { color: getStatusColor(item.status) }
-              ]}>
-                {item.status.replace(/([A-Z])/g, ' $1').toUpperCase()}
-              </AppText>
-            </View>
-            <AppText style={[styles.priorityText, { color: getPriorityColor(item.priority), marginTop: 4 }]}>
-              {item.priority.toUpperCase()} PRIORITY
-            </AppText>
+            <AppText style={[styles.statusBadge, { color: getStatusColor(item.status) }]}>{item.status.replace(/([A-Z])/g, ' $1').toUpperCase()}</AppText>
+            <AppText style={styles.priorityText}>{item.priority.toUpperCase()} PRIORITY</AppText>
           </View>
         </View>
-
-        <AppText style={[styles.description, { backgroundColor: isDark ? colors.background : '#F8FAFC', color: colors.textSecondary }]}>
-          {item.description}
-        </AppText>
+        <AppText style={[styles.description, { color: textSecondary }]}>{item.description}</AppText>
       </View>
     );
   };
 
-  const renderList = (data: Complaint[], emptyText: string, icon: any) => (
+  const renderList = (data: Complaint[], emptyText: string) => (
     <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
+      data={data} renderItem={renderItem} keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#004e92']} tintColor="#004e92" />}
-      ListEmptyComponent={
-        <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons name={icon} size={64} color={isDark ? colors.secondary : "#CBD5E1"} />
-          <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {emptyText}
-          </AppText>
-        </View>
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[textMain]} tintColor={textMain} />}
+      ListEmptyComponent={<View style={styles.emptyContainer}><AppText style={styles.emptyText}>{emptyText}</AppText></View>}
     />
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.headerActions, { paddingTop: insets.top + 16 }]}>
+        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+        </Pressable>
+      </View>
 
-      {/* Header */}
-      <LinearGradient
-        colors={['#000428', '#004e92']}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView edges={['top', 'left', 'right']}>
-          <View style={styles.headerContent}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                <MaterialIcons name="arrow-back" size={24} color="#fff" />
-              </Pressable>
-              <AppText style={styles.headerTitle}>My Complaints</AppText>
-            </View>
-
-            <View style={styles.summaryBox}>
-              <View>
-                <AppText style={styles.summaryLabel}>ACTIVE</AppText>
-                <AppText style={styles.summaryValue}>
-                  {activeComplaints.length}
-                </AppText>
-              </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={styles.hero}>
+        <AppText style={[styles.heroTitle, { color: textMain }]}>History</AppText>
+        <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Track past complaints</AppText>
+      </View>
 
       <View style={styles.contentContainer}>
-        {/* Tabs */}
-        <View style={[styles.tabs, { backgroundColor: isDark ? colors.card : '#fff' }]}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'active' && { backgroundColor: isDark ? '#1e3a8a' : '#EFF6FF' }]}
-            onPress={() => handleTabPress('active')}
-          >
-            <AppText style={[styles.tabText, activeTab === 'active' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'active' && { color: colors.textSecondary }]}>Active</AppText>
+        <View style={[styles.tabContainer, { borderColor: borderSubtle }]}>
+          <TouchableOpacity style={[styles.tabBtn, activeTab === 'active' && [styles.tabBtnActive, { borderColor: textMain }]]} onPress={() => handleTabPress('active')}>
+            <AppText style={[styles.tabText, activeTab === 'active' && { color: textMain }]}>ACTIVE ({activeComplaints.length})</AppText>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'resolved' && { backgroundColor: isDark ? '#1e3a8a' : '#EFF6FF' }]}
-            onPress={() => handleTabPress('resolved')}
-          >
-            <AppText style={[styles.tabText, activeTab === 'resolved' && { color: '#3b82f6', fontWeight: '700' }, activeTab !== 'resolved' && { color: colors.textSecondary }]}>Resolved</AppText>
+          <TouchableOpacity style={[styles.tabBtn, activeTab === 'resolved' && [styles.tabBtnActive, { borderColor: textMain }]]} onPress={() => handleTabPress('resolved')}>
+            <AppText style={[styles.tabText, activeTab === 'resolved' && { color: textMain }]}>RESOLVED ({resolvedComplaints.length})</AppText>
           </TouchableOpacity>
         </View>
 
-        {loading ? (
-          <StudentComplaintListSkeleton />
-        ) : (
-          <PagerView
-            style={styles.pagerView}
-            initialPage={0}
-            ref={pagerRef}
-            onPageSelected={handlePageSelected}
-          >
-            <View key="active">
-              {renderList(activeComplaints, "No active complaints", "clipboard-check-outline")}
-            </View>
-            <View key="resolved">
-              {renderList(resolvedComplaints, "No resolved complaints", "clipboard-text-clock-outline")}
-            </View>
+        {loading ? <StudentComplaintListSkeleton /> : (
+          <PagerView style={styles.pagerView} initialPage={0} ref={pagerRef} onPageSelected={handlePageSelected}>
+            <View key="active">{renderList(activeComplaints, "No active complaints")}</View>
+            <View key="resolved">{renderList(resolvedComplaints, "No resolved complaints")}</View>
           </PagerView>
         )}
       </View>
 
-      {/* FAB to Add New */}
-      <Pressable
-        style={styles.fab}
-        onPress={() => router.push('/new-complaint')}
-      >
-        <LinearGradient
-          colors={['#000428', '#004e92']}
-          style={styles.fabGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <MaterialIcons name="add" size={32} color="#fff" />
-        </LinearGradient>
+      <Pressable style={({ pressed }) => [styles.fab, { backgroundColor: fabBg }, pressed && { opacity: 0.8 }]} onPress={() => router.push('/new-complaint')}>
+        <MaterialIcons name="add" size={24} color={fabText} />
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingBottom: 24,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: "#004e92",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  headerContent: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  summaryBox: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textAlign: 'center',
-  },
-  summaryValue: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 6,
-    marginBottom: 16,
-    shadowColor: '#64748B',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  tabText: {
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  pagerView: {
-    flex: 1,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: '#64748B',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    marginBottom: 16,
-  },
-  cardResolved: {
-    opacity: 0.8,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 12,
-  },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 2,
-  },
-  cardDate: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  statusBadgeContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  description: {
-    fontSize: 13,
-    color: '#475569',
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-    borderRadius: 12,
-    lineHeight: 20,
-  },
-  listContent: {
-    paddingBottom: 120,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  emptyText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: '#004e92',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  fabGradient: {
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1 },
+  headerActions: { paddingHorizontal: 24, paddingBottom: 16 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  hero: { paddingHorizontal: 24, marginBottom: 32 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 8 },
+  heroSubtitle: { fontSize: 16, fontWeight: '600' },
+  contentContainer: { flex: 1 },
+  tabContainer: { flexDirection: 'row', marginHorizontal: 24, borderBottomWidth: 1, marginBottom: 24 },
+  tabBtn: { flex: 1, paddingVertical: 16, alignItems: 'center' },
+  tabBtnActive: { borderBottomWidth: 2, marginBottom: -1 },
+  tabText: { fontSize: 12, fontWeight: '700', color: '#666666', letterSpacing: 1.5 },
+  pagerView: { flex: 1 },
+  card: { paddingHorizontal: 24, paddingVertical: 24, borderBottomWidth: 1 },
+  cardResolved: { opacity: 0.6 },
+  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 },
+  cardTitle: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
+  cardDate: { fontSize: 12, fontWeight: '600' },
+  statusBadge: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  priorityText: { fontSize: 10, fontWeight: '600', color: '#666666', marginTop: 4 },
+  description: { fontSize: 14, lineHeight: 22 },
+  listContent: { paddingBottom: 120 },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  emptyText: { color: '#666666', fontSize: 14, fontStyle: 'italic' },
+  fab: { position: 'absolute', bottom: 32, right: 24, width: 64, height: 64, borderRadius: 32, justifyContent: 'center', alignItems: 'center' },
 });

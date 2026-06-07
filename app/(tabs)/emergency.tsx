@@ -1,8 +1,7 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '../../utils/authUtils';
 import { EmergencyContact, subscribeToContacts } from '../../utils/emergencySyncUtils';
@@ -11,27 +10,28 @@ import { useTheme } from '../../utils/ThemeContext';
 import AppText from '../../components/AppText';
 import api from '../../utils/api';
 
-
 export default function Emergency() {
-  const { colors, isDark } = useTheme();
   const router = useRouter();
   const user = useUser();
+  const { isDark } = useTheme();
+  
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [wardens, setWardens] = useState<any[]>([]);
   const [userData, setUserData] = useState<StudentData | null>(null);
   const [loadingWardens, setLoadingWardens] = useState(true);
 
+  // Dynamic Theme Colors
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const iconWrapBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const pressedBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+
   useEffect(() => {
-    const unsubscribe = subscribeToContacts((data) => {
-      setContacts(data);
-    });
-
-    // Fetch user data for medical info
+    const unsubscribe = subscribeToContacts((data) => setContacts(data));
     fetchUserData().then(setUserData);
-
-    // Fetch Wardens
     fetchWardens();
-
     return () => unsubscribe();
   }, []);
 
@@ -50,23 +50,20 @@ export default function Emergency() {
     if (!lastSeen) return false;
     const lastSeenDate = new Date(lastSeen);
     const now = new Date();
-    // Consider online if seen in the last 5 minutes
     return (now.getTime() - lastSeenDate.getTime()) < 5 * 60 * 1000;
   };
 
   const getStatusColor = (lastSeen: string | null) => {
-    return isOnline(lastSeen) ? '#10B981' : '#94A3B8';
+    return isOnline(lastSeen) ? '#10B981' : textMuted;
   };
 
   const handleMessage = (warden?: any) => {
     if (warden?.id) {
-      // Private chat with specific warden
       router.push({
         pathname: `/chat/${user?.uid || user?.email || 'guest'}`,
         params: { staffId: warden.id.toString(), name: warden.fullName }
       });
     } else {
-      // General Admin Support
       router.push(`/chat/${user?.uid || user?.email || 'guest'}`);
     }
   };
@@ -75,388 +72,181 @@ export default function Emergency() {
     Linking.openURL(`tel:${phoneNumber}`);
   };
 
+  const SectionHeader = ({ title, icon }: { title: string, icon: any }) => (
+    <View style={styles.sectionHeader}>
+      <MaterialCommunityIcons name={icon} size={16} color={textMuted} />
+      <AppText style={[styles.sectionTitle, { color: textMuted }]}>{title}</AppText>
+    </View>
+  );
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
-      <LinearGradient
-        colors={['#000428', '#004e92']}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView edges={['top', 'left', 'right']}>
-          <View style={styles.headerContent}>
-            <View>
-              <AppText style={styles.headerTitle}>Emergency</AppText>
-              <AppText style={styles.headerSubtitle}>24/7 Support & Help</AppText>
-            </View>
-            <View style={styles.sosIconContainer}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+        <View style={styles.header}>
+          <AppText style={[styles.headerTitle, { color: textMain }]}>Emergency</AppText>
+          <AppText style={[styles.headerSubtitle, { color: textMuted }]}>24/7 Support & Help</AppText>
+        </View>
+
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={{ paddingBottom: 140 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HERO SOS ACTION */}
+          <Pressable
+            style={({ pressed }) => [styles.heroRow, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
+            onPress={() => handleCall('112')}
+          >
+            <View style={[styles.heroIconWrap, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
               <MaterialCommunityIcons name="alarm-light" size={28} color="#EF4444" />
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={{ padding: 24 }}>
-          {/* Helper Banner */}
-          <View style={[styles.banner, {
-            backgroundColor: isDark ? colors.card : '#EFF6FF',
-            borderColor: isDark ? colors.border : '#DBEAFE'
-          }]}>
-            <MaterialCommunityIcons name="information-outline" size={24} color={isDark ? colors.primary : "#004e92"} />
-            <AppText style={[styles.bannerText, { color: isDark ? colors.text : '#1E40AF' }]}>
-              {wardens.length > 0 ? "Message our wardens directly for immediate assistance." : "Tap on any contact card below to initiate an immediate call."}
-            </AppText>
-          </View>
-
-          {/* Support Chat Card */}
-          {/* Wardens Section */}
-          <View style={{ marginBottom: 24 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingHorizontal: 4 }}>
-              <MaterialCommunityIcons name="shield-account" size={22} color={colors.primary} />
-              <AppText style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginLeft: 10 }}>
-                Wardens on Duty
-              </AppText>
+            <View style={styles.heroTextContent}>
+              <AppText style={[styles.heroSosTitle, { color: '#EF4444' }]}>Call Security</AppText>
+              <AppText style={styles.heroSosSubtitle}>Immediate Assistance</AppText>
             </View>
+            <MaterialCommunityIcons name="phone" size={24} color="#EF4444" />
+          </Pressable>
 
+          {/* WARDENS ON DUTY */}
+          <View style={styles.section}>
+            <SectionHeader title="WARDENS ON DUTY" icon="shield-account" />
             {loadingWardens ? (
-              <ActivityIndicator color={colors.primary} size="small" />
+              <ActivityIndicator color={textMain} size="small" style={{ marginVertical: 20 }} />
             ) : wardens.length > 0 ? (
-              <View style={{ gap: 12 }}>
-                {wardens.map((warden) => (
-                  <Pressable
-                    key={warden.id}
-                    style={[styles.contactCard, styles.shadowProp, {
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                    }]}
-                    onPress={() => handleMessage(warden)}
-                  >
-                    <View style={styles.cardInner}>
-                      <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#F1F5F9' }]}>
-                        <MaterialCommunityIcons name="account" size={26} color={colors.primary} />
-                        <View style={[styles.onlineIndicator, { backgroundColor: getStatusColor(warden.lastSeen) }]} />
-                      </View>
-                      
-                      <View style={styles.contactInfo}>
-                        <AppText style={[styles.contactName, { color: colors.text }]}>{warden.fullName}</AppText>
-                        <AppText style={[styles.contactNumber, { color: colors.textSecondary, fontSize: 12, textTransform: 'capitalize' }]}>
-                          {warden.role} • {isOnline(warden.lastSeen) ? 'Active Now' : 'Away'}
-                        </AppText>
-                      </View>
-
-                      <TouchableOpacity 
-                        style={[styles.callBtn, { backgroundColor: colors.primary }]}
-                        onPress={() => handleMessage(warden)}
-                      >
-                        <MaterialCommunityIcons name="message-text" size={20} color="#fff" />
-                      </TouchableOpacity>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
+              wardens.map((warden) => (
+                <Pressable
+                  key={warden.id}
+                  style={({ pressed }) => [styles.row, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
+                  onPress={() => handleMessage(warden)}
+                >
+                  <View style={[styles.avatar, { backgroundColor: iconWrapBg }]}>
+                    <MaterialCommunityIcons name="account" size={24} color={textMain} />
+                    <View style={[styles.onlineIndicator, { backgroundColor: getStatusColor(warden.lastSeen), borderColor: themeBg }]} />
+                  </View>
+                  <View style={styles.rowInfo}>
+                    <AppText style={[styles.rowTitle, { color: textMain }]} numberOfLines={1}>{warden.fullName}</AppText>
+                    <AppText style={[styles.rowSubtitle, { color: textMuted }]}>{warden.role}</AppText>
+                  </View>
+                  <MaterialCommunityIcons name="message-text" size={22} color={textMain} />
+                </Pressable>
+              ))
             ) : (
               <Pressable
-                style={[styles.contactCard, styles.shadowProp, {
-                  backgroundColor: isDark ? colors.card : '#FFFFFF',
-                  borderColor: colors.border,
-                }]}
+                style={({ pressed }) => [styles.row, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
                 onPress={() => handleMessage()}
               >
-                <View style={styles.cardInner}>
-                  <View style={[styles.iconBox, { backgroundColor: '#F0FDF4' }]}>
-                    <MaterialCommunityIcons name="whatsapp" size={24} color="#25D366" />
-                  </View>
-                  <View style={styles.contactInfo}>
-                    <AppText style={[styles.contactName, { color: colors.text }]}>Admin Support Chat</AppText>
-                    <AppText style={[styles.contactNumber, { color: colors.textSecondary }]}>Direct Message to Hostel Admin</AppText>
-                  </View>
-                  <View style={[styles.callBtn, { backgroundColor: '#25D366' }]}>
-                    <MaterialCommunityIcons name="message-text" size={20} color="#fff" />
-                  </View>
+                <View style={[styles.avatar, { backgroundColor: iconWrapBg }]}>
+                  <MaterialCommunityIcons name="message-alert" size={24} color={textMain} />
                 </View>
+                <View style={styles.rowInfo}>
+                  <AppText style={[styles.rowTitle, { color: textMain }]}>Admin Support</AppText>
+                  <AppText style={[styles.rowSubtitle, { color: textMuted }]}>Direct Message</AppText>
+                </View>
+                <MaterialCommunityIcons name="message-text" size={22} color={textMain} />
               </Pressable>
             )}
           </View>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* Medical Profile Card */}
+          {/* MEDICAL ID */}
           {userData && (
-            <View style={{ marginBottom: 24 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
-                <MaterialCommunityIcons name="medical-bag" size={20} color={isDark ? colors.text : '#1E293B'} />
-                <AppText style={{ fontSize: 16, fontWeight: '700', color: isDark ? colors.text : '#1E293B', marginLeft: 8 }}>
-                  My Medical Profile
-                </AppText>
-              </View>
-
-              <View style={[styles.contactCard, styles.shadowProp, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
-                <View style={{ flexDirection: 'row', gap: 16 }}>
-                  {/* Blood Group Badge */}
-                  <View style={{
-                    width: 60, height: 60,
-                    borderRadius: 16,
-                    backgroundColor: '#FEF2F2',
-                    justifyContent: 'center', alignItems: 'center',
-                    borderWidth: 1, borderColor: '#FECACA'
-                  }}>
-                    <MaterialIcons name="water" size={24} color="#EF4444" />
-                    <AppText style={{ fontSize: 14, fontWeight: '800', color: '#B91C1C', marginTop: 2 }}>
-                      {userData.bloodGroup || 'N/A'}
-                    </AppText>
-                  </View>
-
-                  <View style={{ flex: 1, justifyContent: 'center' }}>
-                    <View style={{ marginBottom: 8 }}>
-                      <AppText style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 2 }}>Specific Emergency Contact</AppText>
-                      <AppText style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{userData.emergencyContactName || 'Not set'}</AppText>
-                      {userData.emergencyContactPhone && userData.emergencyContactPhone !== 'N/A' && (
-                        <AppText style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }} onPress={() => handleCall(userData.emergencyContactPhone!)}>
-                          {userData.emergencyContactPhone}
-                        </AppText>
-                      )}
-                    </View>
-                  </View>
+            <View style={styles.section}>
+              <SectionHeader title="MEDICAL ID" icon="medical-bag" />
+              
+              <View style={[styles.row, { borderColor: borderSubtle }]}>
+                <View style={[styles.iconWrap, { backgroundColor: iconWrapBg }]}>
+                  <MaterialIcons name="water-drop" size={20} color="#EF4444" />
                 </View>
-
-                {(userData.medicalHistory && userData.medicalHistory !== 'None') && (
-                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.border }}>
-                    <AppText style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>Medical History / Allergies</AppText>
-                    <AppText style={{ fontSize: 14, color: colors.text, lineHeight: 20 }}>
-                      {userData.medicalHistory}
-                    </AppText>
-                  </View>
-                )}
+                <View style={styles.rowInfo}>
+                  <AppText style={[styles.rowTitle, { color: textMain }]}>Blood Group</AppText>
+                  <AppText style={[styles.rowSubtitle, { color: textMuted }]}>{userData.bloodGroup || 'Not provided'}</AppText>
+                </View>
               </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.row, { borderColor: borderSubtle }, pressed && userData.emergencyContactPhone && userData.emergencyContactPhone !== 'N/A' && { backgroundColor: pressedBg }]}
+                onPress={() => {
+                  if (userData.emergencyContactPhone && userData.emergencyContactPhone !== 'N/A') {
+                    handleCall(userData.emergencyContactPhone);
+                  }
+                }}
+              >
+                <View style={[styles.iconWrap, { backgroundColor: iconWrapBg }]}>
+                  <MaterialCommunityIcons name="heart-pulse" size={20} color="#F59E0B" />
+                </View>
+                <View style={styles.rowInfo}>
+                  <AppText style={[styles.rowTitle, { color: textMain }]}>{userData.emergencyContactName || 'Emergency Contact'}</AppText>
+                  <AppText style={[styles.rowSubtitle, { color: textMuted }]}>{userData.emergencyContactPhone || 'Not provided'}</AppText>
+                </View>
+                {userData.emergencyContactPhone && userData.emergencyContactPhone !== 'N/A' && (
+                  <MaterialCommunityIcons name="phone" size={22} color={textMain} />
+                )}
+              </Pressable>
+
+              {(userData.medicalHistory && userData.medicalHistory !== 'None') && (
+                <View style={[styles.historyRow, { borderColor: borderSubtle }]}>
+                  <AppText style={[styles.historyLabel, { color: textMain }]}>Medical History / Allergies</AppText>
+                  <AppText style={[styles.historyText, { color: textMuted }]}>{userData.medicalHistory}</AppText>
+                </View>
+              )}
             </View>
           )}
 
-          <View style={styles.contactsContainer}>
-            <View style={{ paddingHorizontal: 4, marginBottom: 4 }}>
-              <AppText style={{ fontSize: 16, fontWeight: '700', color: isDark ? colors.text : '#1E293B' }}>
-                Quick Support
-              </AppText>
-            </View>
-            {contacts.map((contact, index) => (
+          {/* QUICK DIAL */}
+          <View style={styles.section}>
+            <SectionHeader title="QUICK DIAL" icon="phone-classic" />
+            {contacts.map((contact) => (
               <Pressable
                 key={contact.id}
-                style={[styles.contactCard, styles.shadowProp, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={({ pressed }) => [styles.row, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
                 onPress={() => handleCall(contact.number)}
               >
-                <View style={styles.cardInner}>
-                  <View style={[styles.iconBox, { backgroundColor: index === 0 ? '#FEF2F2' : (isDark ? '#172554' : '#EFF6FF') }]}>
-                    <MaterialCommunityIcons
-                      name={contact.icon as any || 'phone-in-talk'}
-                      size={24} // keeping red for emergency
-                      color={index === 0 ? "#EF4444" : (isDark ? '#60A5FA' : "#004e92")}
-                    />
-                  </View>
-
-                  <View style={styles.contactInfo}>
-                    <AppText style={[styles.contactName, { color: colors.text }]}>{contact.title} {contact.name ? `• ${contact.name}` : ''}</AppText>
-                    <AppText style={[styles.contactNumber, { color: colors.textSecondary }]}>{contact.number}</AppText>
-                  </View>
-
-                  <View style={[styles.callBtn, { backgroundColor: index === 0 ? '#EF4444' : '#10B981' }]}>
-                    <MaterialIcons name="call" size={20} color="#fff" />
-                  </View>
+                <View style={[styles.iconWrap, { backgroundColor: iconWrapBg }]}>
+                  <MaterialCommunityIcons name={contact.icon as any || 'phone'} size={20} color={textMain} />
                 </View>
+                <View style={styles.rowInfo}>
+                  <AppText style={[styles.rowTitle, { color: textMain }]}>{contact.title}</AppText>
+                  <AppText style={[styles.rowSubtitle, { color: textMuted }]}>{contact.number}</AppText>
+                </View>
+                <MaterialCommunityIcons name="phone" size={22} color={textMain} />
               </Pressable>
             ))}
           </View>
-        </View>
-      </ScrollView>
+
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingBottom: 24,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: "#004e92",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  headerContent: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  sosIconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    gap: 12,
-  },
-  bannerText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1E40AF',
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-  contactsContainer: {
-    gap: 16,
-    marginBottom: 24,
-  },
-  contactCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  cardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 16,
-  },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative'
-  },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#fff'
-  },
-  // Removed old iconBox
-  dummyIconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contactInfo: {
-    flex: 1,
-  },
-  contactName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
-  },
-  contactNumber: {
-    fontSize: 14,
-    color: '#64748B',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  callBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sosButton: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  sosGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    gap: 16,
-  },
-  sosTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  sosSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  shadowProp: {
-    shadowColor: '#64748B',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
+  headerTitle: { fontSize: 32, fontWeight: '800', letterSpacing: -1 },
+  headerSubtitle: { fontSize: 15, fontWeight: '600', marginTop: 4, letterSpacing: 0.2 },
+  content: { flex: 1 },
+  
+  heroRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, paddingHorizontal: 24, borderTopWidth: 1, borderBottomWidth: 1, marginBottom: 32 },
+  heroIconWrap: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  heroTextContent: { flex: 1 },
+  heroSosTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
+  heroSosSubtitle: { fontSize: 13, fontWeight: '600', color: '#EF4444', marginTop: 2 },
+
+  section: { marginBottom: 40 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, marginBottom: 8 },
+  sectionTitle: { fontSize: 11, fontWeight: '800', marginLeft: 8, letterSpacing: 1.5 },
+
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: 1 },
+  avatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  onlineIndicator: { position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  iconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  rowInfo: { flex: 1, paddingRight: 12 },
+  rowTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  rowSubtitle: { fontSize: 13, fontWeight: '500' },
+
+  historyRow: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: 1 },
+  historyLabel: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  historyText: { fontSize: 14, lineHeight: 22 },
 });

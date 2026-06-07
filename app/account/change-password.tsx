@@ -1,8 +1,7 @@
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -11,8 +10,8 @@ import AppText from '../../components/AppText';
 export default function ChangePassword() {
   const router = useRouter();
   const { showAlert } = useAlert();
-  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isDark } = useTheme();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -23,179 +22,74 @@ export default function ChangePassword() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Dynamic Theme Map
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+  const saveBtnBg = isDark ? '#FFFFFF' : '#111111';
+  const saveBtnText = isDark ? '#000000' : '#FFFFFF';
+
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showAlert('Error', 'Please fill in all fields', [], 'error');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showAlert('Error', 'New passwords do not match', [], 'error');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showAlert('Error', 'Password must be at least 6 characters long', [], 'error');
-      return;
-    }
-
+    if (!currentPassword || !newPassword || !confirmPassword) return showAlert('Error', 'Please fill in all fields', [], 'error');
+    if (newPassword !== confirmPassword) return showAlert('Error', 'New passwords do not match', [], 'error');
+    if (newPassword.length < 6) return showAlert('Error', 'Password must be at least 6 characters long', [], 'error');
+    
     setIsLoading(true);
-
     try {
       const { default: api } = await import('../../utils/api');
-      await api.post('/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
-
-      showAlert('Success', 'Password updated successfully!', [
-        { text: 'OK', onPress: () => router.back() }
-      ], 'success');
+      await api.post('/auth/change-password', { currentPassword, newPassword });
+      showAlert('Success', 'Password updated successfully!', [{ text: 'OK', onPress: () => router.back() }], 'success');
     } catch (error: any) {
-      console.error(error);
-      let msg = 'Failed to update password.';
-      if (error.response?.data?.error) {
-        msg = error.response.data.error;
-      }
+      let msg = error.response?.data?.error || 'Failed to update password.';
       showAlert('Error', msg, [], 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
-  const renderInput = (
-    label: string,
-    value: string,
-    setValue: (val: string) => void,
-    placeholder: string,
-    showPassword: boolean,
-    setShowPassword: (val: boolean) => void,
-    icon: any
-  ) => (
-    <View style={styles.inputGroup}>
-      <AppText style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</AppText>
-      <View style={[styles.inputContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: colors.border }]}>
-        <MaterialCommunityIcons name={icon} size={20} color={isDark ? '#60A5FA' : '#004e92'} style={styles.inputIcon} />
+  const renderInput = (label: string, value: string, setValue: (val: string) => void, placeholder: string, showPassword: boolean, setShowPassword: (val: boolean) => void) => (
+    <View style={styles.inputWrapper}>
+      <AppText style={styles.inputLabel}>{label}</AppText>
+      <View style={[styles.inputContainer, { borderColor: borderSubtle }]}>
         <TextInput
-          style={[styles.input, { color: colors.text }]}
+          style={[styles.input, { color: textMain }]}
           value={value}
           onChangeText={setValue}
           secureTextEntry={!showPassword}
           placeholder={placeholder}
-          placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+          placeholderTextColor={textMuted}
+          selectionColor={textMain}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-          <MaterialCommunityIcons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+        <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+          <MaterialCommunityIcons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={textMuted} />
+        </Pressable>
       </View>
     </View>
   );
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: themeBg }]} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+        </Pressable>
+      </View>
 
-      <LinearGradient
-        colors={['#000428', '#004e92']}
-        style={[styles.header, { paddingTop: insets.top + 10 }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
-          </TouchableOpacity>
-          <AppText style={styles.headerTitle}>Change Password</AppText>
-          <View style={{ width: 40 }} />
-        </View>
-      </LinearGradient>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
-      >
-        {/* Hero Section */}
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}>
         <View style={styles.hero}>
-          <View style={[styles.heroIconWrap, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF' }]}>
-            <LinearGradient colors={['#004e92', '#000428']} style={styles.heroIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-              <MaterialCommunityIcons name="lock-reset" size={32} color="#fff" />
-            </LinearGradient>
-          </View>
-          <AppText style={[styles.heroTitle, { color: colors.text }]}>Update Security</AppText>
-          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
-            Ensure your account is protected by using a strong, unique password.
-          </AppText>
+          <AppText style={[styles.heroTitle, { color: textMain }]}>New{"\n"}Password</AppText>
+          <AppText style={[styles.heroSub, { color: textMuted }]}>Create a secure password with at least 6 characters.</AppText>
         </View>
 
-        {/* Input Card */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {renderInput(
-            "Current Password",
-            currentPassword,
-            setCurrentPassword,
-            "Enter current password",
-            showCurrent,
-            setShowCurrent,
-            "lock-outline"
-          )}
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {renderInput(
-            "New Password",
-            newPassword,
-            setNewPassword,
-            "Enter new password",
-            showNew,
-            setShowNew,
-            "shield-lock-outline"
-          )}
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {renderInput(
-            "Confirm New Password",
-            confirmPassword,
-            setConfirmPassword,
-            "Confirm new password",
-            showConfirm,
-            setShowConfirm,
-            "check-decagram-outline"
-          )}
+        <View style={styles.form}>
+          {renderInput("Current Password", currentPassword, setCurrentPassword, "Enter current", showCurrent, setShowCurrent)}
+          {renderInput("New Password", newPassword, setNewPassword, "Enter new", showNew, setShowNew)}
+          {renderInput("Confirm Password", confirmPassword, setConfirmPassword, "Confirm new", showConfirm, setShowConfirm)}
         </View>
 
-        {/* Info Note */}
-        <View style={[styles.noteCard, {
-          backgroundColor: isDark ? '#0c2d48' : '#EFF6FF',
-          borderColor: isDark ? '#1e3a5f' : '#BFDBFE',
-          marginTop: 20
-        }]}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={isDark ? '#93C5FD' : '#3B82F6'} />
-          <AppText style={[styles.noteText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
-            Password must be at least 6 characters long and include a mix of letters and numbers.
-          </AppText>
-        </View>
-
-        {/* Action Button */}
-        <TouchableOpacity
-          style={[styles.saveBtn, isLoading && { opacity: 0.7 }]}
-          onPress={handleChangePassword}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <MaterialCommunityIcons name="shield-check-outline" size={22} color="#fff" />
-              <AppText style={styles.saveBtnText}>Update Password</AppText>
-            </>
-          )}
-        </TouchableOpacity>
+        <Pressable style={({ pressed }) => [styles.saveBtn, { backgroundColor: saveBtnBg }, pressed && { transform: [{ scale: 0.98 }] }, isLoading && { opacity: 0.7 }]} onPress={handleChangePassword} disabled={isLoading}>
+          {isLoading ? <ActivityIndicator color={saveBtnText} /> : <AppText style={[styles.saveBtnTextLabel, { color: saveBtnText }]}>Update</AppText>}
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -203,50 +97,17 @@ export default function ChangePassword() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
-  backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  hero: { alignItems: 'center', marginBottom: 24, gap: 8 },
-  heroIconWrap: {
-    width: 80, height: 80, borderRadius: 24,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 4,
-  },
-  heroIcon: {
-    width: 64, height: 64, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  heroTitle: { fontSize: 22, fontWeight: '800', letterSpacing: 0.3 },
-  heroSub: { fontSize: 14, textAlign: 'center', lineHeight: 21, paddingHorizontal: 10 },
-  card: {
-    borderRadius: 24, borderWidth: 1, padding: 20,
-    shadowColor: '#004e92', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05, shadowRadius: 10, elevation: 3,
-  },
-  inputGroup: { gap: 8, marginVertical: 8 },
-  inputLabel: { fontSize: 13, fontWeight: '700', marginLeft: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
-  inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, height: 54,
-  },
-  inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 16, fontWeight: '600' },
-  eyeBtn: { padding: 4 },
-  divider: { height: 1, marginVertical: 12, opacity: 0.5 },
-  saveBtn: {
-    backgroundColor: '#004e92', flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', padding: 18, borderRadius: 20, gap: 10,
-    marginTop: 32, shadowColor: '#004e92', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3, shadowRadius: 12, elevation: 8,
-  },
-  saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
-  noteCard: {
-    borderRadius: 16, borderWidth: 1, padding: 14,
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-  },
-  noteText: { fontSize: 13, lineHeight: 19, flex: 1 },
+  header: { paddingHorizontal: 24, paddingBottom: 24 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  hero: { marginBottom: 48 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
+  heroSub: { fontSize: 15, lineHeight: 22 },
+  form: { gap: 32, marginBottom: 48 },
+  inputWrapper: { flexDirection: 'column' },
+  inputLabel: { fontSize: 11, fontWeight: '700', color: '#888888', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, paddingBottom: 12 },
+  input: { flex: 1, fontSize: 20, fontWeight: '500', padding: 0 },
+  eyeBtn: { padding: 4, marginLeft: 12 },
+  saveBtn: { justifyContent: 'center', alignItems: 'center', paddingVertical: 18, borderRadius: 32 },
+  saveBtnTextLabel: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
 });

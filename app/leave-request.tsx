@@ -1,23 +1,24 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Modal, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Modal, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
 import { createLeaveRequest, getStudentLeaves, LeaveRequest } from '../utils/leavesUtils';
 import { fetchUserData } from '../utils/nameUtils';
-import { useTheme } from '../utils/ThemeContext';
 import { formatUniversalTime } from '../utils/timeUtils';
+import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 import QRCode from 'react-native-qrcode-svg';
 
 export default function LeaveRequestPage() {
     const router = useRouter();
-    const { colors, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
     const { showAlert } = useAlert();
+    const { isDark } = useTheme();
+
     const [reason, setReason] = useState('');
     const [category, setCategory] = useState('');
     const [startDate, setStartDate] = useState(new Date());
@@ -27,30 +28,29 @@ export default function LeaveRequestPage() {
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<LeaveRequest[]>([]);
     
-    // QR Modal State
     const [qrModalVisible, setQrModalVisible] = useState(false);
     const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
 
+    // Dynamic Theme Map
+    const themeBg = isDark ? '#000000' : '#F8FAFC';
+    const textMain = isDark ? '#FFFFFF' : '#111111';
+    const textMuted = isDark ? '#888888' : '#64748B';
+    const textSecondary = isDark ? '#CCCCCC' : '#475569';
+    const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+    const inputBg = isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF';
+    const inputBorder = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+    const primaryBtnBg = isDark ? '#FFFFFF' : '#111111';
+    const primaryBtnText = isDark ? '#000000' : '#FFFFFF';
+    const modalBg = isDark ? '#111111' : '#FFFFFF';
+    const modalOverlay = isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.4)';
+    const qrBg = '#FFFFFF';
+    const passBoxBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
     const { refreshing, onRefresh } = useRefresh(async () => {
         await loadHistory();
-    }, () => {
-        setReason('');
-        setCategory('');
-        setStartDate(new Date());
-        setEndDate(new Date());
-    });
+    }, () => { setReason(''); setCategory(''); setStartDate(new Date()); setEndDate(new Date()); });
 
-    /* Replaced by useRefresh
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadHistory();
-        setRefreshing(false);
-    };
-    */
-
-    useEffect(() => {
-        loadHistory();
-    }, []);
+    useEffect(() => { loadHistory(); }, []);
 
     const loadHistory = async () => {
         try {
@@ -59,280 +59,139 @@ export default function LeaveRequestPage() {
                 const leaves = await getStudentLeaves(user.email);
                 setHistory(leaves);
             }
-        } catch (error) {
-            console.error(error);
-        }
+        } catch (error) {}
     };
 
     const handleSubmit = async () => {
-        if (!reason.trim()) {
-            showAlert('Error', 'Please provide a reason for your leave.', [], 'error');
-            return;
-        }
-
-        if (endDate < startDate) {
-            showAlert('Error', 'End date cannot be before start date.', [], 'error');
-            return;
-        }
+        if (!reason.trim()) return showAlert('Error', 'Please provide a reason for your leave.', [], 'error');
+        if (endDate < startDate) return showAlert('Error', 'End date cannot be before start date.', [], 'error');
 
         setLoading(true);
         try {
             const user = await fetchUserData();
             if (!user) throw new Error("User not found");
-
             const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include start day
-
-            await createLeaveRequest({
-                studentName: user.fullName,
-                studentRoom: user.roomNo || 'N/A',
-                studentEmail: user.email || '',
-                startDate: startDate.toISOString().split('T')[0],
-                endDate: endDate.toISOString().split('T')[0],
-                category: category,
-                reason: reason,
-                days: diffDays,
-            });
-
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            await createLeaveRequest({ studentName: user.fullName, studentRoom: user.roomNo || 'N/A', studentEmail: user.email || '', startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0], category: category, reason: reason, days: diffDays });
             showAlert('Success', 'Leave request submitted successfully!', [], 'success');
-            setReason('');
-            setCategory('');
-            loadHistory();
-        } catch (error) {
-            showAlert('Error', 'Failed to submit leave request. Please try again.', [], 'error');
-        } finally {
-            setLoading(false);
-        }
+            setReason(''); setCategory(''); loadHistory();
+        } catch (error) { showAlert('Error', 'Failed to submit leave request. Please try again.', [], 'error'); } finally { setLoading(false); }
     };
 
-    const onChangeStart = (event: any, selectedDate?: Date) => {
-        setShowStartPicker(Platform.OS === 'ios');
-        if (selectedDate) setStartDate(selectedDate);
-    };
+    const onChangeStart = (event: any, selectedDate?: Date) => { setShowStartPicker(Platform.OS === 'ios'); if (selectedDate) setStartDate(selectedDate); };
+    const onChangeEnd = (event: any, selectedDate?: Date) => { setShowEndPicker(Platform.OS === 'ios'); if (selectedDate) setEndDate(selectedDate); };
 
-    const onChangeEnd = (event: any, selectedDate?: Date) => {
-        setShowEndPicker(Platform.OS === 'ios');
-        if (selectedDate) setEndDate(selectedDate);
-    };
-
-    /* Handled by useRefresh
-    const handleRefresh = async () => {
-        setRefreshing(true);
-        await loadHistory();
-        setRefreshing(false);
-    };
-    */
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'approved': return '#10B981';
-            case 'rejected': return '#EF4444';
-            default: return '#F59E0B';
-        }
-    };
+    const getStatusColor = (status: string) => { switch (status) { case 'approved': return '#10B981'; case 'rejected': return '#EF4444'; default: return '#F59E0B'; } };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
-            <LinearGradient
-                colors={['#000428', '#004e92']}
-                style={styles.header}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <SafeAreaView edges={['top', 'left', 'right']}>
-                    <View style={styles.headerContent}>
-                        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                            <MaterialIcons name="arrow-back" size={24} color="#fff" />
-                        </Pressable>
-                        <View style={{ flex: 1 }}>
-                            <AppText style={styles.headerTitle}>Apply for Leave</AppText>
-                            <AppText style={styles.headerSubtitle}>Request Time Off</AppText>
-                        </View>
+            <View style={[styles.headerActions, { paddingTop: insets.top + 16 }]}>
+                <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+                    <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+                </Pressable>
+            </View>
 
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
-
-            <ScrollView
-                contentContainerStyle={styles.content}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : colors.primary} colors={[colors.primary]} />}
-            >
-                <View style={{ padding: 24 }}>
-                    {/* Form Section */}
-                    <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <AppText style={[styles.sectionTitle, { color: colors.textSecondary }]}>NEW REQUEST</AppText>
-
-                        <View style={styles.dateRow}>
-                            <View style={styles.dateField}>
-                                <AppText style={[styles.label, { color: colors.textSecondary }]}>From Date</AppText>
-                                <Pressable onPress={() => setShowStartPicker(true)} style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                                    <MaterialCommunityIcons name="calendar" size={20} color={colors.textSecondary} />
-                                    <AppText style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
-                                </Pressable>
-                                {showStartPicker && (
-                                    <DateTimePicker
-                                        value={startDate}
-                                        mode="date"
-                                        display="default"
-                                        onChange={onChangeStart}
-                                        minimumDate={new Date()}
-                                    />
-                                )}
-                            </View>
-
-                            <View style={styles.dateField}>
-                                <AppText style={[styles.label, { color: colors.textSecondary }]}>To Date</AppText>
-                                <Pressable onPress={() => setShowEndPicker(true)} style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                                    <MaterialCommunityIcons name="calendar" size={20} color={colors.textSecondary} />
-                                    <AppText style={[styles.dateText, { color: colors.text }]}>{formatUniversalTime(endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
-                                </Pressable>
-                                {showEndPicker && (
-                                    <DateTimePicker
-                                        value={endDate}
-                                        mode="date"
-                                        display="default"
-                                        onChange={onChangeEnd}
-                                        minimumDate={startDate}
-                                    />
-                                )}
-                            </View>
-                        </View>
-
-                        <AppText style={[styles.label, { marginTop: 16, color: colors.textSecondary }]}>Going to:</AppText>
-                        <TextInput
-                            style={[styles.dateInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, marginBottom: 16 }]}
-                            placeholder="e.g. Home, Market, Hospital..."
-                            placeholderTextColor={colors.textSecondary}
-                            value={category}
-                            onChangeText={setCategory}
-                        />
-
-                        <AppText style={[styles.label, { color: colors.textSecondary }]}>Reason</AppText>
-                        <TextInput
-                            style={[styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                            placeholder="e.g. Visiting home for festival..."
-                            placeholderTextColor={colors.textSecondary}
-                            multiline
-                            numberOfLines={3}
-                            value={reason}
-                            onChangeText={setReason}
-                            textAlignVertical="top"
-                        />
-
-                        <Pressable
-                            style={[styles.submitBtn, loading && { opacity: 0.7 }]}
-                            onPress={handleSubmit}
-                            disabled={loading}
-                        >
-                            <LinearGradient
-                                colors={['#7C3AED', '#6D28D9']}
-                                style={styles.btnGradient}
-                            >
-                                {loading ? (
-                                    <AppText style={styles.btnText}>Submitting...</AppText>
-                                ) : (
-                                    <AppText style={styles.btnText}>Submit Request</AppText>
-                                )}
-                            </LinearGradient>
-                        </Pressable>
+            <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />}>
+                    <View style={styles.hero}>
+                        <AppText style={[styles.heroTitle, { color: textMain }]}>Apply Leave</AppText>
+                        <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Request time off</AppText>
                     </View>
 
-                    {/* History Section */}
-                    <AppText style={[styles.sectionTitle, { marginTop: 24, marginLeft: 4, color: colors.textSecondary }]}>PAST REQUESTS</AppText>
-                    {history.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textSecondary} />
-                            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>No leave history found</AppText>
-                        </View>
-                    ) : (
-                        <View style={styles.historyList}>
-                            {history.map((item) => (
-                                <View key={item.id} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                                    <View style={styles.historyHeader}>
-                                        <View style={styles.dateInfo}>
-                                            <AppText style={[styles.historyDate, { color: colors.text }]}>
-                                                {formatUniversalTime(item.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </AppText>
-                                            <MaterialCommunityIcons name="arrow-right" size={16} color={colors.textSecondary} />
-                                            <AppText style={[styles.historyDate, { color: colors.text }]}>
-                                                {formatUniversalTime(item.endDate, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </AppText>
-                                        </View>
-                                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                                            <AppText style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                                                {item.status.toUpperCase()}
-                                            </AppText>
-                                        </View>
-                                    </View>
-                                    <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 6}}>
-                                        <View style={{backgroundColor: colors.primary + '15', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6}}>
-                                            <AppText style={{color: colors.primary, fontSize: 10, fontWeight: '700'}}>{item.category || 'General'}</AppText>
-                                        </View>
-                                    </View>
-                                    <AppText style={[styles.historyReason, { color: colors.textSecondary }]}>{item.reason}</AppText>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                        <AppText style={[styles.durationText, { color: colors.textSecondary }]}>{item.days} days</AppText>
-                                        
-                                        {item.status === 'approved' && item.qrCode && (
-                                            <TouchableOpacity 
-                                                style={[styles.qrBtn, { backgroundColor: colors.primary + '15', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }]} 
-                                                onPress={() => {
-                                                    setSelectedQrCode(item.qrCode || null);
-                                                    setQrModalVisible(true);
-                                                }}
-                                            >
-                                                <MaterialCommunityIcons name="qrcode-scan" size={16} color={colors.primary} />
-                                                <AppText style={{ color: colors.primary, fontSize: 12, fontWeight: '700', marginLeft: 4 }}>Show Pass</AppText>
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
+                    <View style={{ paddingHorizontal: 24 }}>
+                        <View style={styles.section}>
+                            <AppText style={styles.sectionTitle}>NEW REQUEST</AppText>
+
+                            <View style={styles.dateRow}>
+                                <View style={styles.dateField}>
+                                    <AppText style={styles.label}>FROM DATE</AppText>
+                                    <Pressable onPress={() => setShowStartPicker(true)} style={[styles.inputBox, { backgroundColor: inputBg, borderColor: inputBorder }]}>
+                                        <MaterialCommunityIcons name="calendar" size={20} color={textMuted} />
+                                        <AppText style={[styles.inputText, { color: textMain }]}>{formatUniversalTime(startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                    </Pressable>
+                                    {showStartPicker && <DateTimePicker value={startDate} mode="date" display="default" onChange={onChangeStart} minimumDate={new Date()} />}
                                 </View>
-                            ))}
+
+                                <View style={styles.dateField}>
+                                    <AppText style={styles.label}>TO DATE</AppText>
+                                    <Pressable onPress={() => setShowEndPicker(true)} style={[styles.inputBox, { backgroundColor: inputBg, borderColor: inputBorder }]}>
+                                        <MaterialCommunityIcons name="calendar" size={20} color={textMuted} />
+                                        <AppText style={[styles.inputText, { color: textMain }]}>{formatUniversalTime(endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                    </Pressable>
+                                    {showEndPicker && <DateTimePicker value={endDate} mode="date" display="default" onChange={onChangeEnd} minimumDate={startDate} />}
+                                </View>
+                            </View>
+
+                            <AppText style={styles.label}>GOING TO</AppText>
+                            <TextInput style={[styles.inputBox, styles.textInput, { backgroundColor: inputBg, borderColor: inputBorder, color: textMain }]} placeholder="e.g. Home, Market, Hospital..." placeholderTextColor={textMuted} value={category} onChangeText={setCategory} />
+
+                            <AppText style={styles.label}>REASON</AppText>
+                            <TextInput style={[styles.inputBox, styles.textArea, { backgroundColor: inputBg, borderColor: inputBorder, color: textMain }]} placeholder="e.g. Visiting home for festival..." placeholderTextColor={textMuted} multiline numberOfLines={3} value={reason} onChangeText={setReason} textAlignVertical="top" />
+
+                            <Pressable style={({ pressed }) => [styles.submitBtn, { backgroundColor: primaryBtnBg }, loading && { opacity: 0.7 }, pressed && { opacity: 0.8 }]} onPress={handleSubmit} disabled={loading}>
+                                {loading ? <AppText style={[styles.btnText, { color: primaryBtnText }]}>SUBMITTING...</AppText> : <AppText style={[styles.btnText, { color: primaryBtnText }]}>SUBMIT REQUEST</AppText>}
+                            </Pressable>
                         </View>
-                    )}
 
-                </View>
-            </ScrollView>
+                        <AppText style={[styles.sectionTitle, { marginTop: 40 }]}>PAST REQUESTS</AppText>
+                        {history.length === 0 ? (
+                            <View style={styles.emptyState}><AppText style={styles.emptyText}>No leave history found</AppText></View>
+                        ) : (
+                            <View style={styles.historyList}>
+                                {history.map((item) => (
+                                    <View key={item.id} style={[styles.historyRow, { borderColor: borderSubtle }]}>
+                                        <View style={{ flex: 1 }}>
+                                            <View style={styles.dateInfo}>
+                                                <AppText style={[styles.historyDate, { color: textMain }]}>{formatUniversalTime(item.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                                <MaterialCommunityIcons name="arrow-right" size={16} color={textMuted} />
+                                                <AppText style={[styles.historyDate, { color: textMain }]}>{formatUniversalTime(item.endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                            </View>
+                                            <AppText style={styles.historyCategory}>{item.category || 'General'}</AppText>
+                                            <AppText style={[styles.historyReason, { color: textSecondary }]}>{item.reason}</AppText>
+                                            <AppText style={styles.durationText}>{item.days} days</AppText>
+                                        </View>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                                            <AppText style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status.toUpperCase()}</AppText>
+                                            {item.status === 'approved' && item.qrCode && (
+                                                <TouchableOpacity style={[styles.qrBtn, { backgroundColor: primaryBtnBg }]} onPress={() => { setSelectedQrCode(item.qrCode || null); setQrModalVisible(true); }}>
+                                                    <MaterialCommunityIcons name="qrcode-scan" size={16} color={primaryBtnText} />
+                                                    <AppText style={[styles.qrBtnText, { color: primaryBtnText }]}>Show Pass</AppText>
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
-            {/* QR Code Modal */}
-            <Modal
-                visible={qrModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setQrModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: isDark ? '#1E293B' : '#fff' }]}>
+            <Modal visible={qrModalVisible} transparent={true} animationType="fade" onRequestClose={() => setQrModalVisible(false)}>
+                <View style={[styles.modalOverlay, { backgroundColor: modalOverlay }]}>
+                    <View style={[styles.modalContent, { backgroundColor: modalBg, borderColor: borderSubtle }]}>
                         <View style={styles.modalHeader}>
-                            <AppText style={[styles.modalTitle, { color: colors.text }]}>Gate Pass</AppText>
+                            <AppText style={[styles.modalTitle, { color: textMain }]}>Gate Pass</AppText>
                             <TouchableOpacity onPress={() => setQrModalVisible(false)} style={styles.closeBtn}>
-                                <MaterialIcons name="close" size={24} color={colors.textSecondary} />
+                                <MaterialIcons name="close" size={24} color={textMuted} />
                             </TouchableOpacity>
                         </View>
-                        
                         <View style={styles.qrContainer}>
                             {selectedQrCode && (
-                                <View style={styles.qrWrapper}>
-                                    <View style={{ backgroundColor: '#fff', padding: 16, borderRadius: 24, justifyContent: 'center', alignItems: 'center' }}>
-                                        <QRCode value={selectedQrCode} size={180} />
-                                        <AppText style={{ color: '#7C3AED', fontSize: 13, fontWeight: '800', marginTop: 12, textAlign: 'center', letterSpacing: 1 }}>VERIFIED PASS</AppText>
-                                    </View>
+                                <View style={[styles.qrWrapper, { backgroundColor: qrBg }]}>
+                                    <QRCode value={selectedQrCode} size={180} />
+                                    <AppText style={styles.qrVerifiedText}>VERIFIED PASS</AppText>
                                 </View>
                             )}
-                            
                             {selectedQrCode && (
-                                <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', borderRadius: 12, padding: 14, width: '100%', marginBottom: 16 }}>
-                                    <AppText style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Pass Code (Fallback)</AppText>
-                                    <AppText style={{ color: colors.text, fontSize: 14, fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} selectable>{selectedQrCode}</AppText>
+                                <View style={[styles.passCodeWrapper, { backgroundColor: passBoxBg, borderColor: borderSubtle }]}>
+                                    <AppText style={styles.passCodeLabel}>PASS CODE</AppText>
+                                    <AppText style={[styles.passCodeText, { color: textMain }]} selectable>{selectedQrCode}</AppText>
                                 </View>
                             )}
-
-                            <AppText style={[styles.qrHint, { color: colors.textSecondary }]}>
-                                Show this QR code to the Guard at the Main Gate to log your movement.
-                            </AppText>
+                            <AppText style={styles.qrHint}>Show this QR code to the Guard at the Main Gate to log your movement.</AppText>
                         </View>
                     </View>
                 </View>
@@ -342,208 +201,46 @@ export default function LeaveRequestPage() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        paddingBottom: 24,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-        shadowColor: "#004e92",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    headerContent: {
-        paddingHorizontal: 24,
-        paddingTop: 12,
-        paddingBottom: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    backBtn: {
-        width: 40,
-        height: 40,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#fff',
-        letterSpacing: 0.5,
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
-        fontWeight: '500',
-    },
-    content: {
-        flexGrow: 1,
-    },
-    formCard: {
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
-        shadowColor: '#64748B',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    sectionTitle: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#64748B',
-        marginBottom: 16,
-        letterSpacing: 1,
-    },
-    dateRow: {
-        flexDirection: 'row',
-        gap: 16,
-    },
-    dateField: {
-        flex: 1,
-    },
-    label: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#334155',
-        marginBottom: 8,
-    },
-    dateInput: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 12,
-        gap: 8,
-    },
-    dateText: {
-        color: '#1E293B',
-        fontWeight: '500',
-    },
-    textArea: {
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 12,
-        height: 80,
-        marginBottom: 20,
-    },
-    submitBtn: {
-        borderRadius: 14,
-        overflow: 'hidden',
-    },
-    btnGradient: {
-        paddingVertical: 14,
-        alignItems: 'center',
-    },
-    btnText: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: 16,
-    },
-    historyList: {
-        gap: 12,
-    },
-    historyCard: {
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
-    },
-    historyHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    dateInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    historyDate: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1E293B',
-    },
-    statusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    statusText: {
-        fontSize: 11,
-        fontWeight: '700',
-    },
-    historyReason: {
-        color: '#64748B',
-        fontSize: 13,
-        marginBottom: 4,
-    },
-    durationText: {
-        fontSize: 12,
-        color: '#94A3B8',
-        fontWeight: '500',
-    },
-    emptyState: {
-        alignItems: 'center',
-        padding: 40,
-    },
-    emptyText: {
-        color: '#94A3B8',
-        marginTop: 12,
-        fontWeight: '500',
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-    },
-    modalContent: {
-        width: '100%',
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 10,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-    },
-    closeBtn: {
-        padding: 4,
-    },
-    qrContainer: {
-        alignItems: 'center',
-    },
-    qrWrapper: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 24,
-    },
-    qrHint: {
-        textAlign: 'center',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 20,
-    }
+    container: { flex: 1 },
+    headerActions: { paddingHorizontal: 24, paddingBottom: 16 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+    hero: { paddingHorizontal: 24, marginBottom: 48 },
+    heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 8 },
+    heroSubtitle: { fontSize: 16, fontWeight: '600' },
+    content: { paddingBottom: 80 },
+    section: { marginBottom: 24 },
+    sectionTitle: { fontSize: 11, fontWeight: '700', color: '#666666', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 24 },
+    dateRow: { flexDirection: 'row', gap: 16, marginBottom: 24 },
+    dateField: { flex: 1 },
+    label: { fontSize: 11, fontWeight: '700', color: '#666666', letterSpacing: 1.5, marginBottom: 12 },
+    inputBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12, padding: 16, gap: 12 },
+    textInput: { fontSize: 16, marginBottom: 24 },
+    inputText: { fontSize: 16, fontWeight: '500' },
+    textArea: { height: 100, fontSize: 16, marginBottom: 32 },
+    submitBtn: { paddingVertical: 18, borderRadius: 100, alignItems: 'center' },
+    btnText: { fontSize: 16, fontWeight: '800', letterSpacing: 1 },
+    historyList: { marginTop: 16 },
+    historyRow: { flexDirection: 'row', paddingVertical: 24, borderBottomWidth: 1, justifyContent: 'space-between' },
+    dateInfo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+    historyDate: { fontSize: 14, fontWeight: '700' },
+    historyCategory: { fontSize: 12, color: '#888888', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
+    historyReason: { fontSize: 14, lineHeight: 20, marginBottom: 8 },
+    durationText: { fontSize: 12, color: '#666666', fontWeight: '600' },
+    statusText: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+    qrBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 100, gap: 6 },
+    qrBtnText: { fontSize: 12, fontWeight: '800' },
+    emptyState: { alignItems: 'flex-start', paddingTop: 16 },
+    emptyText: { color: '#666666', fontStyle: 'italic', fontSize: 14 },
+    modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+    modalContent: { width: '100%', borderRadius: 24, padding: 24, borderWidth: 1 },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
+    modalTitle: { fontSize: 20, fontWeight: '800' },
+    closeBtn: { padding: 4 },
+    qrContainer: { alignItems: 'center' },
+    qrWrapper: { padding: 24, borderRadius: 16, marginBottom: 24, alignItems: 'center' },
+    qrVerifiedText: { color: '#000000', fontSize: 13, fontWeight: '800', marginTop: 16, letterSpacing: 1 },
+    passCodeWrapper: { borderRadius: 12, padding: 16, width: '100%', marginBottom: 24, borderWidth: 1 },
+    passCodeLabel: { color: '#888888', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
+    passCodeText: { fontSize: 16, fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+    qrHint: { textAlign: 'center', fontSize: 13, color: '#888888', lineHeight: 20 },
 });

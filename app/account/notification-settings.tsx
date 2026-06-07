@@ -1,27 +1,12 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import api from '../../utils/api';
 import AppText from '../../components/AppText';
-
-const PreferenceItem = ({ icon, iconColor, iconBg, label, description, value, onValueChange, colors, isLast }: any) => (
-  <View style={[styles.prefRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-    <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
-      <MaterialIcons name={icon} size={22} color={iconColor} />
-    </View>
-    <View style={styles.textWrap}>
-      <AppText style={[styles.prefLabel, { color: colors.text }]}>{label}</AppText>
-      <AppText style={[styles.prefDesc, { color: colors.textSecondary }]}>{description}</AppText>
-    </View>
-    <Switch value={value} onValueChange={onValueChange} trackColor={{ false: '#CBD5E1', true: '#004e92' }} thumbColor={'#fff'} ios_backgroundColor="#CBD5E1" />
-  </View>
-);
 
 const CATEGORIES = [
   { key: 'notices', icon: 'announcement', color: '#3B82F6', label: 'Hostel Notices', desc: 'Announcements, events, and news' },
@@ -38,57 +23,83 @@ const CATEGORIES = [
 
 export default function NotificationSettings() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [prefs, setPrefs] = useState<any>({ master: true, notices: true, complaints: true, leaves: true, services: true, payments: true, mess: true, laundry: true, bus: true, visitors: true, messages: true });
 
+  // Dynamic Theme Map
+  const themeBg = isDark ? '#000000' : '#F8FAFC';
+  const textMain = isDark ? '#FFFFFF' : '#111111';
+  const textMuted = isDark ? '#888888' : '#64748B';
+  const borderSubtle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const iconWrapActiveBg = isDark ? '#111111' : '#E2E8F0';
+  const iconWrapInactiveBg = isDark ? '#0A0A0A' : '#F1F5F9';
+  const trackFalse = isDark ? '#222222' : '#CBD5E1';
+  const thumbFalse = isDark ? '#888888' : '#FFFFFF';
+
   useEffect(() => { fetchPreferences(); }, []);
 
   const fetchPreferences = async () => {
-    try { const response = await api.get('/notifications/preferences'); if (response.data) setPrefs((c: any) => ({ ...c, ...response.data })); } catch (error) { console.error('Error fetching preferences:', error); } finally { setLoading(false); }
+    try { const response = await api.get('/notifications/preferences'); if (response.data) setPrefs((c: any) => ({ ...c, ...response.data })); }
+    catch (error) {} finally { setLoading(false); }
   };
 
   const savePreferences = async (updatedPrefs: any) => {
     setSaving(true);
-    try { await api.post('/notifications/preferences', { preferences: updatedPrefs }); } catch (error) { console.error('Error saving:', error); showAlert('Error', 'Failed to save preferences.'); } finally { setSaving(false); }
+    try { await api.post('/notifications/preferences', { preferences: updatedPrefs }); } catch (error) { showAlert('Error', 'Failed to save preferences.'); } finally { setSaving(false); }
   };
 
   const togglePreference = (key: string) => { const newPrefs = { ...prefs, [key]: !prefs[key] }; setPrefs(newPrefs); savePreferences(newPrefs); };
 
-  if (loading) return <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center' }]}><ActivityIndicator size="large" color="#004e92" /></View>;
+  if (loading) return <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}><ActivityIndicator size="large" color={textMain} /></View>;
+
+  const PreferenceItem = ({ icon, label, description, value, onValueChange, isMaster = false, customColor }: any) => (
+    <View style={[styles.prefRow, { borderColor: borderSubtle }]}>
+      <View style={[styles.iconWrap, value ? (isMaster ? styles.iconWrapMaster : { backgroundColor: iconWrapActiveBg, borderColor: borderSubtle }) : { backgroundColor: iconWrapInactiveBg, borderColor: 'transparent' }]}>
+        <MaterialIcons name={icon} size={24} color={value ? (isMaster ? "#10B981" : (customColor || textMain)) : "#666666"} />
+      </View>
+      <View style={styles.textWrap}>
+        <AppText style={[styles.prefLabel, { color: textMain }]}>{label}</AppText>
+        <AppText style={styles.prefDesc}>{description}</AppText>
+      </View>
+      <Switch value={value} onValueChange={onValueChange} trackColor={{ false: trackFalse, true: '#10B981' }} thumbColor={value ? '#FFFFFF' : thumbFalse} />
+    </View>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: insets.top + 10 }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><MaterialCommunityIcons name="arrow-left" size={22} color="#fff" /></TouchableOpacity>
-          <View>
-            <AppText style={styles.headerTitle}>Push Notifications</AppText>
-            <AppText style={styles.headerSub}>Changes save automatically{saving ? ' • Saving...' : ''}</AppText>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} onPress={() => router.back()}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={textMain} />
+        </Pressable>
+      </View>
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        <View style={styles.hero}>
+          <AppText style={[styles.heroTitle, { color: textMain }]}>Push{"\n"}Alerts</AppText>
+          <View style={styles.subContainer}>
+            <AppText style={[styles.heroSub, { color: textMuted }]}>Customize the alerts you receive on your device.</AppText>
+            {saving && <View style={styles.savingBadge}><ActivityIndicator size="small" color="#10B981" /></View>}
           </View>
-          <View style={{ width: 40 }} />
-        </View>
-      </LinearGradient>
-
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Master Toggle */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 20 }]}>
-          <PreferenceItem icon="notifications-active" iconColor={isDark ? '#60A5FA' : '#004e92'} iconBg={isDark ? 'rgba(96,165,250,0.1)' : '#F1F5F9'} label="Allow Notifications" description="Toggle all push alerts on or off" value={prefs.master !== false} onValueChange={() => togglePreference('master')} colors={colors} isLast />
         </View>
 
-        {/* Granular */}
-        {prefs.master !== false && (<>
-          <AppText style={[styles.secTitle, { color: colors.textSecondary }]}>GRANULAR PREFERENCES</AppText>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {CATEGORIES.map((cat, i) => (
-              <PreferenceItem key={cat.key} icon={cat.icon} iconColor={cat.color} iconBg={cat.color + '15'} label={cat.label} description={cat.desc} value={prefs[cat.key]} onValueChange={() => togglePreference(cat.key)} colors={colors} isLast={i === CATEGORIES.length - 1} />
+        <View style={styles.section}>
+          <AppText style={styles.secTitle}>GLOBAL NOTIFICATIONS</AppText>
+          <PreferenceItem icon="notifications-active" label="Allow Notifications" description="Toggle all push alerts on or off globally." value={prefs.master !== false} onValueChange={() => togglePreference('master')} isMaster={true} />
+        </View>
+
+        {prefs.master !== false && (
+          <View style={styles.section}>
+            <AppText style={styles.secTitle}>GRANULAR PREFERENCES</AppText>
+            {CATEGORIES.map((cat) => (
+              <PreferenceItem key={cat.key} icon={cat.icon} label={cat.label} description={cat.desc} value={prefs[cat.key]} onValueChange={() => togglePreference(cat.key)} customColor={cat.color} />
             ))}
           </View>
-        </>)}
+        )}
       </ScrollView>
     </View>
   );
@@ -96,16 +107,20 @@ export default function NotificationSettings() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 16 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  secTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.1, marginBottom: 10, marginLeft: 4 },
-  card: { borderRadius: 20, borderWidth: 1, overflow: 'hidden', shadowColor: '#004e92', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-  prefRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, gap: 12 },
-  iconBox: { width: 42, height: 42, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  textWrap: { flex: 1 },
-  prefLabel: { fontSize: 15, fontWeight: '600' },
-  prefDesc: { fontSize: 12, marginTop: 2, lineHeight: 16 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { paddingHorizontal: 24, paddingBottom: 24 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  hero: { marginBottom: 48 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
+  subContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroSub: { flex: 1, fontSize: 15, lineHeight: 22 },
+  savingBadge: { padding: 4, borderRadius: 20, backgroundColor: 'rgba(16,185,129,0.1)' },
+  section: { marginBottom: 40 },
+  secTitle: { fontSize: 11, fontWeight: '700', color: '#888888', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16 },
+  prefRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1 },
+  iconWrap: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 16, borderWidth: 1 },
+  iconWrapMaster: { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' },
+  textWrap: { flex: 1, paddingRight: 12 },
+  prefLabel: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
+  prefDesc: { fontSize: 14, color: '#888888' },
 });
