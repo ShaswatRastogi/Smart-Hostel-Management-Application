@@ -65,6 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "cameraPermission": "Allow SmartStay to access your camera to scan student leave QR codes."
       }
     ],
+    "expo-localization",
     "./plugins/withSafeOnUserLeaveHint.js"
   ],
   experiments: {
