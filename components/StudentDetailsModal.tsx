@@ -39,12 +39,12 @@ export default function StudentDetailsModal({ visible, student, onClose, onEdit,
             backgroundColor: 'rgba(15, 23, 42, 0.6)',
         },
         modalContent: {
-            backgroundColor: viewMode === 'attendance' ? '#000000' : colors.card,
+            backgroundColor: colors.card,
             borderRadius: 24,
             width: '90%',
             maxHeight: Dimensions.get('window').height * 0.85,
-            borderWidth: viewMode === 'attendance' ? 1 : 0,
-            borderColor: viewMode === 'attendance' ? 'rgba(255,255,255,0.1)' : 'transparent',
+            borderWidth: 0,
+            borderColor: 'transparent',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 20 },
             shadowOpacity: 0.3,
@@ -58,16 +58,16 @@ export default function StudentDetailsModal({ visible, student, onClose, onEdit,
             alignItems: 'center',
             padding: 24,
             borderBottomWidth: 1,
-            borderBottomColor: viewMode === 'attendance' ? 'rgba(255,255,255,0.1)' : colors.border,
+            borderBottomColor: colors.border,
         },
         modalTitle: {
             fontSize: 20,
             fontWeight: '800',
-            color: viewMode === 'attendance' ? '#FFFFFF' : colors.text,
+            color: colors.text,
         },
         closeBtn: {
             padding: 4,
-            backgroundColor: viewMode === 'attendance' ? 'rgba(255,255,255,0.1)' : colors.background,
+            backgroundColor: colors.background,
             borderRadius: 20,
         },
         modalBody: {
@@ -166,7 +166,7 @@ export default function StudentDetailsModal({ visible, student, onClose, onEdit,
                             {viewMode === 'attendance' ? 'Attendance Details' : 'Student Details'}
                         </Text>
                         <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                            <MaterialCommunityIcons name="close" size={24} color={viewMode === 'attendance' ? '#FFFFFF' : '#64748B'} />
+                            <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
 
@@ -186,8 +186,8 @@ export default function StudentDetailsModal({ visible, student, onClose, onEdit,
                                     </Text>
                                 </View>
                             )}
-                            <Text style={{ fontSize: 18, fontWeight: '700', color: viewMode === 'attendance' ? '#FFFFFF' : colors.text, marginTop: 4 }}>{student.name || student.fullName}</Text>
-                            <Text style={{ fontSize: 14, color: viewMode === 'attendance' ? '#888888' : colors.textSecondary }}>{student.rollNo} • Room {student.room || student.roomNo}</Text>
+                            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 4 }}>{student.name || student.fullName}</Text>
+                            <Text style={{ fontSize: 14, color: colors.textSecondary }}>{student.rollNo} • Room {student.room || student.roomNo}</Text>
 
                             {viewMode === 'full' && (
                                 <>

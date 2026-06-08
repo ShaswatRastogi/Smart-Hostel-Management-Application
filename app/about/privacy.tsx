@@ -37,9 +37,12 @@ const SECTIONS = [
   },
 ];
 
+import { useTheme } from '../../utils/ThemeContext';
+
 export default function PrivacyPolicy() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   const toggleSection = (index: number) => {
@@ -48,7 +51,7 @@ export default function PrivacyPolicy() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
@@ -57,7 +60,7 @@ export default function PrivacyPolicy() {
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.5 }]} 
           onPress={() => router.back()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
         </Pressable>
       </View>
 
@@ -68,8 +71,8 @@ export default function PrivacyPolicy() {
       >
         {/* Typographic Hero */}
         <View style={styles.hero}>
-          <AppText style={styles.heroTitle}>Privacy{"\n"}Policy</AppText>
-          <AppText style={styles.heroSub}>
+          <AppText style={[styles.heroTitle, { color: colors.text }]}>Privacy{"\n"}Policy</AppText>
+          <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
             We are committed to protecting your personal data and being transparent about how we use it.
           </AppText>
         </View>
@@ -84,23 +87,24 @@ export default function PrivacyPolicy() {
                 onPress={() => toggleSection(index)}
                 style={({ pressed }) => [
                   styles.cardRow,
-                  pressed && { backgroundColor: 'rgba(255,255,255,0.05)' }
+                  { borderColor: colors.border },
+                  pressed && { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }
                 ]}
               >
                 <View style={styles.cardHeader}>
                   <View style={[styles.iconWrap, { backgroundColor: section.bg }]}>
                     <MaterialCommunityIcons name={section.icon as any} size={22} color={section.color} />
                   </View>
-                  <AppText style={styles.cardTitle}>{section.title}</AppText>
+                  <AppText style={[styles.cardTitle, { color: colors.text }]}>{section.title}</AppText>
                   <MaterialCommunityIcons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
                     size={24}
-                    color="#666666"
+                    color={colors.textSecondary}
                   />
                 </View>
                 {isExpanded && (
                   <View style={styles.cardContentContainer}>
-                    <AppText style={styles.cardContent}>{section.content}</AppText>
+                    <AppText style={[styles.cardContent, { color: colors.textSecondary }]}>{section.content}</AppText>
                   </View>
                 )}
               </Pressable>
@@ -110,7 +114,7 @@ export default function PrivacyPolicy() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <AppText style={styles.footerText}>Last Updated: April 2026</AppText>
+          <AppText style={[styles.footerText, { color: colors.textSecondary }]}>Last Updated: April 2026</AppText>
         </View>
       </ScrollView>
     </View>
@@ -118,13 +122,13 @@ export default function PrivacyPolicy() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000000' },
+  container: { flex: 1 },
   header: { paddingHorizontal: 24, paddingBottom: 24 },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
   
   hero: { marginBottom: 48 },
-  heroTitle: { fontSize: 40, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
-  heroSub: { fontSize: 15, color: '#666666', lineHeight: 22 },
+  heroTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.5, lineHeight: 44, marginBottom: 12 },
+  heroSub: { fontSize: 15, lineHeight: 22 },
   
   section: { marginBottom: 32 },
   
@@ -133,13 +137,12 @@ const styles = StyleSheet.create({
   cardRow: { 
     paddingVertical: 16, 
     borderBottomWidth: 1, 
-    borderColor: 'rgba(255,255,255,0.1)' 
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: '#FFFFFF', paddingRight: 16, lineHeight: 22 },
+  cardTitle: { flex: 1, fontSize: 16, fontWeight: '600', paddingRight: 16, lineHeight: 22 },
   cardContentContainer: { marginTop: 12, paddingLeft: 60, paddingRight: 16, paddingBottom: 8 },
-  cardContent: { fontSize: 14, color: '#888888', lineHeight: 22 },
+  cardContent: { fontSize: 14, lineHeight: 22 },
   
   footer: { alignItems: 'center', marginTop: 24 },
-  footerText: { fontSize: 12, fontWeight: '600', color: '#666666', textTransform: 'uppercase', letterSpacing: 1 },
+  footerText: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
 });
