@@ -2,8 +2,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -443,91 +443,88 @@ export default function RoomsPage() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: 24 + insets.top }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialIcons name="chevron-left" size={32} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <AppText style={styles.headerTitle}>Manage Rooms</AppText>
-          </View>
-        </LinearGradient>
-
-        <View style={styles.statsGrid}>
-          {/* Hero Card: Total Rooms */}
-          <LinearGradient
-            colors={['#7C3AED', '#5B21B6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <View>
-              <AppText style={styles.heroLabel}>Total Rooms</AppText>
-              <AppText style={styles.heroValue}>{rooms.length}</AppText>
-            </View>
-            <MaterialIcons name="door-closed" size={48} color="rgba(255,255,255,0.9)" />
-            <View style={styles.cardWatermark}>
-              <MaterialIcons name="door-closed" size={100} color="#fff" />
-            </View>
-          </LinearGradient>
-
-          <View style={styles.statsRow}>
-            {/* Occupied */}
-            <LinearGradient
-              colors={['#06B6D4', '#0E7490']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.miniCard}
-            >
-              <View style={styles.miniHeader}>
-                <MaterialIcons name="check-circle" size={18} color="rgba(255,255,255,0.9)" />
-                <AppText style={styles.miniLabel}>Occupied</AppText>
-              </View>
-              <AppText style={styles.miniValue}>{occupiedRooms}</AppText>
-              <View style={styles.cardWatermark}>
-                <MaterialIcons name="check-circle" size={80} color="#fff" />
-              </View>
-            </LinearGradient>
-
-            {/* Vacant */}
-            <LinearGradient
-              colors={['#10B981', '#047857']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.miniCard}
-            >
-              <View style={styles.miniHeader}>
-                <MaterialIcons name="home-outline" size={18} color="rgba(255,255,255,0.9)" />
-                <AppText style={styles.miniLabel}>Vacant</AppText>
-              </View>
-              <AppText style={styles.miniValue}>{vacantRooms}</AppText>
-              <View style={styles.cardWatermark}>
-                <MaterialIcons name="home-outline" size={80} color="#fff" />
-              </View>
-            </LinearGradient>
-          </View>
-        </View>
-
-        {/* Action Button Styles (Defining here for convenience as they were removed/missing in styles object) */}
-        {/* We will add them to the StyleSheet at the bottom instead in a separate edit if needed, or use inline/existing styles if compatible. */}
-        {/* Let's double check styles. actionBtn and deleteBtn seem missing from Step 357 view. */}
-        {/* I'll add the function first. */}
-
-        <View style={styles.searchContainer}>
-          <MaterialIcons name="magnify" size={20} color={colors.textSecondary} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by room number..."
-            placeholderTextColor={colors.textSecondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        <FlatList
+        <FlashList
           data={filteredRooms}
-          scrollEnabled={false}
           keyExtractor={(item) => item.id}
+          estimatedItemSize={150}
+          ListHeaderComponent={
+            <View>
+              <LinearGradient colors={['#000428', '#004e92']} style={[styles.header, { paddingTop: 24 + insets.top }]}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                  <MaterialIcons name="chevron-left" size={32} color="#fff" />
+                </TouchableOpacity>
+                <View style={styles.headerContent}>
+                  <AppText style={styles.headerTitle}>Manage Rooms</AppText>
+                </View>
+              </LinearGradient>
+
+              <View style={styles.statsGrid}>
+                {/* Hero Card: Total Rooms */}
+                <LinearGradient
+                  colors={['#7C3AED', '#5B21B6']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.heroCard}
+                >
+                  <View>
+                    <AppText style={styles.heroLabel}>Total Rooms</AppText>
+                    <AppText style={styles.heroValue}>{rooms.length}</AppText>
+                  </View>
+                  <MaterialIcons name="door-closed" size={48} color="rgba(255,255,255,0.9)" />
+                  <View style={styles.cardWatermark}>
+                    <MaterialIcons name="door-closed" size={100} color="#fff" />
+                  </View>
+                </LinearGradient>
+
+                <View style={styles.statsRow}>
+                  {/* Occupied */}
+                  <LinearGradient
+                    colors={['#06B6D4', '#0E7490']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.miniCard}
+                  >
+                    <View style={styles.miniHeader}>
+                      <MaterialIcons name="check-circle" size={18} color="rgba(255,255,255,0.9)" />
+                      <AppText style={styles.miniLabel}>Occupied</AppText>
+                    </View>
+                    <AppText style={styles.miniValue}>{occupiedRooms}</AppText>
+                    <View style={styles.cardWatermark}>
+                      <MaterialIcons name="check-circle" size={80} color="#fff" />
+                    </View>
+                  </LinearGradient>
+
+                  {/* Vacant */}
+                  <LinearGradient
+                    colors={['#10B981', '#047857']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.miniCard}
+                  >
+                    <View style={styles.miniHeader}>
+                      <MaterialIcons name="home-outline" size={18} color="rgba(255,255,255,0.9)" />
+                      <AppText style={styles.miniLabel}>Vacant</AppText>
+                    </View>
+                    <AppText style={styles.miniValue}>{vacantRooms}</AppText>
+                    <View style={styles.cardWatermark}>
+                      <MaterialIcons name="home-outline" size={80} color="#fff" />
+                    </View>
+                  </LinearGradient>
+                </View>
+              </View>
+
+              <View style={styles.searchContainer}>
+                <MaterialIcons name="magnify" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search by room number..."
+                  placeholderTextColor={colors.textSecondary}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+            </View>
+          }
           renderItem={({ item }) => {
             const isDark = theme === 'dark';
             const statusColor = getStatusColor(item.status);
@@ -538,7 +535,7 @@ export default function RoomsPage() {
                 style={[
                   styles.roomCard,
                   selectedRoom === item.id && styles.roomCardActive,
-                  { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }
+                  { backgroundColor: isDark ? '#1E293B' : '#FFFFFF', marginHorizontal: 20 }
                 ]}
                 onPress={() => setSelectedRoom(item.id)}
               >
@@ -585,14 +582,13 @@ export default function RoomsPage() {
               </TouchableOpacity>
             );
           }}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
           ListEmptyComponent={
             <AppText style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>No rooms found. Allot students to create rooms.</AppText>
           }
         />
-      </ScrollView>
 
       {/* Room Details Modal */}
       {selectedRoom && (

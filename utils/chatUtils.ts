@@ -19,9 +19,30 @@ export interface ChatMessage {
 const socketUrl = API_BASE_URL.replace('/api', '');
 
 const socket = io(socketUrl, {
-    autoConnect: true,
+    autoConnect: false,
     transports: ['websocket'],
 });
+
+export const connectSocket = async () => {
+    try {
+        const { getSecureToken } = await import('./tokenStorage');
+        const token = await getSecureToken('userToken');
+        if (token) {
+            socket.auth = { token };
+            socket.connect();
+            console.log("🔌 Socket connected with auth");
+        }
+    } catch (e) {
+        console.error("Socket connect error:", e);
+    }
+};
+
+export const disconnectSocket = () => {
+    if (socket.connected) {
+        socket.disconnect();
+        console.log("🔌 Socket disconnected");
+    }
+};
 
 export const sendMessage = async (conversationId: string, text: string, user: { _id: string, name: string }, staffId?: string) => {
     try {

@@ -2,7 +2,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../utils/ThemeContext';
@@ -222,6 +224,7 @@ export default function ContactsPage() {
                         <Image
                             source={{ uri: item.profilePhoto.startsWith('http') ? item.profilePhoto : `${API_BASE_URL}${item.profilePhoto}` }}
                             style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+                            contentFit="cover"
                         />
                     ) : (
                         <View style={styles.reqAvatar}>
@@ -303,11 +306,12 @@ export default function ContactsPage() {
                 )}
             </View>
 
-            <FlatList
+            <FlashList
                 style={{ flex: 1 }}
                 data={filteredStudents}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
+                estimatedItemSize={150}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={

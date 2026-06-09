@@ -39,11 +39,13 @@ import {
 } from '../controllers/serviceController';
 import { requireAuth } from '../middleware/auth';
 
+import { cacheMiddleware } from '../middleware/cache';
+
 const router = Router();
 
 // Public / Info Routes
-router.get('/notices', requireAuth, getNotices);
-router.get('/mess', requireAuth, getMessMenu);
+router.get('/notices', requireAuth, cacheMiddleware(60), getNotices);
+router.get('/mess', requireAuth, cacheMiddleware(3600), getMessMenu);
 router.post('/mess/update', requireAuth, updateMessMenu); // Admin only ideal, but auth for now
 router.get('/bus', requireAuth, getBusTimings);
 

@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Modal, Pressable, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { formatDate, formatTime, Visitor } from '../utils/visitorUtils';
 import AppText from './AppText';
 
@@ -42,6 +43,17 @@ Please show this pass at the gate.
         }
     };
 
+    const HolographicShimmer = () => {
+        const translateY = useSharedValue(-150);
+        useEffect(() => {
+            translateY.value = withRepeat(withSequence(withTiming(200, {duration: 2000, easing: Easing.linear}), withTiming(-150, {duration: 0})), -1, false);
+        }, []);
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+        return (
+            <Animated.View style={[{ position: 'absolute', left: 0, right: 0, height: 80, backgroundColor: 'rgba(255, 255, 255, 0.2)', zIndex: 10, shadowColor: '#fff', shadowOpacity: 0.8, shadowRadius: 10 }, rStyle]} pointerEvents="none" />
+        );
+    };
+
     return (
         <Modal
             visible={visible}
@@ -58,7 +70,8 @@ Please show this pass at the gate.
 
                         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                             {visitor.qr_code && (
-                                <View style={styles.qrContainer}>
+                                <View style={[styles.qrContainer, { overflow: 'hidden', position: 'relative' }]}>
+                                    <HolographicShimmer />
                                     <AppText style={styles.passCode}>{visitor.qr_code}</AppText>
                                     <AppText style={styles.qrLabel}>SHOW AT GATE</AppText>
                                 </View>

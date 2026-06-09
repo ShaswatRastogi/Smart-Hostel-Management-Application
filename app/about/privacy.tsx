@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutAnimation, Platform, ScrollView, StyleSheet, Pressable, UIManager, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../../components/AppText';
 
@@ -50,6 +51,32 @@ export default function PrivacyPolicy() {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
+  const ScanningMagnifier = () => {
+      const scanX = useSharedValue(-10);
+
+      useEffect(() => {
+          scanX.value = withRepeat(
+              withSequence(
+                  withTiming(20, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+                  withTiming(-10, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+              ), -1, true
+          );
+      }, []);
+
+      const magStyle = useAnimatedStyle(() => ({
+          transform: [{ translateX: scanX.value }]
+      }));
+
+      return (
+          <View style={{ position: 'absolute', right: 0, top: 0, width: 64, height: 64, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="file-document-outline" size={48} color={colors.textSecondary} />
+              <Animated.View style={[{ position: 'absolute' }, magStyle]}>
+                  <MaterialCommunityIcons name="magnify" size={32} color="#8B5CF6" />
+              </Animated.View>
+          </View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -70,11 +97,12 @@ export default function PrivacyPolicy() {
         showsVerticalScrollIndicator={false}
       >
         {/* Typographic Hero */}
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: colors.text }]}>Privacy{"\n"}Policy</AppText>
           <AppText style={[styles.heroSub, { color: colors.textSecondary }]}>
             We are committed to protecting your personal data and being transparent about how we use it.
           </AppText>
+          <ScanningMagnifier />
         </View>
 
         {/* Accordion Sections */}

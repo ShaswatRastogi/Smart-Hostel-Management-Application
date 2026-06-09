@@ -4,10 +4,13 @@ import { requireStaffOrHigher, requireAuth } from '../middleware/auth';
 
 const router = Router();
 
+import { cacheMiddleware } from '../middleware/cache';
+
 router.get('/admin', requireAuth, requireStaffOrHigher, getAdminNotifications);
 router.post('/admin/clear', requireAuth, requireStaffOrHigher, clearAdminNotifications);
 
-router.get('/student', requireAuth, getStudentNotifications);
+// Cache student notifications for 30 seconds to prevent hammering the DB
+router.get('/student', requireAuth, cacheMiddleware(30), getStudentNotifications);
 router.post('/student/clear', requireAuth, clearStudentNotifications);
 
 router.get('/preferences', requireAuth, getPreferences);

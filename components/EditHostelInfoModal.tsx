@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '../utils/ThemeContext';
 import { HostelInfo, updateHostelInfo } from '../utils/hostelUtils';
 import InputField from './InputField';
@@ -158,7 +159,7 @@ function EditHostelInfoModal({ visible, onClose, hostelInfo, onSuccess }: EditHo
                     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                             {image ? (
-                                <Image source={{ uri: image }} style={styles.imagePreview} resizeMode="cover" />
+                                <Image source={{ uri: image }} style={styles.imagePreview} contentFit="cover" cachePolicy="memory-disk" />
                             ) : (
                                 <View style={styles.imagePlaceholder}>
                                     <MaterialCommunityIcons name="camera-plus" size={32} color={colors.textSecondary} />

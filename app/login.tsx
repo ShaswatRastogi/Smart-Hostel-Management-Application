@@ -23,6 +23,8 @@ import CustomAlert, { AlertType } from '../components/CustomAlert';
 import { useAuth } from '../context/AuthContext';
 import { setStoredUser, isAdmin } from '../utils/authUtils';
 import AppText from '../components/AppText';
+import { getSecureToken, setSecureToken } from '../utils/tokenStorage';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 // ─── Shimmer line component for input fields ───
 function ShimmerLine() {
@@ -156,7 +158,60 @@ export default function Login() {
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
     });
+    checkBiometricAvailability();
   }, []);
+
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const checkBiometricAvailability = async () => {
+    const compatible = await LocalAuthentication.hasHardwareAsync();
+    const enrolled = await LocalAuthentication.isEnrolledAsync();
+    setBiometricSupported(compatible && enrolled);
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      const storedToken = await getSecureToken('userToken');
+      if (!storedToken) {
+        showAlert('Info', 'Please login with your password first to enable biometric login.', 'info');
+        return;
+      }
+      
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Unlock SmartStay',
+        fallbackLabel: 'Use Password',
+        disableDeviceFallback: false,
+      });
+
+      if (auth.success) {
+        setIsLoading(true);
+        // We have a token securely decrypted. Just refresh the session
+        await refreshUser();
+        
+        const { useSettingsStore } = await import('../store/useSettingsStore');
+        await useSettingsStore.getState().loadSettings();
+        const { onboardingCompleted } = useSettingsStore.getState();
+
+        const { useAuthStore } = await import('../store/useAuthStore');
+        const user = useAuthStore.getState().user;
+
+        if (!onboardingCompleted) {
+          router.replace('/onboarding');
+          return;
+        }
+
+        if (user && isAdmin({ role: user.role })) {
+          router.replace('/admin');
+        } else {
+          router.replace('/(tabs)');
+        }
+      }
+    } catch (error) {
+      console.error('Biometric failed:', error);
+      showAlert('Error', 'Biometric login failed', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -178,7 +233,6 @@ export default function Login() {
 
         // Call Backend API
         const { default: api } = await import('../utils/api');
-        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
 
         const response = await api.post('/auth/google', { 
           token: idToken,
@@ -195,9 +249,9 @@ export default function Login() {
 
         const { user, token, refreshToken } = response.data;
 
-        // Store Token
-        await AsyncStorage.setItem('userToken', token);
-        if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
+        // Store Token securely
+        await setSecureToken('userToken', token);
+        if (refreshToken) await setSecureToken('refreshToken', refreshToken);
 
         // Store User Info
         await setStoredUser({
@@ -261,9 +315,7 @@ export default function Login() {
     try {
       // Dynamic imports
       const { default: api } = await import('../utils/api');
-      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
       const { setStoredUser } = await import('../utils/authUtils');
-      const { getRoleFromEmail } = await import('../utils/roleUtils');
 
       console.log('Attempting login with:', loginEmail);
       const response = await api.post('/auth/login', {
@@ -282,9 +334,9 @@ export default function Login() {
 
       const { user, token, refreshToken } = response.data;
 
-      // Store Token
-      await AsyncStorage.setItem('userToken', token);
-      if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
+      // Store Token securely
+      await setSecureToken('userToken', token);
+      if (refreshToken) await setSecureToken('refreshToken', refreshToken);
 
       await setStoredUser({
         id: user.id.toString(),
@@ -328,7 +380,6 @@ export default function Login() {
     setIsLoading(true);
     try {
       const { default: api } = await import('../utils/api');
-      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
       
       const response = await api.post('/auth/login/verify-2fa', {
         tempToken,
@@ -339,8 +390,8 @@ export default function Login() {
 
       const { user, token, refreshToken } = response.data;
 
-      await AsyncStorage.setItem('userToken', token);
-      if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
+      await setSecureToken('userToken', token);
+      if (refreshToken) await setSecureToken('refreshToken', refreshToken);
 
       await setStoredUser({
         id: user.id.toString(),
@@ -516,17 +567,28 @@ export default function Login() {
                   autoCapitalize="none"
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
+                  onSubmitEditing={() => handleLogin()}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
-                >
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={18}
-                    color="#555555"
-                  />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', position: 'absolute', right: 4, height: '100%' }}>
+                  {biometricSupported && (
+                    <TouchableOpacity 
+                      onPress={handleBiometricLogin} 
+                      style={{ padding: 12, marginRight: 4, opacity: 0.8 }}
+                    >
+                      <MaterialCommunityIcons name="fingerprint" size={26} color="#3B82F6" />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.eyeBtn}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <MaterialCommunityIcons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color="#555555"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
               {!passwordFocused && <ShimmerLine />}
             </View>

@@ -2,7 +2,8 @@ import { MaterialCommunityIcons as MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   SharedValue,
   interpolate,
@@ -115,19 +116,12 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
           style: "destructive",
           onPress: async () => {
             try {
-              const { deregisterPushToken } = await import('../utils/usePushNotifications');
-              const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-              const { useAuthStore } = await import('../store/useAuthStore');
-
-              await deregisterPushToken();
-              await setStoredUser(null);
-              await AsyncStorage.removeItem('userToken');
-              useAuthStore.getState().setUser(null);
-
+              const { performLogout } = await import('../utils/authUtils');
               onClose();
-              router.replace('/login');
+              await performLogout(router);
             } catch (e) {
-              console.error(e);
+              console.error('Admin logout error:', e);
+              showAlert('Error', 'Failed to logout properly', [], 'error');
             }
           },
         },
@@ -197,10 +191,10 @@ export default function AdminSidebar({ onClose, activeNav, drawerProgress, visib
       <Animated.View style={[styles.sidebarPanel, { backgroundColor: colors.card, shadowColor: '#000' }, panelStyle]}>
         <LinearGradient colors={['#000428', '#004e92']} style={[styles.sidebarHeader, { paddingTop: insets.top + 24 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Image
-              source={require('../assets/brand_icon.jpg')}
+            <Image 
+              source={require('../assets/brand_icon.jpg')} 
               style={{ width: 40, height: 40, borderRadius: 10 }}
-              resizeMode="contain"
+              contentFit="cover" 
             />
             <AppText style={styles.sidebarTitle}>SmartStay</AppText>
           </View>

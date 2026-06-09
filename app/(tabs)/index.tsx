@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, Dimensions, Pressable, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,7 +19,8 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
-  cancelAnimation
+  cancelAnimation,
+  runOnJS
 } from 'react-native-reanimated';
 import { useRefresh } from '../../hooks/useRefresh';
 import api, { API_BASE_URL } from '../../utils/api';
@@ -33,59 +34,11 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import { subscribeToBusTimings } from '../../utils/busTimingsSyncUtils';
 import { fetchUserData } from '../../utils/nameUtils';
 import { useTheme } from '../../utils/ThemeContext';
+import { checkNetworkStatus } from '../../utils/useNetworkStatus';
+import { DashboardSkeleton } from '../../components/SkeletonLists';
 import { getCurrentTimeInCountry } from '../../utils/timeUtils';
 import AppText from '../../components/AppText';
 
-const toggleStyles = StyleSheet.create({
-  toggleBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  }
-});
-
-const AnimatedThemeToggle = ({ isDark, toggleTheme, textMain }: { isDark: boolean, toggleTheme: () => void, textMain: string }) => {
-  const progress = useDerivedValue(() => {
-    return isDark ? withSpring(1) : withSpring(0);
-  }, [isDark]);
-
-  const rStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(progress.value, [0, 1], [0, 360], Extrapolate.CLAMP);
-    const scale = interpolate(progress.value, [0, 0.5, 1], [1, 0.8, 1], Extrapolate.CLAMP);
-
-    return {
-      transform: [
-        { rotate: `${rotate}deg` },
-        { scale: scale }
-      ]
-    };
-  });
-
-  return (
-    <TouchableOpacity
-      style={[
-        toggleStyles.toggleBtn,
-        { backgroundColor: 'transparent', borderWidth: 0 }
-      ]}
-      onPress={toggleTheme}
-      activeOpacity={0.8}
-    >
-      <Animated.View style={rStyle}>
-        <MaterialCommunityIcons
-          name={isDark ? "weather-sunny" : "weather-night"}
-          size={24}
-          color={textMain}
-        />
-      </Animated.View>
-    </TouchableOpacity>
-  );
-};
 
 const { width } = Dimensions.get('window');
 
@@ -114,9 +67,107 @@ const CustomBusIcon = () => (
   </Svg>
 );
 
+const AnimatedStar = ({ delay, top, left }: { delay: number, top: number, left: number }) => {
+  const opacity = useSharedValue(0.1);
+  useFocusEffect(
+    useCallback(() => {
+      let timeout = setTimeout(() => {
+        opacity.value = withRepeat(withSequence(
+          withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ), -1, true);
+      }, delay);
+      return () => { clearTimeout(timeout); cancelAnimation(opacity); };
+    }, [delay])
+  );
+  const rStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={[{ position: 'absolute', top, left }, rStyle]}>
+      <MaterialCommunityIcons name="star-four-points" size={10} color="#FFFFFF" />
+    </Animated.View>
+  );
+};
+
+const AnimatedBird = ({ delay, top }: { delay: number, top: number }) => {
+  const y = useSharedValue(0);
+  const x = useSharedValue(0);
+  useFocusEffect(
+    useCallback(() => {
+      let timeout = setTimeout(() => {
+        y.value = withRepeat(withSequence(
+          withTiming(-15, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 800, easing: Easing.inOut(Easing.ease) })
+        ), -1, true);
+        x.value = withRepeat(withTiming(-Dimensions.get('window').width * 1.5, { duration: 12000, easing: Easing.linear }), -1, false);
+      }, delay);
+      return () => { clearTimeout(timeout); cancelAnimation(x); cancelAnimation(y); };
+    }, [delay])
+  );
+  const rStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { translateY: y.value }] }));
+  return (
+    <Animated.View style={[{ position: 'absolute', right: -20, top }, rStyle]}>
+      <MaterialCommunityIcons name="bird" size={16} color="#111111" opacity={0.4} />
+    </Animated.View>
+  );
+};
+
+const SteamingPlateIcon = ({ isServing }: { isServing: boolean }) => {
+  const steam1 = useSharedValue(0);
+  const steam2 = useSharedValue(0);
+  useFocusEffect(
+    useCallback(() => {
+      if (isServing) {
+        steam1.value = withRepeat(withTiming(-15, { duration: 1500, easing: Easing.inOut(Easing.ease) }), -1, true);
+        steam2.value = withRepeat(withTiming(15, { duration: 1800, easing: Easing.inOut(Easing.ease) }), -1, true);
+      }
+      return () => { cancelAnimation(steam1); cancelAnimation(steam2); };
+    }, [isServing])
+  );
+  const s1 = useAnimatedStyle(() => ({ transform: [{ translateY: steam1.value }] }));
+  const s2 = useAnimatedStyle(() => ({ transform: [{ translateY: steam2.value }] }));
+  return (
+    <View style={{ position: 'relative', width: 110, height: 110 }}>
+      {isServing && (
+        <>
+          <Animated.View style={[{ position: 'absolute', top: 10, left: 30, opacity: 0.5 }, s1]}>
+            <MaterialCommunityIcons name="weather-windy" size={30} color="#FDBA74" />
+          </Animated.View>
+          <Animated.View style={[{ position: 'absolute', top: 5, right: 30, opacity: 0.5 }, s2]}>
+             <MaterialCommunityIcons name="weather-windy" size={24} color="#FDBA74" style={{ transform: [{ scaleX: -1 }] }} />
+          </Animated.View>
+        </>
+      )}
+      <MaterialCommunityIcons name="silverware-fork-knife" size={110} color={'#FDBA74'} />
+    </View>
+  );
+};
+
+const SpinningWashingMachine = ({ isActive }: { isActive: boolean }) => {
+  const rotation = useSharedValue(0);
+  useFocusEffect(
+    useCallback(() => {
+      if (isActive) {
+        rotation.value = withRepeat(withTiming(360, { duration: 2000, easing: Easing.linear }), -1, false);
+      }
+      return () => { cancelAnimation(rotation); };
+    }, [isActive])
+  );
+  const rStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }));
+  return (
+    <View style={{ position: 'relative', width: 110, height: 110, justifyContent: 'center', alignItems: 'center' }}>
+      <MaterialCommunityIcons name="washing-machine" size={110} color={'#67E8F9'} />
+      {isActive && (
+        <Animated.View style={[{ position: 'absolute', top: 40, left: 40 }, rStyle]}>
+           <MaterialCommunityIcons name="loading" size={30} color="#0891B2" opacity={0.6} />
+        </Animated.View>
+      )}
+    </View>
+  );
+};
+
 export default function Index() {
   const router = useRouter();
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Dynamic Theme Colors
   const themeBg = isDark ? '#000000' : '#F8FAFC';
@@ -137,27 +188,31 @@ export default function Index() {
   const skylineX = useSharedValue(0);
   const cardIconRotation = useSharedValue(0);
 
-  React.useEffect(() => {
-    driftX.value = -width * 2;
-    skylineX.value = 0;
-    busScale.value = 1;
-    cardIconRotation.value = 0;
+  useFocusEffect(
+    useCallback(() => {
+      driftX.value = -width * 2;
+      skylineX.value = 0;
+      busScale.value = 1;
+      cardIconRotation.value = 0;
 
-    driftX.value = withRepeat(withTiming(0, { duration: 8000, easing: Easing.linear }), -1, false);
-    busScale.value = withRepeat(withSequence(withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }), withTiming(0.95, { duration: 1000, easing: Easing.inOut(Easing.ease) })), -1, true);
-    skylineX.value = withRepeat(withTiming(-width * 2, { duration: 14000, easing: Easing.linear }), -1, false);
-    cardIconRotation.value = withRepeat(withSequence(withTiming(12, { duration: 3000, easing: Easing.inOut(Easing.ease) }), withTiming(-12, { duration: 6000, easing: Easing.inOut(Easing.ease) }), withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })), -1, false);
+      driftX.value = withRepeat(withTiming(0, { duration: 8000, easing: Easing.linear }), -1, false);
+      busScale.value = withRepeat(withSequence(withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }), withTiming(0.95, { duration: 1000, easing: Easing.inOut(Easing.ease) })), -1, true);
+      skylineX.value = withRepeat(withTiming(-width * 2, { duration: 14000, easing: Easing.linear }), -1, false);
+      cardIconRotation.value = withRepeat(withSequence(withTiming(12, { duration: 3000, easing: Easing.inOut(Easing.ease) }), withTiming(-12, { duration: 6000, easing: Easing.inOut(Easing.ease) }), withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })), -1, false);
 
-    return () => {
-      cancelAnimation(driftX); cancelAnimation(busScale); cancelAnimation(skylineX); cancelAnimation(cardIconRotation);
-    };
-  }, []);
+      return () => {
+        cancelAnimation(driftX); cancelAnimation(busScale); cancelAnimation(skylineX); cancelAnimation(cardIconRotation);
+      };
+    }, [])
+  );
 
   const driftStyle = useAnimatedStyle(() => ({ transform: [{ translateX: driftX.value }] }));
   const busBreathingStyle = useAnimatedStyle(() => ({ transform: [{ scale: busScale.value }] }));
   const skylineStyle = useAnimatedStyle(() => ({ transform: [{ translateX: skylineX.value }] }));
   
   const cardIconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${cardIconRotation.value}deg` }] }));
+
+
 
   const {
     studentData: student, messMenu: fullMenu, laundrySettings: laundry, busRoutes, dashboardCounts,
@@ -185,15 +240,22 @@ export default function Index() {
       setStudentData(data);
       setLastSynced(Date.now());
       fetchDashboardCounts();
-    } catch (error) {} finally { setLoading(false); }
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   }, [setStudentData, setLastSynced, fetchDashboardCounts]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get('/notifications/student');
       setUnreadCount(res.data.length);
-    } catch (error) {}
+    } catch (error) { console.error(error); }
   }, []);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('appForegrounded', () => {
+      loadUserData(); fetchUnreadCount();
+    });
+    return () => sub.remove();
+  }, [loadUserData, fetchUnreadCount]);
 
   useFocusEffect(
     useCallback(() => {
@@ -255,9 +317,8 @@ export default function Index() {
 
   if (loading && !student) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
-        <ActivityIndicator size="large" color={textMain} />
-        <AppText style={[styles.loadingText, { color: textMuted }]}>Loading Dashboard...</AppText>
+      <View style={[styles.container, { backgroundColor: themeBg }]}>
+        <DashboardSkeleton />
       </View>
     );
   }
@@ -286,7 +347,7 @@ export default function Index() {
         <View style={[styles.heroWrapper, { backgroundColor: themeBg, paddingBottom: 0, zIndex: 10 }]}>
           <Animated.View style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: '12.5%', backgroundColor: themeBg, borderBottomLeftRadius: 32, borderBottomRightRadius: 32,
-            shadowColor: isDark ? '#FFD700' : '#000000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: isDark ? 0.8 : 0.1, shadowRadius: isDark ? 24 : 20, elevation: isDark ? 24 : 10
+            shadowColor: isDark ? '#3B82F6' : '#000000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: isDark ? 0.3 : 0.1, shadowRadius: isDark ? 24 : 20, elevation: isDark ? 24 : 10
           }} />
           <LinearGradient
             colors={heroGradient as any}
@@ -294,6 +355,27 @@ export default function Index() {
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           >
             <LinearGradient colors={[overlayGlass, 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.5 }} />
+
+            {/* Living Time Elements */}
+            {isDark ? (
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <AnimatedStar delay={0} top={20} left={30} />
+                <AnimatedStar delay={500} top={40} left={width / 2} />
+                <AnimatedStar delay={1000} top={15} left={width - 50} />
+                <AnimatedStar delay={250} top={60} left={80} />
+                <AnimatedStar delay={800} top={50} left={width - 100} />
+                {/* Moon */}
+                <MaterialCommunityIcons name="moon-waning-crescent" size={40} color="#FDE047" opacity={0.2} style={{ position: 'absolute', top: 10, right: 20 }} />
+              </View>
+            ) : (
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <AnimatedBird delay={0} top={20} />
+                <AnimatedBird delay={4000} top={40} />
+                <AnimatedBird delay={8000} top={15} />
+                {/* Sun */}
+                <MaterialCommunityIcons name="white-balance-sunny" size={60} color="#FBBF24" opacity={0.15} style={{ position: 'absolute', top: -10, right: -10 }} />
+              </View>
+            )}
 
             <Animated.View style={[{ position: 'absolute', bottom: 0, width: width * 4, height: 40, flexDirection: 'row', opacity: skylineOpacity }, skylineStyle]}>
               <View style={{ width: width * 2, height: '100%', position: 'absolute', left: 0 }}>
@@ -322,7 +404,7 @@ export default function Index() {
                   <Pressable onPress={() => router.push('/profile')} style={[styles.premiumProfileFrame, { borderColor: cardBorder, backgroundColor: overlayGlass }]}>
                     <View style={styles.avatar}>
                       {student?.profilePhoto ? (
-                        <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 28 }} contentFit="cover" cachePolicy="none" />
+                        <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 28 }} contentFit="cover" cachePolicy="memory-disk" />
                       ) : (
                         <AppText style={styles.avatarText}>{student?.fullName ? student.fullName.charAt(0).toUpperCase() : 'S'}</AppText>
                       )}
@@ -335,7 +417,7 @@ export default function Index() {
                   </View>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <AnimatedThemeToggle isDark={isDark} toggleTheme={toggleTheme} textMain={textMain} />
+
                     <Pressable style={styles.glassHeaderBtn} onPress={() => setNotificationVisible(true)}>
                       <Ionicons name="notifications-outline" size={20} color={textMain} />
                       {unreadCount > 0 && <View style={[styles.premiumNotificationBadge, { backgroundColor: textMain, borderColor: themeBg }]} />}
@@ -476,7 +558,7 @@ export default function Index() {
                   onPress={() => router.push({ pathname: '/mess', params: { tab: 'menu', day: new Date().toLocaleDateString('en-US', { weekday: 'long' }), target: getUpcomingMeal().type.toLowerCase() } })}
                 >
                   <Animated.View style={[{ position: 'absolute', right: -20, bottom: -20, opacity: 0.12 }, cardIconStyle]}>
-                    <MaterialCommunityIcons name="silverware-fork-knife" size={110} color={'#FDBA74'} />
+                    <SteamingPlateIcon isServing={getUpcomingMeal().soon || (new Date().getHours() * 60 + new Date().getMinutes() >= 0 && new Date().getHours() * 60 + new Date().getMinutes() < 1440)} />
                   </Animated.View>
                   <View style={{ gap: 4 }}>
                     <AppText style={[styles.serviceLabel, { color: textMain, fontSize: 17, marginBottom: 0 }]}>Mess Menu</AppText>
@@ -499,7 +581,7 @@ export default function Index() {
                   onPress={() => router.push('/laundry-request')}
                 >
                   <Animated.View style={[{ position: 'absolute', right: -20, bottom: -20, opacity: 0.12 }, cardIconStyle]}>
-                    <MaterialCommunityIcons name="washing-machine" size={110} color={'#67E8F9'} />
+                    <SpinningWashingMachine isActive={laundry?.status === 'Processing' || laundry?.status === 'Active' || laundry?.status === 'Washing'} />
                   </Animated.View>
                   <View style={{ gap: 4 }}>
                     <AppText style={[styles.serviceLabel, { color: textMain, fontSize: 17, marginBottom: 0 }]}>Laundry</AppText>

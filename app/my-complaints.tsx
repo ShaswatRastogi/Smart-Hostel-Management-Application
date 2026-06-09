@@ -1,8 +1,10 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import PagerView from 'react-native-pager-view';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StudentComplaintListSkeleton } from '../components/SkeletonLists';
 import { useTheme } from '../utils/ThemeContext';
@@ -44,7 +46,7 @@ export default function MyComplaints() {
         createdAt: new Date(c.created_at), priority: (c.category as any) || 'low', category: c.category
       }));
       setComplaints(mapped);
-    } catch (error) {} finally { setLoading(false); setRefreshing(false); }
+    } catch (error) { console.error(error); } finally { setLoading(false); setRefreshing(false); }
   };
 
   const onRefresh = () => { setRefreshing(true); fetchComplaints(); };
@@ -68,6 +70,20 @@ export default function MyComplaints() {
     return colors[status] || colors.open;
   };
 
+  const UrgentSiren = () => {
+      const scale = useSharedValue(1);
+      useEffect(() => {
+          scale.value = withRepeat(withSequence(withTiming(1.3, {duration: 600}), withTiming(1, {duration: 600})), -1, true);
+      }, []);
+      const rStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: 0.3 }));
+      return (
+          <View style={{ marginLeft: 8, justifyContent: 'center', alignItems: 'center', width: 14, height: 14 }}>
+              <Animated.View style={[{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#EF4444', position: 'absolute' }, rStyle]} />
+              <MaterialCommunityIcons name="alarm-light" size={10} color="#EF4444" />
+          </View>
+      );
+  };
+
   const renderItem = ({ item }: { item: Complaint }) => {
     const isResolved = ['resolved', 'closed'].includes(item.status);
     return (
@@ -79,7 +95,10 @@ export default function MyComplaints() {
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <AppText style={[styles.statusBadge, { color: getStatusColor(item.status) }]}>{item.status.replace(/([A-Z])/g, ' $1').toUpperCase()}</AppText>
-            <AppText style={styles.priorityText}>{item.priority.toUpperCase()} PRIORITY</AppText>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <AppText style={styles.priorityText}>{item.priority.toUpperCase()} PRIORITY</AppText>
+                {item.priority === 'emergency' && <UrgentSiren />}
+            </View>
           </View>
         </View>
         <AppText style={[styles.description, { color: textSecondary }]}>{item.description}</AppText>
@@ -88,9 +107,10 @@ export default function MyComplaints() {
   };
 
   const renderList = (data: Complaint[], emptyText: string) => (
-    <FlatList
+    <FlashList
       data={data} renderItem={renderItem} keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
+      estimatedItemSize={120}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[textMain]} tintColor={textMain} />}
       ListEmptyComponent={<View style={styles.emptyContainer}><AppText style={styles.emptyText}>{emptyText}</AppText></View>}
     />

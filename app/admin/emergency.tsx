@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InputField from '../../components/InputField';
 import { useAlert } from '../../context/AlertContext';
@@ -344,9 +345,10 @@ export default function ManageEmergencyPage() {
             {loading ? (
                 <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
             ) : (
-                <FlatList
+                <FlashList
                     data={contacts}
                     keyExtractor={(item) => item.id}
+                    estimatedItemSize={100}
                     contentContainerStyle={styles.list}
                     ListHeaderComponent={
                         <TouchableOpacity style={styles.createBtn} onPress={handleAddNew}>

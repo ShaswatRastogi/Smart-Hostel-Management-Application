@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Dimensions } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -23,6 +24,42 @@ export default function LaundryRequest() {
     const [history, setHistory] = useState<LaundryRequestDisplay[]>([]);
     const [clothesDetails, setClothesDetails] = useState('');
     const [totalClothes, setTotalClothes] = useState('');
+    const [showBubbles, setShowBubbles] = useState(false);
+
+    const SpinningWashingMachine = () => {
+        const rotation = useSharedValue(0);
+        useEffect(() => {
+            if (settings?.status === 'Processing' || settings?.status === 'Active' || settings?.status === 'Washing') {
+                rotation.value = withRepeat(withTiming(360, { duration: 2000, easing: Easing.linear }), -1, false);
+            }
+        }, [settings?.status]);
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }));
+        return (
+            <View style={{ position: 'absolute', right: -20, top: -20, opacity: 0.15, zIndex: 0 }} pointerEvents="none">
+                <MaterialCommunityIcons name="washing-machine" size={140} color={'#67E8F9'} />
+                <Animated.View style={[{ position: 'absolute', top: 50, left: 50 }, rStyle]}>
+                    <MaterialCommunityIcons name="loading" size={40} color="#0891B2" opacity={0.6} />
+                </Animated.View>
+            </View>
+        );
+    };
+
+    const AnimatedBubble = ({ delay, left }: { delay: number, left: number }) => {
+        const y = useSharedValue(Dimensions.get('window').height);
+        const opacity = useSharedValue(0);
+        useEffect(() => {
+            setTimeout(() => {
+                opacity.value = withSequence(withTiming(0.8, { duration: 500 }), withTiming(0, { duration: 2000 }));
+                y.value = withTiming(-100, { duration: 2500, easing: Easing.out(Easing.ease) });
+            }, delay);
+        }, []);
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }], opacity: opacity.value }));
+        return (
+            <Animated.View style={[{ position: 'absolute', left, zIndex: 100 }, rStyle]} pointerEvents="none">
+                <MaterialCommunityIcons name="water-circle" size={24} color="#67E8F9" />
+            </Animated.View>
+        );
+    };
 
     // Dynamic Theme Map
     const themeBg = isDark ? '#000000' : '#F8FAFC';
@@ -48,7 +85,7 @@ export default function LaundryRequest() {
     }, []);
 
     const loadUserData = async () => {
-        try { const data = await fetchUserData(); setStudent(data); } catch (error) {} finally { setLoading(false); }
+        try { const data = await fetchUserData(); setStudent(data); } catch (error) { console.error(error); } finally { setLoading(false); }
     };
 
     const handleSubmit = async () => {
@@ -59,6 +96,8 @@ export default function LaundryRequest() {
         try {
             const { default: api } = await import('../utils/api');
             await api.post('/services/laundry', { pickupDate: new Date().toISOString(), itemsCount: Number(totalClothes), notes: clothesDetails });
+            setShowBubbles(true);
+            setTimeout(() => setShowBubbles(false), 3000);
             showAlert('Success', 'Your laundry request has been submitted!', [{ text: 'OK' }], 'success');
             setClothesDetails(''); setTotalClothes('');
         } catch (error) { showAlert('Error', 'Failed to submit request. Please try again.', [], 'error'); } finally { setSubmitting(false); }
@@ -81,9 +120,10 @@ export default function LaundryRequest() {
                 </View>
 
                 <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 80, paddingHorizontal: 24 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
-                    <View style={styles.hero}>
-                        <AppText style={[styles.heroTitle, { color: textMain }]}>Laundry</AppText>
-                        <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Request Pickup</AppText>
+                    <View style={[styles.hero, { position: 'relative', overflow: 'hidden' }]}>
+                        <AppText style={[styles.heroTitle, { color: textMain, zIndex: 1 }]}>Laundry</AppText>
+                        <AppText style={[styles.heroSubtitle, { color: textMuted, zIndex: 1 }]}>Request Pickup</AppText>
+                        <SpinningWashingMachine />
                     </View>
 
                     <View style={styles.section}>
@@ -141,6 +181,17 @@ export default function LaundryRequest() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
+            
+            {showBubbles && (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                    <AnimatedBubble delay={0} left={30} />
+                    <AnimatedBubble delay={300} left={Dimensions.get('window').width / 2} />
+                    <AnimatedBubble delay={600} left={Dimensions.get('window').width - 50} />
+                    <AnimatedBubble delay={150} left={Dimensions.get('window').width / 3} />
+                    <AnimatedBubble delay={450} left={(Dimensions.get('window').width / 3) * 2} />
+                    <AnimatedBubble delay={750} left={80} />
+                </View>
+            )}
         </View>
     );
 }

@@ -1,16 +1,20 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StudentDetailsModal from '../components/StudentDetailsModal';
 import { useAlert } from '../context/AlertContext';
 import { API_BASE_URL } from '../utils/api';
 import { setStoredUser } from '../utils/authUtils';
+import { getSecureToken, removeSecureToken } from '../utils/tokenStorage';
 import { fetchUserData, getInitial, StudentData } from '../utils/nameUtils';
 import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
+import { ProfileSkeleton } from '../components/SkeletonLists';
 
 export default function ProfilePage() {
     const insets = useSafeAreaInsets();
@@ -24,6 +28,23 @@ export default function ProfilePage() {
     const [uploading, setUploading] = useState(false);
     const [attendanceModalVisible, setAttendanceModalVisible] = useState(false);
     const [pendingDues, setPendingDues] = useState<number>(0);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const flipRotation = useSharedValue(0);
+
+    const handleFlip = () => {
+        setIsFlipped(!isFlipped);
+        flipRotation.value = withTiming(isFlipped ? 0 : 180, { duration: 800, easing: Easing.inOut(Easing.ease) });
+    };
+
+    const frontAnimatedStyle = useAnimatedStyle(() => {
+        const rotateY = interpolate(flipRotation.value, [0, 180], [0, 180], Extrapolation.CLAMP);
+        return { transform: [{ perspective: 1000 }, { rotateY: `${rotateY}deg` }], backfaceVisibility: 'hidden' };
+    });
+
+    const backAnimatedStyle = useAnimatedStyle(() => {
+        const rotateY = interpolate(flipRotation.value, [0, 180], [180, 360], Extrapolation.CLAMP);
+        return { transform: [{ perspective: 1000 }, { rotateY: `${rotateY}deg` }], backfaceVisibility: 'hidden', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
+    });
 
     // Dynamic Theme Mapping
     const themeBg = isDark ? '#000000' : '#F8FAFC';
@@ -79,7 +100,7 @@ export default function ProfilePage() {
             if (status !== 'granted') return showAlert('Permission Required', 'Need camera roll permissions!');
             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.5 });
             if (!result.canceled && result.assets[0].uri) uploadImage(result.assets[0].uri);
-        } catch (error) {}
+        } catch (error) { console.error(error); }
     };
 
     const uploadImage = async (uri: string) => {
@@ -88,7 +109,7 @@ export default function ProfilePage() {
         try {
             const formData = new FormData();
             formData.append('profilePhoto', { uri, name: 'profile_photo.jpg', type: 'image/jpeg' } as any);
-            const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
+            const token = await getSecureToken('userToken');
             const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, { method: 'POST', body: formData, headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Upload failed');
             const result = await response.json();
@@ -110,15 +131,12 @@ export default function ProfilePage() {
             {
                 text: 'Sign Out', style: 'destructive', onPress: async () => {
                     try {
-                        const { deregisterPushToken } = await import('../utils/usePushNotifications');
-                        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-                        const { useAuthStore } = await import('../store/useAuthStore');
-                        await deregisterPushToken();
-                        await setStoredUser(null);
-                        await AsyncStorage.removeItem('userToken');
-                        useAuthStore.getState().setUser(null);
-                        router.replace('/login');
-                    } catch (error: any) {}
+                        const { performLogout } = await import('../utils/authUtils');
+                        await performLogout(router);
+                    } catch (error: any) {
+                        console.error('Logout error:', error);
+                        showAlert('Error', 'Failed to logout properly', [], 'error');
+                    }
                 }
             }
         ]);
@@ -133,10 +151,9 @@ export default function ProfilePage() {
     };
 
     if (loading) return (
-        <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
+        <View style={{ flex: 1, backgroundColor: themeBg }}>
             <Stack.Screen options={{ headerShown: false }} />
-            <ActivityIndicator color={textMain} size="large" />
-            <AppText style={{ color: textMuted, marginTop: 16 }}>Loading Profile...</AppText>
+            <ProfileSkeleton />
         </View>
     );
 
@@ -149,26 +166,39 @@ export default function ProfilePage() {
                     <Pressable style={styles.iconButton} onPress={() => router.push('/edit-profile')}><MaterialCommunityIcons name="pencil" size={24} color={textMain} /></Pressable>
                 </View>
 
-                <View style={styles.hero}>
-                    <View style={styles.avatarContainer}>
-                        <View style={[styles.avatar, { backgroundColor: iconBg }]}>
-                            {student?.profilePhoto ? (
-                                <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
-                            ) : <AppText style={[styles.avatarText, { color: textMain }]}>{getInitial(student?.fullName || 'U')}</AppText>}
-                            {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10 }]}><ActivityIndicator color="#fff" /></View>}
-                        </View>
-                        <Pressable style={[styles.cameraButton, { backgroundColor: textMain }]} onPress={pickImage} disabled={uploading}>
-                            <MaterialCommunityIcons name="camera" size={20} color={themeBg} />
-                        </Pressable>
-                    </View>
-                    <AppText style={[styles.studentName, { color: textMain }]}>{student?.fullName || 'Student Name'}</AppText>
-                    <AppText style={[styles.studentRoll, { color: textMuted }]}>{student?.rollNo || 'Roll No. --'}</AppText>
-                    <View style={styles.tagsRow}>
-                        <View style={[styles.tag, { backgroundColor: iconBg }]}><AppText style={[styles.tagText, { color: textMain }]}>Room {student?.roomNo || '--'}</AppText></View>
-                        <View style={[styles.tag, { backgroundColor: student?.status === 'active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' }]}>
-                            <AppText style={[styles.tagText, { color: student?.status === 'active' ? '#10B981' : '#EF4444' }]}>{student?.status === 'active' ? 'Active' : 'Inactive'}</AppText>
-                        </View>
-                    </View>
+                <View style={{ paddingHorizontal: 24, marginBottom: 48, paddingTop: 16 }}>
+                    <Pressable onPress={handleFlip} style={{ position: 'relative' }}>
+                        {/* Front of ID */}
+                        <Animated.View style={[frontAnimatedStyle, { backgroundColor: isDark ? '#18181B' : '#FFFFFF', padding: 24, borderRadius: 24, borderWidth: 1, borderColor: borderSubtle, elevation: 10, shadowColor: isDark ? '#3B82F6' : '#000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: isDark ? 0.2 : 0.1, shadowRadius: 20 }]}>
+                            <View style={[styles.avatarContainer, { marginBottom: 24, alignSelf: 'flex-start' }]}>
+                                <View style={[styles.avatar, { backgroundColor: iconBg }]}>
+                                    {student?.profilePhoto ? (
+                                        <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="memory-disk" />
+                                    ) : <AppText style={[styles.avatarText, { color: textMain }]}>{getInitial(student?.fullName || 'U')}</AppText>}
+                                    {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10 }]}><ActivityIndicator color="#fff" /></View>}
+                                </View>
+                                <Pressable style={[styles.cameraButton, { backgroundColor: textMain }]} onPress={pickImage} disabled={uploading}>
+                                    <MaterialCommunityIcons name="camera" size={20} color={themeBg} />
+                                </Pressable>
+                            </View>
+                            <AppText style={[styles.studentName, { color: textMain }]}>{student?.fullName || 'Student Name'}</AppText>
+                            <AppText style={[styles.studentRoll, { color: textMuted }]}>{student?.rollNo || 'Roll No. --'}</AppText>
+                            <View style={[styles.tagsRow, { marginTop: 16 }]}>
+                                <View style={[styles.tag, { backgroundColor: iconBg }]}><AppText style={[styles.tagText, { color: textMain }]}>Room {student?.roomNo || '--'}</AppText></View>
+                                <View style={[styles.tag, { backgroundColor: student?.status === 'active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' }]}>
+                                    <AppText style={[styles.tagText, { color: student?.status === 'active' ? '#10B981' : '#EF4444' }]}>{student?.status === 'active' ? 'Active' : 'Inactive'}</AppText>
+                                </View>
+                            </View>
+                            <View style={{ position: 'absolute', top: 24, right: 24, opacity: 0.1 }}><MaterialCommunityIcons name="fingerprint" size={60} color={textMain} /></View>
+                        </Animated.View>
+
+                        {/* Back of ID */}
+                        <Animated.View style={[backAnimatedStyle, { backgroundColor: isDark ? '#18181B' : '#FFFFFF', padding: 24, borderRadius: 24, borderWidth: 1, borderColor: borderSubtle, alignItems: 'center', justifyContent: 'center', elevation: 10 }]}>
+                            <MaterialCommunityIcons name="qrcode" size={150} color={textMain} />
+                            <AppText style={{ color: textMuted, marginTop: 24, fontSize: 16, fontWeight: '600' }}>Scan to verify identity</AppText>
+                            <AppText style={{ color: textMuted, marginTop: 8, fontSize: 12 }}>{student?.email}</AppText>
+                        </Animated.View>
+                    </Pressable>
                 </View>
 
                 <View style={styles.statsGrid}>

@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from './AppText';
+import { triggerHaptic } from '../utils/haptics';
 
 export type AlertButton = {
     text: string;
@@ -37,6 +38,12 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
     useEffect(() => {
         if (visible) {
+            // Trigger haptic based on alert type
+            if (type === 'error') triggerHaptic('error');
+            else if (type === 'success') triggerHaptic('success');
+            else if (type === 'warning') triggerHaptic('warning');
+            else triggerHaptic('light');
+
             // Start shadow shimmer
             Animated.loop(
                 Animated.sequence([

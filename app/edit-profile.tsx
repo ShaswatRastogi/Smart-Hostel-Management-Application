@@ -4,10 +4,12 @@ import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import api, { API_BASE_URL } from '../utils/api';
 import { getInitial } from '../utils/nameUtils';
+import { getSecureToken } from '../utils/tokenStorage';
 import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
@@ -60,7 +62,7 @@ export default function EditProfile() {
                 motherPhone: data.motherPhone || '', emergencyContactName: data.emergencyContactName || '', emergencyContactPhone: data.emergencyContactPhone || '',
             };
             setFormData(loadedFormData); setInitialData(loadedFormData);
-        } catch (error) {} finally { setLoading(false); }
+        } catch (error) { console.error('Error loading profile data:', error); } finally { setLoading(false); }
     };
 
     const pickImage = async () => {
@@ -70,7 +72,7 @@ export default function EditProfile() {
             if (status !== 'granted') return showAlert('Permission Required', 'Need camera roll permissions!');
             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.5 });
             if (!result.canceled && result.assets[0].uri) uploadImage(result.assets[0].uri);
-        } catch (error) {}
+        } catch (error) { console.error('Error picking image:', error); }
     };
 
     const uploadImage = async (uri: string) => {
@@ -78,7 +80,7 @@ export default function EditProfile() {
         try {
             const formDataUpload = new FormData();
             formDataUpload.append('profilePhoto', { uri, name: 'profile_photo.jpg', type: 'image/jpeg' } as any);
-            const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
+            const token = await getSecureToken('userToken');
             const response = await fetch(`${API_BASE_URL}/api/students/profile/photo`, { method: 'POST', body: formDataUpload, headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Upload failed');
             const result = await response.json();
@@ -87,7 +89,7 @@ export default function EditProfile() {
                 DeviceEventEmitter.emit('profileUpdated');
                 showAlert('Success', 'Profile photo updated!', [], 'success');
             }
-        } catch (error) {} finally { setUploading(false); }
+        } catch (error) { console.error('Error uploading image:', error); } finally { setUploading(false); }
     };
 
     const handleSave = async () => {
@@ -99,7 +101,7 @@ export default function EditProfile() {
             DeviceEventEmitter.emit('profileUpdated');
             showAlert('Success', 'Profile updated!', [], 'success');
             router.back();
-        } catch (error) {} finally { setSaving(false); }
+        } catch (error) { console.error('Error saving profile:', error); showAlert('Error', 'Failed to save profile', [], 'error'); } finally { setSaving(false); }
     };
 
     const onDateChange = (event: any, selectedDate?: Date) => {
@@ -125,6 +127,23 @@ export default function EditProfile() {
         </View>
     );
 
+    const SpinningGear = () => {
+        const rotation = useSharedValue(0);
+        useEffect(() => {
+            rotation.value = withRepeat(withTiming(360, { duration: 1000, easing: Easing.linear }), -1, false);
+        }, []);
+
+        const rStyle = useAnimatedStyle(() => ({
+            transform: [{ rotateZ: `${rotation.value}deg` }]
+        }));
+
+        return (
+            <Animated.View style={rStyle}>
+                <MaterialCommunityIcons name="cog" size={24} color={primaryBtnText} />
+            </Animated.View>
+        );
+    };
+
     if (loading) return (
         <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -146,7 +165,7 @@ export default function EditProfile() {
                     <View style={styles.avatarContainer}>
                         <View style={[styles.avatar, { backgroundColor: iconBg }]}>
                             {profilePhoto ? (
-                                <Image source={{ uri: profilePhoto.startsWith('http') ? profilePhoto : `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="none" />
+                                <Image source={{ uri: profilePhoto.startsWith('http') ? profilePhoto : `${API_BASE_URL}${profilePhoto}` }} style={{ width: '100%', height: '100%', borderRadius: 60 }} contentFit="cover" cachePolicy="memory-disk" />
                             ) : <AppText style={[styles.avatarText, { color: textMain }]}>{getInitial(fullName)}</AppText>}
                             {uploading && <View style={[styles.avatar, { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10 }]}><ActivityIndicator color="#fff" /></View>}
                         </View>
@@ -194,7 +213,12 @@ export default function EditProfile() {
                     style={({ pressed }) => [styles.saveBtn, { backgroundColor: primaryBtnBg }, saving && { opacity: 0.7 }, pressed && !saving && { opacity: 0.8 }]} 
                     onPress={handleSave} disabled={saving}
                 >
-                    {saving ? <ActivityIndicator color={primaryBtnText} /> : (<>
+                    {saving ? (
+                        <>
+                            <SpinningGear />
+                            <AppText style={[styles.saveBtnText, { color: primaryBtnText }]}>Saving...</AppText>
+                        </>
+                    ) : (<>
                         <MaterialCommunityIcons name="check" size={24} color={primaryBtnText} />
                         <AppText style={[styles.saveBtnText, { color: primaryBtnText }]}>Save Changes</AppText>
                     </>)}

@@ -33,6 +33,7 @@ import teamRoutes from './routes/teamRoutes';
 import cleaningRoutes from './routes/cleaning_routes';
 import guardRoutes from './routes/guardRoutes';
 import { initSocket } from './socket';
+import { connectRedis } from './utils/redis';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -104,6 +105,9 @@ const startServer = async () => {
     try {
         // Connect to DB (Supabase first, falls back to local automatically)
         await initDatabase();
+
+        // Connect Redis
+        await connectRedis();
 
         console.log('Checking database schema...');
         await query(`

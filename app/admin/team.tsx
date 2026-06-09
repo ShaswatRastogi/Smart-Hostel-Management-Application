@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppText from '../../components/AppText';
@@ -294,11 +295,12 @@ export default function TeamManagementPage() {
                 </View>
             </LinearGradient>
 
-            <FlatList
+            <FlashList
                 style={{ flex: 1 }}
                 data={filteredTeam}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
+                estimatedItemSize={100}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={

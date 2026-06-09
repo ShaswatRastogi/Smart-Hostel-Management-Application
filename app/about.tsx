@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Facility, getAllFacilities } from '../utils/facilityUtils';
 import { HostelInfo, getHostelInfo as fetchHostelInfo } from '../utils/hostelUtils';
@@ -31,7 +32,7 @@ export default function AboutPage() {
         try {
             const [facilitiesData, infoData] = await Promise.all([getAllFacilities(), fetchHostelInfo()]);
             setFacilities(facilitiesData); setHostelInfo(infoData);
-        } catch (error) {} finally { setLoading(false); }
+        } catch (error) { console.error(error); } finally { setLoading(false); }
     };
 
     return (
@@ -50,7 +51,7 @@ export default function AboutPage() {
 
                     {!loading && (
                         <View style={[styles.heroImageContainer, { borderColor: borderSubtle }]}>
-                            <Image source={{ uri: hostelInfo?.image_url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }} style={styles.heroImage} resizeMode="cover" />
+                            <Image source={{ uri: hostelInfo?.image_url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }} style={styles.heroImage} contentFit="cover" />
                         </View>
                     )}
                 </View>
@@ -80,7 +81,7 @@ export default function AboutPage() {
                                 {item.images && item.images.length > 0 ? (
                                     <View style={[styles.facilityImageGallery, { borderColor: borderSubtle }]}>
                                         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.galleryScroll}>
-                                            {item.images.map((img, index) => <Image key={index} source={{ uri: img }} style={styles.facilityGalleryImage} resizeMode="cover" />)}
+                                            {item.images.map((img, index) => <Image key={index} source={{ uri: img }} style={styles.facilityGalleryImage} contentFit="cover" />)}
                                         </ScrollView>
                                         {item.images.length > 1 && (
                                             <View style={styles.galleryDots}>
@@ -89,7 +90,7 @@ export default function AboutPage() {
                                         )}
                                     </View>
                                 ) : item.image_url ? (
-                                    <Image source={{ uri: item.image_url }} style={[styles.facilitySingleImage, { borderColor: borderSubtle }]} resizeMode="cover" />
+                                    <Image source={{ uri: item.image_url }} style={[styles.facilitySingleImage, { borderColor: borderSubtle }]} contentFit="cover" />
                                 ) : null}
                             </View>
                         ))

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken, removeSecureToken } from './tokenStorage';
 import axios from 'axios';
 import Constants from 'expo-constants';
 
@@ -59,7 +60,7 @@ api.interceptors.response.use(
 api.interceptors.request.use(
     async (config) => {
 
-        const token = await AsyncStorage.getItem('userToken');
+        const token = await getSecureToken('userToken');
 
         if (!config.headers) {
             config.headers = new axios.AxiosHeaders();
@@ -101,8 +102,13 @@ api.interceptors.response.use(
     async (error) => {
 
         if (error.response?.status === 401 || error.response?.status === 403) {
-            await AsyncStorage.removeItem('userToken');
+            await removeSecureToken('userToken');
+            await removeSecureToken('refreshToken');
             await AsyncStorage.removeItem('user');
+            try {
+                const { useAuthStore } = require('../store/useAuthStore');
+                useAuthStore.getState().setUser(null);
+            } catch (e) {}
         }
 
         return Promise.reject(error);

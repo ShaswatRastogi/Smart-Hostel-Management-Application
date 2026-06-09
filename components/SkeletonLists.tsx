@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../utils/ThemeContext';
+import { useThemeStore } from '../store/useThemeStore';
 import Skeleton from './Skeleton';
 
 export const StudentComplaintSkeleton = () => {
-    const { colors, theme } = useTheme();
-    const styles = getStyles(colors, theme);
+    const { colors, isDark } = useThemeStore();
+    const styles = getStyles(colors, isDark);
     return (
         <View style={styles.card}>
             {/* Header: Title + Badge */}
@@ -35,8 +35,8 @@ export const StudentComplaintSkeleton = () => {
 };
 
 export const AdminComplaintSkeleton = () => {
-    const { colors, theme } = useTheme();
-    const styles = getStyles(colors, theme);
+    const { colors, isDark } = useThemeStore();
+    const styles = getStyles(colors, isDark);
     return (
         <View style={styles.card}>
             <View style={styles.adminHeader}>
@@ -55,8 +55,8 @@ export const AdminComplaintSkeleton = () => {
 }
 
 export const NoticeSkeleton = () => {
-    const { colors, theme } = useTheme();
-    const styles = getStyles(colors, theme);
+    const { colors, isDark } = useThemeStore();
+    const styles = getStyles(colors, isDark);
     return (
         <View style={styles.card}>
             {/* Header */}
@@ -79,8 +79,8 @@ export const NoticeSkeleton = () => {
 
 // Compact Skeleton for Popover
 export const CompactNoticeSkeleton = () => {
-    const { colors, theme } = useTheme();
-    const styles = getStyles(colors, theme);
+    const { colors, isDark } = useThemeStore();
+    const styles = getStyles(colors, isDark);
     return (
         <View style={[styles.card, { padding: 12, marginBottom: 8 }]}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -138,7 +138,111 @@ export const CompactNoticeListSkeleton = () => (
 );
 
 
-const getStyles = (colors: any, theme: string) => StyleSheet.create({
+export const DashboardSkeleton = () => {
+    const { colors, isDark } = useThemeStore();
+    const styles = getStyles(colors, isDark);
+    return (
+        <View style={{ flex: 1, padding: 20, gap: 24, width: '100%' }}>
+            {/* Header Area */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ gap: 8 }}>
+                    <Skeleton width={120} height={20} borderRadius={4} />
+                    <Skeleton width={180} height={28} borderRadius={6} />
+                </View>
+                <Skeleton width={56} height={56} borderRadius={28} />
+            </View>
+
+            {/* Stats Cards */}
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Skeleton width="48%" height={100} borderRadius={16} />
+                <Skeleton width="48%" height={100} borderRadius={16} />
+            </View>
+
+            {/* Quick Actions */}
+            <View style={{ gap: 12 }}>
+                <Skeleton width={140} height={20} borderRadius={4} />
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <Skeleton width={70} height={70} borderRadius={16} />
+                    <Skeleton width={70} height={70} borderRadius={16} />
+                    <Skeleton width={70} height={70} borderRadius={16} />
+                    <Skeleton width={70} height={70} borderRadius={16} />
+                </View>
+            </View>
+
+            {/* Recent Activity / Menu */}
+            <View style={{ gap: 16, marginTop: 10 }}>
+                <Skeleton width="100%" height={150} borderRadius={16} />
+                <Skeleton width="100%" height={80} borderRadius={16} />
+            </View>
+        </View>
+    );
+};
+
+
+export const ProfileSkeleton = () => {
+    const { colors, isDark } = useThemeStore();
+    return (
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+            {/* Header / Avatar */}
+            <View style={{ alignItems: 'center', marginTop: 80, gap: 16 }}>
+                <Skeleton width={120} height={120} borderRadius={60} />
+                <Skeleton width={160} height={24} borderRadius={4} />
+                <Skeleton width={100} height={16} borderRadius={4} />
+            </View>
+
+            {/* Info Cards */}
+            <View style={{ padding: 20, gap: 16, marginTop: 20 }}>
+                {/* Basic Details Card */}
+                <View style={{ backgroundColor: colors.card, padding: 20, borderRadius: 16, gap: 16 }}>
+                    <Skeleton width={100} height={16} borderRadius={4} />
+                    <View style={{ gap: 12 }}>
+                        <Skeleton width="100%" height={20} borderRadius={4} />
+                        <Skeleton width="80%" height={20} borderRadius={4} />
+                        <Skeleton width="90%" height={20} borderRadius={4} />
+                    </View>
+                </View>
+
+                {/* Parent Details Card */}
+                <View style={{ backgroundColor: colors.card, padding: 20, borderRadius: 16, gap: 16 }}>
+                    <Skeleton width={120} height={16} borderRadius={4} />
+                    <View style={{ gap: 12 }}>
+                        <Skeleton width="100%" height={20} borderRadius={4} />
+                        <Skeleton width="70%" height={20} borderRadius={4} />
+                    </View>
+                </View>
+            </View>
+        </View>
+    );
+};
+
+export const SettingsSkeleton = () => {
+    const { colors, isDark } = useThemeStore();
+    return (
+        <View style={{ flex: 1, backgroundColor: colors.background, paddingHorizontal: 24, paddingTop: 40 }}>
+            {/* Header */}
+            <View style={{ marginBottom: 48, gap: 12 }}>
+                <Skeleton width={200} height={44} borderRadius={8} />
+                <Skeleton width="80%" height={20} borderRadius={4} />
+            </View>
+
+            {/* List items */}
+            <View style={{ gap: 30 }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                        <Skeleton width={48} height={48} borderRadius={24} />
+                        <View style={{ flex: 1, gap: 8 }}>
+                            <Skeleton width={140} height={18} borderRadius={4} />
+                            <Skeleton width="90%" height={14} borderRadius={4} />
+                        </View>
+                        <Skeleton width={50} height={30} borderRadius={15} />
+                    </View>
+                ))}
+            </View>
+        </View>
+    );
+};
+
+const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     card: {
         backgroundColor: colors.card,
         borderRadius: 16,

@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, withDelay } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoticeListSkeleton, StudentComplaintListSkeleton } from '../components/SkeletonLists';
 import { useRefresh } from '../hooks/useRefresh';
@@ -109,6 +110,32 @@ export default function Alerts() {
         return formatUniversalTime(date, { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
+    const SwingingBell = () => {
+        const rotation = useSharedValue(0);
+        useEffect(() => {
+            rotation.value = withRepeat(
+                withSequence(
+                    withTiming(-20, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(20, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(-10, { duration: 300, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(10, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(0, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withDelay(3000, withTiming(0, { duration: 0 }))
+                ), -1, false
+            );
+        }, []);
+
+        const bellStyle = useAnimatedStyle(() => ({
+            transform: [{ rotateZ: `${rotation.value}deg` }]
+        }));
+
+        return (
+            <Animated.View style={bellStyle}>
+                <MaterialCommunityIcons name="bell-sleep" size={48} color={textMuted} />
+            </Animated.View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -163,7 +190,7 @@ export default function Alerts() {
                                     </View>
                                 )) : (
                                     <View style={[styles.emptyState, { backgroundColor: cardBg, borderColor: borderSubtle }]}>
-                                        <MaterialCommunityIcons name="bell-sleep" size={48} color={textMuted} />
+                                        <SwingingBell />
                                         <AppText style={[styles.emptyText, { color: textMain }]}>No new notices</AppText>
                                     </View>
                                 )}

@@ -3,6 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Modal, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing, withRepeat, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -46,6 +47,55 @@ export default function LeaveRequestPage() {
     const qrBg = '#FFFFFF';
     const passBoxBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
+    const AnimatedDate = ({ date, textMainStyle }: { date: Date, textMainStyle: any }) => {
+        const flip = useSharedValue(0);
+        const [displayDate, setDisplayDate] = useState(date);
+
+        useEffect(() => {
+            if (date.getTime() !== displayDate.getTime()) {
+                flip.value = withSequence(
+                    withTiming(90, { duration: 150, easing: Easing.in(Easing.ease) }),
+                    withTiming(0, { duration: 0 }, () => {
+                        runOnJS(setDisplayDate)(date);
+                    }),
+                    withTiming(-90, { duration: 0 }),
+                    withTiming(0, { duration: 150, easing: Easing.out(Easing.ease) })
+                );
+            }
+        }, [date]);
+
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ rotateX: `${flip.value}deg` }] }));
+
+        return (
+            <Animated.View style={rStyle}>
+                <AppText style={[styles.inputText, textMainStyle]}>
+                    {formatUniversalTime(displayDate, { day: 'numeric', month: 'short', year: 'numeric' })}
+                </AppText>
+            </Animated.View>
+        );
+    };
+
+    const PackingSuitcase = ({ isComplete, isSubmitting }: { isComplete: boolean, isSubmitting: boolean }) => {
+        const shake = useSharedValue(0);
+        useEffect(() => {
+            if (isSubmitting) {
+                shake.value = withRepeat(withSequence(withTiming(-10, {duration: 50}), withTiming(10, {duration: 50})), 10, true, () => {
+                    shake.value = withTiming(0);
+                });
+            }
+        }, [isSubmitting]);
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ rotateZ: `${shake.value}deg` }] }));
+        
+        return (
+            <View style={{ position: 'absolute', right: 24, top: 0 }} pointerEvents="none">
+                <Animated.View style={[{ width: 80, height: 80, justifyContent: 'center', alignItems: 'center' }, rStyle]}>
+                    <MaterialCommunityIcons name={isSubmitting ? "bag-suitcase" : (isComplete ? "bag-personal" : "bag-suitcase-outline")} size={80} color="#3B82F6" />
+                    {isSubmitting && <Animated.View><MaterialCommunityIcons name="lock" size={24} color="#F59E0B" style={{ position: 'absolute', bottom: -5, right: -5 }} /></Animated.View>}
+                </Animated.View>
+            </View>
+        );
+    };
+
     const { refreshing, onRefresh } = useRefresh(async () => {
         await loadHistory();
     }, () => { setReason(''); setCategory(''); setStartDate(new Date()); setEndDate(new Date()); });
@@ -59,7 +109,7 @@ export default function LeaveRequestPage() {
                 const leaves = await getStudentLeaves(user.email);
                 setHistory(leaves);
             }
-        } catch (error) {}
+        } catch (error) { console.error(error); }
     };
 
     const handleSubmit = async () => {
@@ -95,9 +145,10 @@ export default function LeaveRequestPage() {
 
             <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />}>
-                    <View style={styles.hero}>
+                    <View style={[styles.hero, { position: 'relative' }]}>
                         <AppText style={[styles.heroTitle, { color: textMain }]}>Apply Leave</AppText>
                         <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Request time off</AppText>
+                        <PackingSuitcase isComplete={reason.length > 5 && category.length > 2} isSubmitting={loading} />
                     </View>
 
                     <View style={{ paddingHorizontal: 24 }}>
@@ -109,7 +160,7 @@ export default function LeaveRequestPage() {
                                     <AppText style={styles.label}>FROM DATE</AppText>
                                     <Pressable onPress={() => setShowStartPicker(true)} style={[styles.inputBox, { backgroundColor: inputBg, borderColor: inputBorder }]}>
                                         <MaterialCommunityIcons name="calendar" size={20} color={textMuted} />
-                                        <AppText style={[styles.inputText, { color: textMain }]}>{formatUniversalTime(startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                        <AnimatedDate date={startDate} textMainStyle={{ color: textMain }} />
                                     </Pressable>
                                     {showStartPicker && <DateTimePicker value={startDate} mode="date" display="default" onChange={onChangeStart} minimumDate={new Date()} />}
                                 </View>
@@ -118,7 +169,7 @@ export default function LeaveRequestPage() {
                                     <AppText style={styles.label}>TO DATE</AppText>
                                     <Pressable onPress={() => setShowEndPicker(true)} style={[styles.inputBox, { backgroundColor: inputBg, borderColor: inputBorder }]}>
                                         <MaterialCommunityIcons name="calendar" size={20} color={textMuted} />
-                                        <AppText style={[styles.inputText, { color: textMain }]}>{formatUniversalTime(endDate, { day: 'numeric', month: 'short', year: 'numeric' })}</AppText>
+                                        <AnimatedDate date={endDate} textMainStyle={{ color: textMain }} />
                                     </Pressable>
                                     {showEndPicker && <DateTimePicker value={endDate} mode="date" display="default" onChange={onChangeEnd} minimumDate={startDate} />}
                                 </View>

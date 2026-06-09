@@ -3,7 +3,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StudentNotification, clearStudentNotifications, subscribeToStudentNotifications } from '../../utils/notificationUtils';
 import { useTheme } from '../../utils/ThemeContext';
@@ -153,13 +154,14 @@ export default function StudentNotifications() {
             {loading ? (
                 <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
             ) : (
-                <FlatList
+                <FlashList
                     data={notifications}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
                     contentContainerStyle={{ padding: 20 }}
+                    estimatedItemSize={100}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchNotifications(); }} tintColor={colors.primary} />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>

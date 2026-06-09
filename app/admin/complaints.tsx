@@ -2,7 +2,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
+import { LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
+import { Image } from 'expo-image';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -21,7 +23,7 @@ export default function ComplaintsPage() {
   const router = useRouter();
   const { showAlert } = useAlert();
   const { openId } = useLocalSearchParams();
-  const flatListRef = useRef<FlatList<Complaint>>(null);
+  const listRef = useRef<FlashList<Complaint>>(null);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export default function ComplaintsPage() {
         console.log(`[Complaints] Scrolling and Expanding index: ${targetIndex} `);
 
         // Scroll
-        flatListRef.current?.scrollToIndex({
+        listRef.current?.scrollToIndex({
           index: targetIndex,
           animated: true,
           viewPosition: 0.1 // Scroll near top
@@ -306,6 +308,7 @@ export default function ComplaintsPage() {
                   <Image
                     source={{ uri: item.studentProfilePhoto.startsWith('http') ? item.studentProfilePhoto : `${API_BASE_URL}${item.studentProfilePhoto}` }}
                     style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
                   />
                 ) : (
                   <AppText style={[styles.studentInitial, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>
@@ -406,7 +409,8 @@ export default function ComplaintsPage() {
       <View style={{ alignItems: 'center', padding: 40 }}>
         <Image
           source={require('../../assets/images/empty-complaints.jpg')}
-          style={{ width: 220, height: 220, resizeMode: 'contain', marginBottom: 16 }}
+          style={{ width: 220, height: 220, marginBottom: 16 }}
+          contentFit="contain"
         />
         <AppText style={{ color: '#94A3B8', fontSize: 16, fontWeight: '600' }}>No complaints found</AppText>
       </View>
@@ -758,10 +762,11 @@ export default function ComplaintsPage() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['left', 'right', 'bottom']}>
-      <FlatList
-        ref={flatListRef}
+      <FlashList
+        ref={listRef}
         data={getFilteredComplaints()}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={120}
         renderItem={({ item }) => renderComplaintItem(item)}
         extraData={selectedId} // Ensure list updates when selectedId changes
         ListHeaderComponent={renderHeader}
@@ -769,12 +774,6 @@ export default function ComplaintsPage() {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
-        onScrollToIndexFailed={(info) => {
-          const wait = new Promise(resolve => setTimeout(resolve, 500));
-          wait.then(() => {
-            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-          });
-        }}
       />
     </SafeAreaView>
   );

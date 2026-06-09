@@ -2,6 +2,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, SectionList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VisitorPassModal from '../components/VisitorPassModal';
 import { useAlert } from '../context/AlertContext';
@@ -38,7 +39,7 @@ export default function MyVisitors() {
     useEffect(() => { loadVisitors(); }, []);
 
     async function loadVisitors() {
-        try { setLoading(true); const data = await getMyVisitors(); setVisitors(data); } catch (error) {} finally { setLoading(false); }
+        try { setLoading(true); const data = await getMyVisitors(); setVisitors(data); } catch (error) { console.error(error); } finally { setLoading(false); }
     }
 
     const handleCancelVisitor = (visitor: Visitor) => {
@@ -100,6 +101,25 @@ export default function MyVisitors() {
         </View>
     );
 
+    const AnimatedDoor = ({ isOpen }: { isOpen: boolean }) => {
+        const rotateY = useSharedValue(0);
+        useEffect(() => {
+            rotateY.value = withTiming(isOpen ? -75 : 0, { duration: 1200, easing: Easing.inOut(Easing.ease) });
+        }, [isOpen]);
+        
+        const rStyle = useAnimatedStyle(() => ({
+            transform: [{ perspective: 500 }, { translateX: -20 }, { rotateY: `${rotateY.value}deg` }, { translateX: 20 }]
+        }));
+        
+        return (
+            <View style={{ position: 'absolute', right: 32, top: 0, width: 40, height: 60, borderLeftWidth: 2, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#94A3B8' }} pointerEvents="none">
+                <Animated.View style={[{ width: '100%', height: '100%', backgroundColor: '#FDBA74' }, rStyle]}>
+                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#000', position: 'absolute', right: 5, top: 30 }} />
+                </Animated.View>
+            </View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -109,9 +129,10 @@ export default function MyVisitors() {
                 </Pressable>
             </View>
 
-            <View style={styles.hero}>
+            <View style={[styles.hero, { position: 'relative' }]}>
                 <AppText style={[styles.heroTitle, { color: textMain }]}>Visitors</AppText>
                 <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Manage your guests</AppText>
+                <AnimatedDoor isOpen={visitors.some(v => v.status === 'approved')} />
             </View>
 
             {loading ? (

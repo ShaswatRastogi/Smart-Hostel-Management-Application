@@ -2,7 +2,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
+import { LayoutAnimation, Platform, RefreshControl, StyleSheet, TouchableOpacity, UIManager, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -19,7 +21,7 @@ export default function LeaveRequestsPage() {
   const router = useRouter();
   const { showAlert } = useAlert();
   const { openId } = useLocalSearchParams();
-  const flatListRef = useRef<FlatList<LeaveRequest>>(null);
+  const listRef = useRef<FlashList<LeaveRequest>>(null);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
@@ -74,7 +76,7 @@ export default function LeaveRequestsPage() {
         console.log(`[Leaves] Scrolling and Expanding index: ${targetIndex}`);
 
         // Scroll
-        flatListRef.current?.scrollToIndex({
+        listRef.current?.scrollToIndex({
           index: targetIndex,
           animated: true,
           viewPosition: 0.1
@@ -704,10 +706,11 @@ export default function LeaveRequestsPage() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['left', 'right', 'bottom']}>
-      <FlatList
-        ref={flatListRef}
+      <FlashList
+        ref={listRef}
         data={getFilteredRequests()}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={120}
         renderItem={({ item }) => renderLeaveItem(item)}
         extraData={selectedId} // Ensure list updates when selectedId changes
         ListHeaderComponent={renderHeader}
@@ -715,12 +718,6 @@ export default function LeaveRequestsPage() {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
-        onScrollToIndexFailed={(info) => {
-          const wait = new Promise(resolve => setTimeout(resolve, 500));
-          wait.then(() => {
-            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-          });
-        }}
       />
     </SafeAreaView>
   );

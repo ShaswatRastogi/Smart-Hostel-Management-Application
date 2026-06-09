@@ -24,38 +24,38 @@ interface ThemeColors {
 }
 
 const lightColors: ThemeColors = {
-    background: '#F8FAFC',
+    background: '#FAFAFA', // Softer, warmer white
     card: '#FFFFFF',
-    text: '#0F172A',
-    textSecondary: '#64748B',
-    border: '#E2E8F0',
-    primary: '#004e92',
-    secondary: '#475569',
+    text: '#18181B', // Zinc-900 instead of harsh black
+    textSecondary: '#71717A', // Zinc-500
+    border: '#E4E4E7', // Zinc-200
+    primary: '#2563EB', // Modern Royal Blue
+    secondary: '#52525B', // Zinc-600
     accent: '#3B82F6',
     success: '#10B981',
     error: '#EF4444',
     warning: '#F59E0B',
     info: '#3B82F6',
-    inputBackground: '#F8FAFC',
-    icon: '#64748B',
-    shadow: '#64748B',
+    inputBackground: '#F4F4F5', // Zinc-100
+    icon: '#71717A',
+    shadow: '#A1A1AA',
 };
 
 const darkColors: ThemeColors = {
-    background: '#0F172A',
-    card: '#1E293B',
-    text: '#F8FAFC',
-    textSecondary: '#94A3B8',
-    border: '#334155',
-    primary: '#3B82F6',
-    secondary: '#94A3B8',
+    background: '#09090B', // Zinc-950 (Extremely deep, premium black)
+    card: '#18181B', // Zinc-900
+    text: '#FAFAFA', // Off-white, easier on eyes than pure white
+    textSecondary: '#A1A1AA', // Zinc-400
+    border: '#27272A', // Zinc-800
+    primary: '#3B82F6', 
+    secondary: '#A1A1AA',
     accent: '#60A5FA',
     success: '#34D399',
     error: '#F87171',
     warning: '#FBBF24',
     info: '#60A5FA',
-    inputBackground: '#020617',
-    icon: '#94A3B8',
+    inputBackground: '#18181B', // Zinc-900
+    icon: '#A1A1AA',
     shadow: '#000000',
 };
 

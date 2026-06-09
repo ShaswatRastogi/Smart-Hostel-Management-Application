@@ -1,4 +1,5 @@
 
+import { getSecureToken, setSecureToken, removeSecureToken } from './tokenStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -62,14 +63,14 @@ import { isAdmin } from './authUtils';
 
 export const deregisterPushToken = async () => {
     try {
-        const token = await AsyncStorage.getItem('userToken');
+        const token = await getSecureToken('userToken');
         if (token) {
             console.log("🔄 Deregistering Push Token for logout");
-            const devicePushToken = await AsyncStorage.getItem('devicePushToken');
+            const devicePushToken = await getSecureToken('devicePushToken');
             await api.post('/auth/push-token/remove', { pushToken: devicePushToken }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            await AsyncStorage.removeItem('devicePushToken');
+            await removeSecureToken('devicePushToken');
             console.log("✅ Push Token deregistered successfully");
         }
     } catch (error) {
@@ -255,7 +256,7 @@ export const usePushNotifications = () => {
                 try {
                     console.log(`🔄 [Push] Syncing Token for ${user.role}: ${user.name || 'User'} (attempt ${attempt})`);
                     await api.post('/auth/push-token', { pushToken: expoPushToken });
-                    await AsyncStorage.setItem('devicePushToken', expoPushToken);
+                    await setSecureToken('devicePushToken', expoPushToken);
                     console.log('✅ [Push] Token successfully saved/synced to backend');
                 } catch (err: any) {
                     const status = err.response ? err.response.status : 'Network Error';

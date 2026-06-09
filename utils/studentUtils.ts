@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken } from './tokenStorage';
 import api, { API_URL } from './api';
 
 export interface Student {
@@ -32,6 +32,18 @@ export interface Student {
     facilities?: any;
 }
 
+export const fetchStudentDetails = async (id: string | number) => {
+  try {
+    const token = await getSecureToken('userToken');
+    if (!token) throw new Error('No auth token');
+    const response = await api.get(`/students/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching student details:", error);
+    throw error;
+  }
+};
+
 
 
 /// ================= GET ALL =================
@@ -63,7 +75,7 @@ export const createStudent = async (studentData: any) => {
             (studentData?._parts && Array.isArray(studentData._parts))
         ) {
 
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await getSecureToken('userToken');
 
             const response = await fetch(`${API_URL}/students/allot`, {
                 method: 'POST',
@@ -123,7 +135,7 @@ export const updateStudent = async (id: string, updates: any) => {
             (updates?._parts && Array.isArray(updates._parts))
         ) {
 
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await getSecureToken('userToken');
 
             const response = await fetch(`${API_URL}/students/${id}`, {
                 method: 'PUT',

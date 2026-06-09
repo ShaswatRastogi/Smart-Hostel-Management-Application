@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
@@ -99,7 +100,7 @@ export default function ChatIndex() {
         c.studentName && c.studentName.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const renderItem = ({ item }: { item: Conversation }) => {
+    const ConversationItem = React.memo(({ item }: { item: Conversation }) => {
         const date = new Date(item.time);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         
@@ -137,7 +138,9 @@ export default function ChatIndex() {
                 </View>
             </TouchableOpacity>
         );
-    };
+    });
+
+    const renderItem = React.useCallback(({ item }: { item: Conversation }) => <ConversationItem item={item} />, []);
 
     if (!isUserAdmin) {
         return (
@@ -180,11 +183,12 @@ export default function ChatIndex() {
             {loading ? (
                 <View style={styles.loaderContainer}><ActivityIndicator size="large" color="#FFFFFF" /></View>
             ) : (
-                <FlatList 
+                <FlashList 
                     data={filteredConversations} 
                     renderItem={renderItem} 
                     keyExtractor={item => item.id.toString()} 
                     contentContainerStyle={styles.listContent} 
+                    estimatedItemSize={90}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" />} 
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>

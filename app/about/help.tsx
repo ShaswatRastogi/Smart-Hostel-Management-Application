@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutAnimation, Linking, Platform, ScrollView, StyleSheet, Pressable, UIManager, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/ThemeContext';
 import AppText from '../../components/AppText';
@@ -45,6 +46,29 @@ export default function HelpCenter() {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
+  const BouncingLifebuoy = () => {
+      const floatY = useSharedValue(0);
+
+      useEffect(() => {
+          floatY.value = withRepeat(
+              withSequence(
+                  withTiming(-10, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+                  withTiming(10, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+              ), -1, true
+          );
+      }, []);
+
+      const buoyStyle = useAnimatedStyle(() => ({
+          transform: [{ translateY: floatY.value }]
+      }));
+
+      return (
+          <Animated.View style={[{ position: 'absolute', right: 0, top: 0 }, buoyStyle]}>
+              <MaterialCommunityIcons name="lifebuoy" size={48} color="#EF4444" />
+          </Animated.View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -55,9 +79,10 @@ export default function HelpCenter() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>Help{"\n"}Center</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Find quick answers to common questions below, or reach out to our support team.</AppText>
+          <BouncingLifebuoy />
         </View>
 
         <View style={styles.section}>

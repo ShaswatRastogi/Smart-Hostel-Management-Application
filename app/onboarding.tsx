@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState, useEffect } from 'react';
-import { Dimensions, Pressable, StyleSheet, Switch, View, Image, Animated, Easing } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Switch, View, Animated, Easing } from 'react-native';
+import { Image } from 'expo-image';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/useAuthStore';
@@ -137,7 +138,7 @@ export default function Onboarding() {
                             <Image 
                                 source={require('../assets/smartstay_logo.png')} 
                                 style={styles.appIconImage} 
-                                resizeMode="cover"
+                                contentFit="cover"
                             />
                         ) : (
                             <MaterialCommunityIcons name={(slide.icon as any) || 'rocket-launch-outline'} size={100} color="#ffffff" />

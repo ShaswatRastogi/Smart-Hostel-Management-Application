@@ -2,6 +2,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '../../utils/authUtils';
 import { EmergencyContact, subscribeToContacts } from '../../utils/emergencySyncUtils';
@@ -79,6 +80,37 @@ export default function Emergency() {
     </View>
   );
 
+  const SosHeartbeat = () => {
+      const pulse = useSharedValue(0);
+      useEffect(() => {
+          pulse.value = withRepeat(
+              withSequence(
+                  withTiming(1, { duration: 800, easing: Easing.out(Easing.ease) }),
+                  withTiming(0, { duration: 1200, easing: Easing.in(Easing.ease) })
+              ), -1, false
+          );
+      }, []);
+
+      const ringStyle = useAnimatedStyle(() => ({
+          transform: [{ scale: interpolate(pulse.value, [0, 1], [1, 2.5], Extrapolation.CLAMP) }],
+          opacity: interpolate(pulse.value, [0, 1], [0.6, 0], Extrapolation.CLAMP)
+      }));
+      
+      const iconStyle = useAnimatedStyle(() => ({
+          transform: [{ scale: interpolate(pulse.value, [0, 0.2, 1], [1, 1.2, 1], Extrapolation.CLAMP) }]
+      }));
+
+      return (
+          <View style={[styles.heroIconWrap, { position: 'relative' }]}>
+              <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#EF4444', borderRadius: 26 }, ringStyle]} />
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: 26 }]} />
+              <Animated.View style={iconStyle}>
+                  <MaterialCommunityIcons name="alarm-light" size={28} color="#EF4444" />
+              </Animated.View>
+          </View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -99,9 +131,7 @@ export default function Emergency() {
             style={({ pressed }) => [styles.heroRow, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]}
             onPress={() => handleCall('112')}
           >
-            <View style={[styles.heroIconWrap, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <MaterialCommunityIcons name="alarm-light" size={28} color="#EF4444" />
-            </View>
+            <SosHeartbeat />
             <View style={styles.heroTextContent}>
               <AppText style={[styles.heroSosTitle, { color: '#EF4444' }]}>Call Security</AppText>
               <AppText style={styles.heroSosSubtitle}>Immediate Assistance</AppText>

@@ -2,7 +2,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -19,7 +20,7 @@ export default function ServiceRequestsPage() {
     const { showAlert } = useAlert();
     const { openId } = useLocalSearchParams();
     const [highlightedId, setHighlightedId] = useState<string | null>(null);
-    const flatListRef = React.useRef<FlatList<ServiceRequest>>(null);
+    const listRef = React.useRef<FlashList<ServiceRequest>>(null);
 
     const styles = React.useMemo(() => StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
@@ -119,7 +120,7 @@ export default function ServiceRequestsPage() {
             const index = requests.findIndex(r => r.id === openId);
             if (index !== -1) {
                 setTimeout(() => {
-                    flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+                    listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
                     setHighlightedId(openId as string);
                     setTimeout(() => setHighlightedId(null), 3000);
                 }, 500);
@@ -231,20 +232,15 @@ export default function ServiceRequestsPage() {
             </LinearGradient>
 
             {loading ? <ActivityIndicator size="large" color="#004e92" style={{ marginTop: 50 }} /> : (
-                <FlatList
-                    ref={flatListRef}
+                <FlashList
+                    ref={listRef}
                     data={requests}
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id}
+                    estimatedItemSize={250}
                     contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
                     ListEmptyComponent={<AppText style={styles.empty}>No requests found.</AppText>}
-                    onScrollToIndexFailed={(info) => {
-                        const wait = new Promise(resolve => setTimeout(resolve, 500));
-                        wait.then(() => {
-                            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-                        });
-                    }}
                 />
             )}
 

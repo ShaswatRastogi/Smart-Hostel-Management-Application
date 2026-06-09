@@ -7,7 +7,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../../components/AppText';
 import { useTheme } from '../../utils/ThemeContext';
 import { API_BASE_URL } from '../../utils/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken } from '../../utils/tokenStorage';
 import { formatUniversalTime } from '../../utils/timeUtils';
 import { Image } from 'expo-image';
 
@@ -32,7 +32,7 @@ export default function GuardScannerScreen() {
         setError(null);
 
         try {
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await getSecureToken('userToken');
             const res = await fetch(`${API_BASE_URL}/api/guard/verify-leave/${encodeURIComponent(data.trim())}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });

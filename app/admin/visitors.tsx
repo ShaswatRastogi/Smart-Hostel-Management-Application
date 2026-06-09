@@ -40,7 +40,7 @@ export default function AdminVisitors() {
     const { studentId, studentName, openId } = useLocalSearchParams();
 
     const flatListRef = useRef<FlatList>(null);
-    const visitorListRef = useRef<FlatList>(null);
+    const visitorListRef = useRef<FlashList<any>>(null);
     const { refreshing, onRefresh } = useRefresh(loadVisitors);
 
     useEffect(() => {
@@ -532,10 +532,11 @@ export default function AdminVisitors() {
         }
 
         return (
-            <FlatList
+            <FlashList
                 ref={tab === activeTab ? visitorListRef : undefined}
                 data={data}
                 keyExtractor={item => item.id.toString()}
+                estimatedItemSize={250}
                 contentContainerStyle={styles.visitorsList}
                 refreshControl={
                     <RefreshControl

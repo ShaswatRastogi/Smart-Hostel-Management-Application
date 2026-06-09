@@ -63,6 +63,8 @@ backend/*.log
 *.sqlite
 backend/src/database.db
 backend/backups/
+redis/
+redis.zip
 
 # Temporary files
 *_files.txt

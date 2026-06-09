@@ -3,7 +3,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Image, RefreshControl, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AlphabetJumpBar from '../../components/AlphabetJumpBar';
 import StudentDetailsModal from '../../components/StudentDetailsModal';
@@ -552,6 +553,7 @@ const AttendancePage = () => {
                                             <Image
                                                 source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }}
                                                 style={styles.avatar}
+                                                contentFit="cover"
                                             />
                                         ) : (
                                             <View style={styles.avatarPlaceholder}>

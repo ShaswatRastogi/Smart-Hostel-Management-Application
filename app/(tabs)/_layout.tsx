@@ -7,10 +7,11 @@ import {
 import { ParamListBase, TabNavigationState } from '@react-navigation/native';
 import { useRouter, useSegments, withLayoutContext } from 'expo-router';
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../utils/ThemeContext';
+import * as Haptics from 'expo-haptics';
 
 const { Navigator } = createMaterialTopTabNavigator();
 
@@ -43,12 +44,11 @@ const _layout = () => {
   const router = useRouter();
   const segments = useSegments();
 
-  const themeBg = isDark ? '#000000' : '#F8FAFC';
-  const tabBg = isDark ? '#000000' : '#FFFFFF';
+  const themeBg = isDark ? '#09090B' : '#FAFAFA';
   const tabActiveText = isDark ? '#FFFFFF' : '#111111';
   const tabInactiveText = isDark ? '#555555' : '#A1A1AA';
-  const tabShadow = isDark ? '#000000' : '#E2E8F0';
-  const tabBorder = isDark ? 'transparent' : 'rgba(0,0,0,0.05)';
+  const tabBorder = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  const solidTabBg = isDark ? '#111111' : '#FFFFFF';
 
   useEffect(() => {
     if (!isLoading) {
@@ -65,27 +65,33 @@ const _layout = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeBg }}>
+
       <MaterialTopTabs
         tabBarPosition="bottom"
+        screenListeners={{
+          state: (e) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
+        }}
         screenOptions={{
           tabBarActiveTintColor: tabActiveText,
           tabBarInactiveTintColor: tabInactiveText,
           tabBarStyle: {
-            backgroundColor: tabBg,
+            backgroundColor: solidTabBg,
             position: 'absolute',
-            bottom: 16,
-            left: 24,
-            right: 24,
+            bottom: 24,
+            left: 16,
+            right: 16,
             borderRadius: 32,
-            height: 60,
-            borderTopWidth: isDark ? 0 : 1,
-            borderWidth: isDark ? 0 : 1,
+            height: 64,
+            borderTopWidth: 0,
+            borderWidth: 1,
             borderColor: tabBorder,
             elevation: isDark ? 8 : 4,
-            shadowColor: tabShadow,
-            shadowOpacity: isDark ? 0.4 : 1,
-            shadowRadius: isDark ? 16 : 8,
+            shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
             justifyContent: 'center',
             paddingBottom: 0,
           },
@@ -94,12 +100,12 @@ const _layout = () => {
             backgroundColor: 'transparent',
           },
           tabBarLabelStyle: {
-            fontSize: 9,
-            fontWeight: '600',
+            fontSize: 10,
+            fontWeight: '700',
             textTransform: 'capitalize',
-            marginTop: -3,
-            marginBottom: 3,
-            letterSpacing: 0.2,
+            marginTop: 0,
+            marginBottom: 4,
+            letterSpacing: 0.5,
           },
           swipeEnabled: true,
           animationEnabled: true,
@@ -110,11 +116,7 @@ const _layout = () => {
           options={{
             title: 'Home',
             tabBarIcon: ({ focused, color }) => (
-              <MaterialCommunityIcons
-                name={focused ? 'home' : 'home-outline'}
-                size={24}
-                color={color}
-              />
+              <AnimatedIcon name={focused ? 'home' : 'home-outline'} focused={focused} color={color} />
             )
           }}
         />
@@ -152,5 +154,7 @@ const _layout = () => {
     </View>
   )
 }
+
+const styles = StyleSheet.create({});
 
 export default _layout

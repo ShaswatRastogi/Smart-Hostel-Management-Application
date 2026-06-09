@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -93,6 +94,41 @@ export default function DownloadData() {
     } catch (error: any) { showAlert('Export Failed', 'There was an error generating your data export. Please try again.', [], 'error'); } finally { setLoading(false); }
   };
 
+  const DroppingFiles = () => {
+      const dropY = useSharedValue(-20);
+      const dropOpacity = useSharedValue(0);
+
+      useEffect(() => {
+          if (loading) {
+              dropY.value = withRepeat(withTiming(20, { duration: 1000, easing: Easing.in(Easing.ease) }), -1, false);
+              dropOpacity.value = withRepeat(
+                  withSequence(
+                      withTiming(1, { duration: 200 }),
+                      withTiming(1, { duration: 600 }),
+                      withTiming(0, { duration: 200 })
+                  ), -1, false
+              );
+          } else {
+              dropY.value = -20;
+              dropOpacity.value = 0;
+          }
+      }, [loading]);
+
+      const rStyle = useAnimatedStyle(() => ({
+          transform: [{ translateY: dropY.value }],
+          opacity: dropOpacity.value
+      }));
+
+      return (
+          <View style={{ position: 'absolute', right: 0, top: 0, width: 64, height: 64, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="folder-download-outline" size={48} color={textMuted} />
+              <Animated.View style={[{ position: 'absolute', top: -10 }, rStyle]}>
+                  <MaterialCommunityIcons name="file-document" size={24} color="#10B981" />
+              </Animated.View>
+          </View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -103,9 +139,10 @@ export default function DownloadData() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>Download{"\n"}Data</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Select the categories below and we'll generate a downloadable copy of your data directly to your device.</AppText>
+          <DroppingFiles />
         </View>
 
         <View style={styles.section}>

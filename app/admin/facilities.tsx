@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import EditFooterModal from '../../components/EditFooterModal';
@@ -53,7 +54,7 @@ const MemoizedFacilityItem = React.memo(({ item, drag, isActive, handleEdit, han
                                     key={index}
                                     source={{ uri: img }}
                                     style={{ width: Dimensions.get('window').width - 42, height: 200 }} // width - padding (40) - border (2)
-                                    resizeMode="cover"
+                                    contentFit="cover"
                                 />
                             ))}
                         </ScrollView>
@@ -66,7 +67,7 @@ const MemoizedFacilityItem = React.memo(({ item, drag, isActive, handleEdit, han
                         )}
                     </View>
                 ) : (item.image_url) && (
-                    <Image source={{ uri: item.image_url }} style={styles.cardImage} resizeMode="cover" />
+                    <Image source={{ uri: item.image_url }} style={styles.cardImage} contentFit="cover" />
                 )}
                 <View style={styles.cardContent}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -593,7 +594,7 @@ export default function ManageFacilities() {
                                     </TouchableOpacity>
                                     {images.map((img, index) => (
                                         <View key={index} style={{ width: 120, height: 120, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-                                            <Image source={{ uri: img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                            <Image source={{ uri: img }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                                             <TouchableOpacity
                                                 style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 4 }}
                                                 onPress={() => removeImage(index)}

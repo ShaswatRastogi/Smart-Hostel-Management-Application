@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withSequence, interpolateColor } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -66,6 +67,32 @@ export default function ChangePassword() {
     </View>
   );
 
+  const isSecure = newPassword.length >= 6 && newPassword === confirmPassword;
+
+  const SnappingLock = () => {
+      const lockScale = useSharedValue(1);
+      const isLocked = useSharedValue(0);
+
+      useEffect(() => {
+          if (isSecure) {
+              lockScale.value = withSequence(withTiming(1.2, { duration: 150 }), withTiming(1, { duration: 150, easing: Easing.bounce }));
+              isLocked.value = withTiming(1, { duration: 300 });
+          } else {
+              isLocked.value = withTiming(0, { duration: 300 });
+          }
+      }, [isSecure]);
+
+      const rStyle = useAnimatedStyle(() => ({
+          transform: [{ scale: lockScale.value }]
+      }));
+
+      return (
+          <Animated.View style={[{ position: 'absolute', right: 0, top: 0 }, rStyle]}>
+              <MaterialCommunityIcons name={isSecure ? "lock" : "lock-open"} size={48} color={isSecure ? "#10B981" : textMuted} />
+          </Animated.View>
+      );
+  };
+
   return (
     <KeyboardAvoidingView style={[styles.container, { backgroundColor: themeBg }]} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
@@ -76,9 +103,10 @@ export default function ChangePassword() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>New{"\n"}Password</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Create a secure password with at least 6 characters.</AppText>
+          <SnappingLock />
         </View>
 
         <View style={styles.form}>

@@ -21,9 +21,6 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         const user = useAuthStore.getState().user;
         if (!user) return;
 
-        const token = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('userToken'));
-        if (!token) return;
-
         const endpoint = isAdmin(user)
             ? '/notifications/admin'
             : '/notifications/student';
@@ -47,7 +44,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         useNotificationStore.getState().fetchNotifications();
         pollingInterval = setInterval(() => {
             useNotificationStore.getState().fetchNotifications();
-        }, 10_000) as any;
+        }, 60_000) as any;
     },
 
     stopPolling: () => {

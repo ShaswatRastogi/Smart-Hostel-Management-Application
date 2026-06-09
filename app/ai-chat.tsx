@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sendChatMessage, ChatMessage } from '../utils/aiChat';
 import { useAuth } from '../context/AuthContext';
@@ -48,6 +49,29 @@ export default function AIChatScreen() {
         } finally { setIsLoading(false); }
     };
 
+    const PulsingAIBrain = () => {
+        const pulse = useSharedValue(0);
+        useEffect(() => {
+            pulse.value = withRepeat(
+                withSequence(
+                    withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(0, { duration: 800, easing: Easing.inOut(Easing.ease) })
+                ), -1, true
+            );
+        }, []);
+
+        const rStyle = useAnimatedStyle(() => ({
+            transform: [{ scale: interpolate(pulse.value, [0, 1], [0.9, 1.1], Extrapolation.CLAMP) }],
+            opacity: interpolate(pulse.value, [0, 1], [0.5, 1], Extrapolation.CLAMP)
+        }));
+
+        return (
+            <Animated.View style={[{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(59, 130, 246, 0.2)', justifyContent: 'center', alignItems: 'center' }, rStyle]}>
+                <MaterialCommunityIcons name="brain" size={18} color="#3B82F6" />
+            </Animated.View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: themeBg }]}>
             <StatusBar style={isDark ? "light" : "dark"} />
@@ -77,10 +101,10 @@ export default function AIChatScreen() {
                     {isLoading && (
                         <View style={styles.messageRow}>
                             <View style={styles.avatarWrap}>
-                                <MaterialCommunityIcons name="robot-outline" size={24} color={textMain} />
+                                <PulsingAIBrain />
                             </View>
-                            <View style={styles.messageContent}>
-                                <ActivityIndicator size="small" color={textMain} style={{ alignSelf: 'flex-start' }} />
+                            <View style={[styles.messageContent, { justifyContent: 'center', height: 32 }]}>
+                                <AppText style={[styles.messageText, { color: textMuted, fontStyle: 'italic', fontSize: 14 }]}>thinking...</AppText>
                             </View>
                         </View>
                     )}

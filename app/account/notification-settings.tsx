@@ -2,11 +2,13 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
 import api from '../../utils/api';
 import AppText from '../../components/AppText';
+import { SettingsSkeleton } from '../../components/SkeletonLists';
 
 const CATEGORIES = [
   { key: 'notices', icon: 'announcement', color: '#3B82F6', label: 'Hostel Notices', desc: 'Announcements, events, and news' },
@@ -44,7 +46,7 @@ export default function NotificationSettings() {
 
   const fetchPreferences = async () => {
     try { const response = await api.get('/notifications/preferences'); if (response.data) setPrefs((c: any) => ({ ...c, ...response.data })); }
-    catch (error) {} finally { setLoading(false); }
+    catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
   const savePreferences = async (updatedPrefs: any) => {
@@ -52,9 +54,34 @@ export default function NotificationSettings() {
     try { await api.post('/notifications/preferences', { preferences: updatedPrefs }); } catch (error) { showAlert('Error', 'Failed to save preferences.'); } finally { setSaving(false); }
   };
 
-  const togglePreference = (key: string) => { const newPrefs = { ...prefs, [key]: !prefs[key] }; setPrefs(newPrefs); savePreferences(newPrefs); };
+  const vibration = useSharedValue(0);
+  const triggerVibrate = () => {
+      vibration.value = withSequence(
+          withTiming(-10, { duration: 50, easing: Easing.linear }),
+          withTiming(10, { duration: 50, easing: Easing.linear }),
+          withTiming(-10, { duration: 50, easing: Easing.linear }),
+          withTiming(10, { duration: 50, easing: Easing.linear }),
+          withTiming(0, { duration: 50, easing: Easing.linear })
+      );
+  };
 
-  if (loading) return <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}><ActivityIndicator size="large" color={textMain} /></View>;
+  const phoneStyle = useAnimatedStyle(() => ({
+      transform: [{ rotateZ: `${vibration.value}deg` }]
+  }));
+
+  const togglePreference = (key: string) => { 
+      const newPrefs = { ...prefs, [key]: !prefs[key] }; 
+      setPrefs(newPrefs); 
+      savePreferences(newPrefs); 
+      if (key === 'master') triggerVibrate();
+  };
+
+  if (loading) return (
+      <View style={{ flex: 1, backgroundColor: themeBg }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SettingsSkeleton />
+      </View>
+  );
 
   const PreferenceItem = ({ icon, label, description, value, onValueChange, isMaster = false, customColor }: any) => (
     <View style={[styles.prefRow, { borderColor: borderSubtle }]}>
@@ -79,8 +106,11 @@ export default function NotificationSettings() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>Push{"\n"}Alerts</AppText>
+          <Animated.View style={[{ position: 'absolute', right: 0, top: 0 }, phoneStyle]}>
+              <MaterialCommunityIcons name={prefs.master !== false ? "cellphone-sound" : "cellphone-off"} size={48} color={prefs.master !== false ? "#10B981" : textMuted} />
+          </Animated.View>
           <View style={styles.subContainer}>
             <AppText style={[styles.heroSub, { color: textMuted }]}>Customize the alerts you receive on your device.</AppText>
             {saving && <View style={styles.savingBadge}><ActivityIndicator size="small" color="#10B981" /></View>}

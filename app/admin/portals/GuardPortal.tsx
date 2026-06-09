@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimatedGradientHeader from '../../../components/AnimatedGradientHeader';
 import { formatUniversalTime } from '../../../utils/timeUtils';
 import { API_BASE_URL } from '../../../utils/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken } from '../../../utils/tokenStorage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -56,7 +56,7 @@ export default function GuardPortal(props: any) {
     const fetchStats = useCallback(async () => {
         try {
             setLoadingStats(true);
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await getSecureToken('userToken');
             const response = await fetch(`${API_BASE_URL}/api/guard/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });

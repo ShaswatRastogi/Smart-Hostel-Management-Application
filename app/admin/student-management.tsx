@@ -2,7 +2,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { isAdmin, useUser } from '../../utils/authUtils';
@@ -195,11 +196,11 @@ export default function StudentManagementPage() {
                 </View>
             </LinearGradient>
 
-            <FlatList
+            <FlashList
                 data={filteredItems}
                 keyExtractor={item => item.id}
                 numColumns={COLUMN_count}
-                columnWrapperStyle={{ justifyContent: 'space-between' }}
+                estimatedItemSize={140}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (

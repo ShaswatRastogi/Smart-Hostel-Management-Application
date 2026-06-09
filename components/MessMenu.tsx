@@ -96,7 +96,7 @@ export default function MessMenu({ initialDay, highlightTarget }: MessMenuProps)
         }
       });
       setFullMenu(formattedMenu);
-    } catch (error) {} finally { setLoading(false); }
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchMenu(); }, []);

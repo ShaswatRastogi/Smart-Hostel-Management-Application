@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, withDelay } from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 // Mock Razorpay to bypass New Architecture native crash
 const RazorpayCheckout = { open: (options: any) => new Promise((resolve, reject) => { setTimeout(() => { resolve({ razorpay_order_id: options.order_id, razorpay_payment_id: 'pay_mock' + Math.random().toString().slice(2, 10), razorpay_signature: 'mock_signature' }); }, 1500); }) };
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,7 +37,7 @@ export default function PaymentsPage() {
             if (user) setDues(user.dues || 0);
             const historyRes = await api.get('/payments/history');
             setHistory(historyRes.data);
-        } catch (error) {}
+        } catch (error) { console.error(error); }
     };
 
     const handlePay = async () => {
@@ -54,6 +56,40 @@ export default function PaymentsPage() {
         } catch (error) { showAlert('Error', 'Failed to initiate payment.', [], 'error'); } finally { setLoading(false); }
     };
 
+    const DroppingCoin = ({ hasDues }: { hasDues: boolean }) => {
+        if (!hasDues) return null;
+        const bounce = useSharedValue(-50);
+        const opacity = useSharedValue(0);
+
+        useEffect(() => {
+            bounce.value = withRepeat(
+                withSequence(
+                    withTiming(0, { duration: 600, easing: Easing.bounce }),
+                    withDelay(1000, withTiming(-50, { duration: 400, easing: Easing.out(Easing.ease) }))
+                ), -1, false
+            );
+            opacity.value = withRepeat(
+                withSequence(
+                    withTiming(1, { duration: 200 }),
+                    withDelay(1400, withTiming(0, { duration: 200 }))
+                ), -1, false
+            );
+        }, []);
+
+        const rStyle = useAnimatedStyle(() => ({
+            transform: [{ translateY: bounce.value }],
+            opacity: opacity.value
+        }));
+
+        return (
+            <Animated.View style={[{ position: 'absolute', right: 0, top: 10 }, rStyle]} pointerEvents="none">
+                <View style={{ backgroundColor: '#FEF3C7', borderRadius: 24, padding: 4, borderWidth: 2, borderColor: '#F59E0B' }}>
+                    <MaterialCommunityIcons name="currency-inr" size={32} color="#F59E0B" />
+                </View>
+            </Animated.View>
+        );
+    };
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: themeBg }} edges={['top']}>
             <ScrollView contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />}>
@@ -61,10 +97,11 @@ export default function PaymentsPage() {
                     <AppText style={[styles.heroTitle, { color: textMain }]}>Payments{"\n"}& Dues</AppText>
                 </View>
 
-                <View style={styles.duesSection}>
+                <View style={[styles.duesSection, { position: 'relative' }]}>
                     <AppText style={styles.duesLabel}>CURRENT DUES</AppText>
                     <AppText style={[styles.amount, { color: dues > 0 ? '#EF4444' : '#10B981' }]}>₹{dues.toLocaleString()}</AppText>
                     <AppText style={styles.status}>{dues > 0 ? 'Payment Pending' : 'All Clear'}</AppText>
+                    <DroppingCoin hasDues={dues > 0} />
                 </View>
 
                 <Pressable style={({ pressed }) => [styles.payBtn, { backgroundColor: primaryBtnBg }, dues <= 0 && { opacity: 0.5 }, pressed && dues > 0 && { opacity: 0.8 }]} onPress={handlePay} disabled={dues <= 0 || loading}>

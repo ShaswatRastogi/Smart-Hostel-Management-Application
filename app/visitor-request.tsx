@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, withDelay } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { formatUniversalTime } from '../utils/timeUtils';
@@ -62,6 +63,32 @@ export default function VisitorRequest() {
     const formatDate = (date: Date) => formatUniversalTime(date, { day: 'numeric', month: 'short', year: 'numeric' });
     const formatTime = (date: Date) => formatUniversalTime(date, { hour: '2-digit', minute: '2-digit', hour12: true });
 
+    const SigningPen = () => {
+        const wiggle = useSharedValue(0);
+        useEffect(() => {
+            wiggle.value = withRepeat(
+                withSequence(
+                    withTiming(-10, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(10, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(-5, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(5, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(0, { duration: 150, easing: Easing.inOut(Easing.ease) }),
+                    withDelay(2000, withTiming(0, { duration: 0 }))
+                ), -1, false
+            );
+        }, []);
+
+        const penStyle = useAnimatedStyle(() => ({
+            transform: [{ rotateZ: `${wiggle.value}deg` }, { translateX: wiggle.value / 2 }]
+        }));
+
+        return (
+            <Animated.View style={[{ position: 'absolute', right: 24, top: -10 }, penStyle]}>
+                <MaterialCommunityIcons name="fountain-pen-tip" size={40} color="#3B82F6" style={{ transform: [{ rotate: '45deg' }] }} />
+            </Animated.View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -73,9 +100,10 @@ export default function VisitorRequest() {
 
             <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} style={{ flex: 1 }}>
                 <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 80, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-                    <View style={styles.hero}>
+                    <View style={[styles.hero, { position: 'relative' }]}>
                         <AppText style={[styles.heroTitle, { color: textMain }]}>Register Visitor</AppText>
                         <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Submit details for approval</AppText>
+                        <SigningPen />
                     </View>
 
                     <View style={styles.formContainer}>

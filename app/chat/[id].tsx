@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StudentDetailsModal from '../../components/StudentDetailsModal';
 import { useAlert } from '../../context/AlertContext';
@@ -34,7 +35,7 @@ export default function ChatScreen() {
     const [loading, setLoading] = useState(true);
     const [isPartnerTyping, setIsPartnerTyping] = useState(false);
     const [realConversationId, setRealConversationId] = useState<string | null>(null);
-    const flatListRef = React.useRef<FlatList>(null);
+    const flashListRef = React.useRef<FlashList<any>>(null);
     const typingTimeoutRef = React.useRef<any>(null);
 
     // Dynamic Theme Map
@@ -136,7 +137,7 @@ export default function ChatScreen() {
 
     const processedMessages = React.useMemo(() => processMessages(messages), [messages]);
 
-    const renderMessage = ({ item, index }: { item: any, index: number }) => {
+    const MessageItem = React.memo(({ item, index }: { item: any, index: number }) => {
         if (item.type === 'day') return <View style={styles.dateSeparator}><AppText style={styles.dateText}>{item.date.toUpperCase()}</AppText></View>;
 
         const isMe = item.user._id === currentUserId;
@@ -165,7 +166,11 @@ export default function ChatScreen() {
                 </View>
             </View>
         );
-    };
+    });
+
+    const renderMessage = React.useCallback(({ item, index }: { item: any, index: number }) => {
+        return <MessageItem item={item} index={index} />;
+    }, [processedMessages, currentUserId, myBubbleBg, myBubbleText, myTimeText, otherBubbleBg, otherBubbleText, otherTimeText, borderSubtle, isDark]);
 
     const getStatusText = () => {
         if (partnerStatus.online) return 'Online';
@@ -204,13 +209,13 @@ export default function ChatScreen() {
                 {loading ? (
                     <View style={styles.loadingContainer}><ActivityIndicator size="large" color={textMain} /></View>
                 ) : (
-                    <FlatList
-                        ref={flatListRef}
+                    <FlashList
+                        ref={flashListRef}
                         data={processedMessages}
                         renderItem={renderMessage}
                         keyExtractor={item => item._id}
                         inverted
-                        style={{ flex: 1 }}
+                        estimatedItemSize={70}
                         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20, paddingTop: 24 }}
                         showsVerticalScrollIndicator={false}
                     />

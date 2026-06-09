@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '../../utils/api';
 import { isAdmin, useUser } from '../../utils/authUtils';
@@ -41,7 +42,7 @@ export default function NewChatScreen() {
         router.replace({ pathname: '/chat/[id]', params: { id: student.id.toString(), name: student.name } });
     };
 
-    const renderItem = ({ item }: { item: any }) => (
+    const StudentItem = React.memo(({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.contactRow}
             onPress={() => handleSelectStudent(item)}
@@ -67,7 +68,9 @@ export default function NewChatScreen() {
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#666666" />
         </TouchableOpacity>
-    );
+    ));
+
+    const renderItem = React.useCallback(({ item }: { item: any }) => <StudentItem item={item} />, []);
 
     return (
         <View style={styles.container}>
@@ -94,13 +97,14 @@ export default function NewChatScreen() {
                 </View>
             </View>
 
-            <FlatList
+            <FlashList
                 style={{ flex: 1 }}
                 data={filteredStudents}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                estimatedItemSize={80}
                 ListEmptyComponent={
                     !loading ? (
                         <View style={styles.emptyState}>

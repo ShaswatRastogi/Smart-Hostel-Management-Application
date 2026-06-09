@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withSequence, withRepeat } from 'react-native-reanimated';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MessAttendanceCard from '../components/MessAttendanceCard';
@@ -14,6 +15,43 @@ export default function Mess() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { isDark } = useTheme();
+
+  const AnimatedCloche = () => {
+      const clocheY = useSharedValue(0);
+      const steamOpacity = useSharedValue(0);
+      
+      useEffect(() => {
+          setTimeout(() => {
+              clocheY.value = withTiming(-80, { duration: 1000, easing: Easing.out(Easing.ease) });
+              setTimeout(() => {
+                  steamOpacity.value = withRepeat(
+                      withSequence(
+                          withTiming(0.8, { duration: 1000 }),
+                          withTiming(0.1, { duration: 1000 })
+                      ), -1, true
+                  );
+              }, 800);
+          }, 600);
+      }, []);
+      
+      const clocheStyle = useAnimatedStyle(() => ({ transform: [{ translateY: clocheY.value }] }));
+      const steamStyle = useAnimatedStyle(() => ({ opacity: steamOpacity.value }));
+      
+      return (
+          <View style={{ position: 'absolute', right: 24, top: 10, width: 80, height: 80 }} pointerEvents="none">
+              {/* Plate */}
+              <MaterialCommunityIcons name="silverware-fork-knife" size={60} color="#FDBA74" style={{ position: 'absolute', bottom: 10, left: 10 }} />
+              {/* Steam */}
+              <Animated.View style={[{ position: 'absolute', bottom: 40, left: 20 }, steamStyle]}>
+                  <MaterialCommunityIcons name="weather-windy" size={30} color="#FDBA74" style={{ transform: [{ rotate: '-90deg' }] }} />
+              </Animated.View>
+              {/* Cloche */}
+              <Animated.View style={[{ position: 'absolute', bottom: 0, left: -5, zIndex: 10 }, clocheStyle]}>
+                  <MaterialCommunityIcons name="room-service" size={90} color="#94A3B8" />
+              </Animated.View>
+          </View>
+      );
+  };
 
   const [activeTab, setActiveTab] = useState(0);
   const pagerRef = useRef<PagerView>(null);
@@ -50,9 +88,10 @@ export default function Mess() {
         </Pressable>
       </View>
 
-      <View style={styles.hero}>
+      <View style={[styles.hero, { position: 'relative' }]}>
         <AppText style={[styles.heroTitle, { color: textMain }]}>Mess Hall</AppText>
         <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Attendance & Menu</AppText>
+        <AnimatedCloche />
       </View>
 
       <View style={[styles.tabContainer, { borderColor: borderSubtle }]}>

@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -76,6 +77,59 @@ export default function ManageDevices() {
   const currentSession = sessions.find(s => s.is_current);
   const otherSessions = sessions.filter(s => !s.is_current);
 
+  const RadarPing = () => {
+      const pulse = useSharedValue(0);
+      useEffect(() => { pulse.value = withRepeat(withTiming(1, { duration: 1500, easing: Easing.out(Easing.ease) }), -1, false); }, []);
+      const rStyle = useAnimatedStyle(() => ({
+          transform: [{ scale: interpolate(pulse.value, [0, 1], [1, 2], Extrapolation.CLAMP) }],
+          opacity: interpolate(pulse.value, [0, 1], [0.5, 0], Extrapolation.CLAMP)
+      }));
+      return <Animated.View style={[StyleSheet.absoluteFillObject, { borderRadius: 24, backgroundColor: '#10B981', zIndex: -1 }, rStyle]} />;
+  };
+
+  const VaporizingRow = ({ session, onTerminate }: { session: DeviceSession, onTerminate: (id: string) => void }) => {
+      const opacity = useSharedValue(1);
+      const scale = useSharedValue(1);
+
+      const triggerVaporize = () => {
+          showAlert('Terminate Session', 'Are you sure you want to log out of this device?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Logout', style: 'destructive', onPress: async () => {
+                scale.value = withTiming(1.05, { duration: 150 });
+                opacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) }, () => {
+                    runOnJS(onTerminate)(session.id);
+                });
+            }}
+          ]);
+      };
+
+      const rStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ scale: scale.value }] }));
+
+      return (
+          <Animated.View style={[styles.deviceRow, { borderColor: borderSubtle }, rStyle]}>
+              <View style={[styles.devIconWrapInactive, { backgroundColor: inactiveDevIconBg }]}>
+                  <MaterialCommunityIcons name={session.device_name.includes('Web') ? 'laptop' : 'cellphone'} size={24} color={inactiveDevIcon} />
+              </View>
+              <View style={styles.devInfo}>
+                  <AppText style={[styles.devName, { color: textMain }]}>{session.device_name}</AppText>
+                  <AppText style={[styles.devMeta, { color: textMuted }]}>{session.location} • {session.app_version}</AppText>
+              </View>
+              <Pressable onPress={triggerVaporize} style={({ pressed }) => [styles.termIconBtn, pressed && { opacity: 0.5 }]}>
+                  <MaterialCommunityIcons name="close" size={24} color={textMuted} />
+              </Pressable>
+          </Animated.View>
+      );
+  };
+
+  const handleConfirmedTerminate = async (sessionId: string) => {
+      try { 
+          const { default: api } = await import('../../utils/api'); 
+          await api.delete(`/auth/sessions/${sessionId}`); 
+          setSessions(prev => prev.filter(s => s.id !== sessionId)); 
+          showAlert('Success', 'Session terminated successfully');
+      } catch (e) { showAlert('Error', 'Failed to terminate session'); }
+  };
+
   if (loading) return <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}><ActivityIndicator size="large" color={textMain} /></View>;
 
   return (
@@ -98,6 +152,7 @@ export default function ManageDevices() {
             <AppText style={styles.secTitle}>CURRENT DEVICE</AppText>
             <View style={[styles.deviceRow, { borderColor: borderSubtle }]}>
               <View style={styles.devIconWrap}>
+                <RadarPing />
                 <MaterialCommunityIcons name={currentSession.device_name.includes('Web') ? 'laptop' : 'cellphone'} size={24} color="#10B981" />
               </View>
               <View style={styles.devInfo}>
@@ -116,18 +171,7 @@ export default function ManageDevices() {
           <View style={[styles.section, { marginTop: 16 }]}>
             <AppText style={styles.secTitle}>OTHER SESSIONS</AppText>
             {otherSessions.map((session) => (
-              <View key={session.id} style={[styles.deviceRow, { borderColor: borderSubtle }]}>
-                <View style={[styles.devIconWrapInactive, { backgroundColor: inactiveDevIconBg }]}>
-                  <MaterialCommunityIcons name={session.device_name.includes('Web') ? 'laptop' : 'cellphone'} size={24} color={inactiveDevIcon} />
-                </View>
-                <View style={styles.devInfo}>
-                  <AppText style={[styles.devName, { color: textMain }]}>{session.device_name}</AppText>
-                  <AppText style={[styles.devMeta, { color: textMuted }]}>{session.location} • {session.app_version}</AppText>
-                </View>
-                <Pressable onPress={() => handleLogoutOther(session.id)} style={({ pressed }) => [styles.termIconBtn, pressed && { opacity: 0.5 }]}>
-                  <MaterialCommunityIcons name="close" size={24} color={textMuted} />
-                </Pressable>
-              </View>
+              <VaporizingRow key={session.id} session={session} onTerminate={handleConfirmedTerminate} />
             ))}
 
             <Pressable style={({ pressed }) => [styles.termAllBtn, { backgroundColor: primaryBtnBg }, pressed && { transform: [{ scale: 0.98 }] }]} onPress={handleLogoutAllOther}>

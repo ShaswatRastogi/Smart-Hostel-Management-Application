@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -83,11 +84,18 @@ export default function DataStorage() {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  const vacuumX = useSharedValue(0);
   const handleClearCache = () => {
     showAlert('Clear Cache', 'This will remove all cached data. Your account data will be preserved.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Clear', style: 'destructive', onPress: async () => {
         setClearing(true);
+        vacuumX.value = withSequence(
+            withTiming(20, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-20, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+            withTiming(20, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0, { duration: 200, easing: Easing.inOut(Easing.ease) })
+        );
         try {
           const keysToKeep = ['userToken', 'user', 'app_theme', 'app_language', 'app_country', 'auto_download_wifi', 'auto_download_mobile', 'data_saver'];
           const allKeys = await AsyncStorage.getAllKeys();
@@ -121,6 +129,10 @@ export default function DataStorage() {
       }}
     ]);
   };
+
+  const vacuumStyle = useAnimatedStyle(() => ({
+      transform: [{ translateX: vacuumX.value }]
+  }));
 
   if (loading) return <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}><ActivityIndicator size="large" color={textMain} /></View>;
 
@@ -173,9 +185,9 @@ export default function DataStorage() {
         <View style={styles.section}>
           <AppText style={styles.secTitle}>MANAGE STORAGE</AppText>
           <Pressable style={({ pressed }) => [styles.actionRow, { borderColor: borderSubtle }, pressed && { backgroundColor: pressedBg }]} onPress={handleClearCache}>
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }]}>
+            <Animated.View style={[styles.actionIcon, { backgroundColor: 'rgba(16,185,129,0.1)' }, vacuumStyle]}>
               <MaterialCommunityIcons name="broom" size={24} color="#10B981" />
-            </View>
+            </Animated.View>
             <View style={styles.actionInfo}>
               <AppText style={[styles.actionLabel, { color: textMain }]}>Clear App Cache</AppText>
               <AppText style={[styles.actionDesc, { color: textMuted }]}>Free up space by removing temporary files</AppText>

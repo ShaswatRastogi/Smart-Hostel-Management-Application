@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View, Dimensions } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../context/AlertContext';
 import { useRefresh } from '../hooks/useRefresh';
@@ -12,6 +14,42 @@ import { useTheme } from '../utils/ThemeContext';
 import AppText from '../components/AppText';
 
 export default function RoomService() {
+    const SweepingBroom = () => {
+        const broomX = useSharedValue(-50);
+        const broomRotate = useSharedValue(0);
+
+        useEffect(() => {
+            broomX.value = withRepeat(
+                withSequence(
+                    withTiming(Dimensions.get('window').width + 50, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(-50, { duration: 0 }),
+                    withTiming(-50, { duration: 7000 })
+                ),
+                -1,
+                false
+            );
+
+            broomRotate.value = withRepeat(
+                withSequence(
+                    withTiming(-20, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(20, { duration: 400, easing: Easing.inOut(Easing.ease) })
+                ),
+                -1,
+                true
+            );
+        }, []);
+
+        const broomStyle = useAnimatedStyle(() => ({
+            transform: [{ translateX: broomX.value }, { rotate: `${broomRotate.value}deg` }]
+        }));
+
+        return (
+            <Animated.View style={[{ position: 'absolute', bottom: -5, left: 0, opacity: 0.15, zIndex: 0 }, broomStyle]} pointerEvents="none">
+                <MaterialCommunityIcons name="broom" size={100} color="#EAB308" />
+            </Animated.View>
+        );
+    };
+
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { showAlert } = useAlert();
@@ -83,9 +121,10 @@ export default function RoomService() {
             </View>
 
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textMain} />} showsVerticalScrollIndicator={false}>
-                <View style={styles.hero}>
-                    <AppText style={[styles.heroTitle, { color: textMain }]}>Services</AppText>
-                    <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Housekeeping & Maintenance</AppText>
+                <View style={[styles.hero, { position: 'relative', overflow: 'hidden' }]}>
+                    <AppText style={[styles.heroTitle, { color: textMain, zIndex: 1 }]}>Services</AppText>
+                    <AppText style={[styles.heroSubtitle, { color: textMuted, zIndex: 1 }]}>Housekeeping & Maintenance</AppText>
+                    <SweepingBroom />
                 </View>
 
                 <View style={{ paddingHorizontal: 24 }}>
@@ -143,7 +182,8 @@ export default function RoomService() {
             </ScrollView>
 
             <Modal transparent animationType="fade" visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.modalOverlay, { backgroundColor: modalOverlay }]}>
+                <BlurView intensity={isDark ? 40 : 60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)' }]}>
                     <View style={[styles.modalContainer, { backgroundColor: modalBg, borderColor: borderSubtle }]}>
                         <AppText style={[styles.modalTitle, { color: textMain }]}>Request {selectedService?.name}</AppText>
                         <AppText style={[styles.modalSubtitle, { color: textMuted }]}>Add a description (optional)</AppText>

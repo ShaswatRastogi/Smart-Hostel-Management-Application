@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import api from '../../utils/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,6 +65,33 @@ export default function LinkedAccounts() {
     }
   };
 
+  const isGoogleLinked = services.find(s => s.id === 'google')?.linked || false;
+
+  const ConnectingChains = () => {
+      const link1X = useSharedValue(-10);
+      const link2X = useSharedValue(10);
+
+      useEffect(() => {
+          if (isGoogleLinked) {
+              link1X.value = withTiming(2, { duration: 500, easing: Easing.bounce });
+              link2X.value = withTiming(-2, { duration: 500, easing: Easing.bounce });
+          } else {
+              link1X.value = withTiming(-10, { duration: 500 });
+              link2X.value = withTiming(10, { duration: 500 });
+          }
+      }, [isGoogleLinked]);
+
+      const style1 = useAnimatedStyle(() => ({ transform: [{ translateX: link1X.value }] }));
+      const style2 = useAnimatedStyle(() => ({ transform: [{ translateX: link2X.value }] }));
+
+      return (
+          <View style={{ position: 'absolute', right: 0, top: 0, flexDirection: 'row', alignItems: 'center' }}>
+              <Animated.View style={style1}><MaterialCommunityIcons name="link-variant" size={32} color={isGoogleLinked ? "#10B981" : textMuted} style={{ transform: [{ rotate: '45deg' }] }} /></Animated.View>
+              <Animated.View style={style2}><MaterialCommunityIcons name="link-variant" size={32} color={isGoogleLinked ? "#EA4335" : textMuted} style={{ transform: [{ rotate: '45deg' }] }} /></Animated.View>
+          </View>
+      );
+  };
+
   if (loading) return <View style={[styles.loadingContainer, { backgroundColor: themeBg }]}><ActivityIndicator size="large" color={textMain} /></View>;
 
   return (
@@ -76,9 +104,10 @@ export default function LinkedAccounts() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>Linked{"\n"}Accounts</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Manage external accounts linked to your profile for faster, alternative sign-in methods.</AppText>
+          <ConnectingChains />
         </View>
 
         <View style={styles.section}>

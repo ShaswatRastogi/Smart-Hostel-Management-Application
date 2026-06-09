@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withSequence, interpolateColor } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -37,8 +38,17 @@ export default function AppLanguage() {
   const handleSelect = async (id: string) => {
     setSelectedLang(id);
     await AsyncStorage.setItem('app_language', id);
+    triggerGlobeSpin();
     showAlert('Language Updated', `The app language has been set to ${LANGUAGES.find(l => l.id === id)?.name}. Some translations will apply upon restart.`, [], 'success');
   };
+
+  const globeRotation = useSharedValue(0);
+  const triggerGlobeSpin = () => {
+      globeRotation.value = withTiming(globeRotation.value + 360, { duration: 800, easing: Easing.out(Easing.cubic) });
+  };
+  const globeStyle = useAnimatedStyle(() => ({
+      transform: [{ rotate: `${globeRotation.value}deg` }]
+  }));
 
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
@@ -50,9 +60,12 @@ export default function AppLanguage() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>App{"\n"}Language</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Select your preferred language for the application interface.</AppText>
+          <Animated.View style={[{ position: 'absolute', right: 0, top: 0 }, globeStyle]}>
+              <MaterialCommunityIcons name="earth" size={48} color={textMuted} />
+          </Animated.View>
         </View>
 
         <View style={styles.section}>

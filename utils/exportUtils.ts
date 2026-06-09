@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken } from './tokenStorage';
 import axios from 'axios';
 import { Alert } from 'react-native';
 import { API_BASE_URL } from './api';
@@ -24,7 +24,7 @@ export interface ExportOptions {
  * Get auth token from AsyncStorage
  */
 const getAuthToken = async (): Promise<string | null> => {
-  return await AsyncStorage.getItem('userToken');
+  return await getSecureToken('userToken');
 };
 
 /**

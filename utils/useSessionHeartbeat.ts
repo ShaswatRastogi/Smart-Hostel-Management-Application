@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Alert, AppState, AppStateStatus } from 'react-native';
 
-const HEARTBEAT_INTERVAL_MS = 10 * 1000; // 10 seconds
+const HEARTBEAT_INTERVAL_MS = 60 * 1000; // 60 seconds
 
 /**
  * Performs a forced logout — clears all local auth state and navigates to login.
@@ -9,13 +9,13 @@ const HEARTBEAT_INTERVAL_MS = 10 * 1000; // 10 seconds
  */
 async function forceLogout() {
   try {
-    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+    const { removeSecureToken } = await import('./tokenStorage');
     const { setStoredUser } = await import('./authUtils');
     const { useAuthStore } = await import('../store/useAuthStore');
     const { router } = await import('expo-router');
     await setStoredUser(null);
-    await AsyncStorage.removeItem('userToken');
-    await AsyncStorage.removeItem('refreshToken');
+    await removeSecureToken('userToken');
+    await removeSecureToken('refreshToken');
     useAuthStore.getState().setUser(null);
     Alert.alert(
       'Session Ended',
@@ -39,10 +39,10 @@ export function useSessionHeartbeat() {
 
   const sendHeartbeat = async () => {
     try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const { getSecureToken } = await import('./tokenStorage');
       const { default: api } = await import('./api');
-      const refreshToken = await AsyncStorage.getItem('refreshToken');
-      const userToken = await AsyncStorage.getItem('userToken');
+      const refreshToken = await getSecureToken('refreshToken');
+      const userToken = await getSecureToken('userToken');
       if (refreshToken && userToken) {
         const response = await api.post('/auth/sessions/heartbeat', { refreshToken });
         // If the session was terminated by another device, force logout

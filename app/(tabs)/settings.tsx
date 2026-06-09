@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS, withRepeat, withSequence } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { API_BASE_URL } from '../../utils/api';
@@ -30,28 +31,44 @@ export default function Settings() {
   const btnBg = isDark ? '#FFFFFF' : '#111111';
   const btnText = isDark ? '#000000' : '#FFFFFF';
 
-  const SettingRow = ({ icon, label, description, onPress, value, danger, isLast }: any) => (
-    <Pressable
-      style={({ pressed }) => [styles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: borderSubtle }, pressed && { opacity: 0.7, backgroundColor: pressedBg }]}
-      onPress={onPress}
-      disabled={!onPress}
-    >
-      <View style={styles.rowLeft}>
-        <View style={[styles.iconBox, { backgroundColor: iconBoxBg, borderColor: iconBoxBorder }]}>
-          <MaterialCommunityIcons name={icon} size={20} color={danger ? '#EF4444' : textMain} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <AppText style={[styles.rowLabel, { color: danger ? '#EF4444' : textMain }]}>{label}</AppText>
-          {description && <AppText style={styles.rowDesc}>{description}</AppText>}
-        </View>
-      </View>
-      {value ? (
-        <AppText style={styles.rowValue}>{value}</AppText>
-      ) : (
-        onPress && <MaterialIcons name="chevron-right" size={22} color={textMuted} />
-      )}
-    </Pressable>
-  );
+  const SettingRow = ({ icon, label, description, onPress, value, danger, isLast }: any) => {
+    const scale = useSharedValue(1);
+    
+    const handlePress = (e?: any) => {
+        if (!onPress) return;
+        scale.value = withSequence(withTiming(0.8, { duration: 100 }), withTiming(1, { duration: 200, easing: Easing.bounce }));
+        onPress(e);
+    };
+
+    const iconStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }]
+    }));
+
+    return (
+        <Pressable
+          style={({ pressed }) => [styles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: borderSubtle }, pressed && { opacity: 0.7, backgroundColor: pressedBg }]}
+          onPress={handlePress}
+          disabled={!onPress}
+        >
+          <View style={styles.rowLeft}>
+            <View style={[styles.iconBox, { backgroundColor: iconBoxBg, borderColor: iconBoxBorder }]}>
+              <Animated.View style={iconStyle}>
+                  <MaterialCommunityIcons name={icon} size={20} color={danger ? '#EF4444' : textMain} />
+              </Animated.View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText style={[styles.rowLabel, { color: danger ? '#EF4444' : textMain }]}>{label}</AppText>
+              {description && <AppText style={styles.rowDesc}>{description}</AppText>}
+            </View>
+          </View>
+          {value ? (
+            <AppText style={styles.rowValue}>{value}</AppText>
+          ) : (
+            onPress && <MaterialIcons name="chevron-right" size={22} color={textMuted} />
+          )}
+        </Pressable>
+    );
+  };
 
   useEffect(() => {
     loadUserData();
@@ -59,31 +76,51 @@ export default function Settings() {
     return () => sub.remove();
   }, []);
 
-  const loadUserData = async () => { try { const data = await fetchUserData(); setStudent(data); } catch (error) {} finally { setLoading(false); } };
+  const loadUserData = async () => { try { const data = await fetchUserData(); setStudent(data); } catch (error) { console.error('Failed to load user data:', error); } finally { setLoading(false); } };
+
+
 
   const handleLogout = async () => {
     showAlert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel', onPress: () => {} },
       { text: 'Logout', style: 'destructive', onPress: async () => {
           try {
-            const { setStoredUser } = await import('../../utils/authUtils');
-            const { deregisterPushToken } = await import('../../utils/usePushNotifications');
-            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-            const { useAuthStore } = await import('../../store/useAuthStore');
-            const { default: api } = await import('../../utils/api');
-            const refreshToken = await AsyncStorage.getItem('refreshToken');
-            if (refreshToken) await api.post('/auth/sessions/logout', { refreshToken }).catch(() => {});
-            await deregisterPushToken();
-            await setStoredUser(null);
-            await AsyncStorage.removeItem('userToken');
-            await AsyncStorage.removeItem('refreshToken');
-            useAuthStore.getState().setUser(null);
-            router.replace('/login');
-          } catch (error) {}
+            const { performLogout } = await import('../../utils/authUtils');
+            await performLogout(router);
+          } catch (error) {
+            console.error('Settings logout error:', error);
+            showAlert('Error', 'Failed to logout properly', [], 'error');
+          }
         }
       }
     ]);
   };
+
+  const ProfileAura = () => {
+      const auraScale = useSharedValue(1);
+      const auraOpacity = useSharedValue(0.4);
+
+      useEffect(() => {
+          auraScale.value = withRepeat(withSequence(withTiming(1.15, { duration: 1500, easing: Easing.inOut(Easing.ease) }), withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })), -1, true);
+          auraOpacity.value = withRepeat(withSequence(withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }), withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) })), -1, true);
+      }, []);
+
+      const rStyle = useAnimatedStyle(() => ({
+          transform: [{ scale: auraScale.value }],
+          opacity: auraOpacity.value
+      }));
+
+      return (
+          <Animated.View style={[StyleSheet.absoluteFillObject, { borderRadius: 60, backgroundColor: isDark ? '#FFFFFF' : '#3B82F6', zIndex: -1 }, rStyle]} />
+      );
+  };
+
+  const logoutX = useSharedValue(0);
+  const handleLogoutAction = () => {
+      logoutX.value = withTiming(30, { duration: 200, easing: Easing.in(Easing.ease) });
+      handleLogout();
+  };
+  const logoutIconStyle = useAnimatedStyle(() => ({ transform: [{ translateX: logoutX.value }] }));
 
   if (loading) return <View style={[styles.container, { backgroundColor: themeBg, justifyContent: 'center' }]}><ActivityIndicator size="large" color={textMain} /></View>;
 
@@ -98,6 +135,7 @@ export default function Settings() {
         <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
           <View style={styles.heroProfile}>
             <View style={styles.avatarWrap}>
+              <ProfileAura />
               {student?.profilePhoto ? (
                 <Image source={{ uri: student.profilePhoto.startsWith('http') ? student.profilePhoto : `${API_BASE_URL}${student.profilePhoto}` }} style={[styles.avatar, { borderColor: borderSubtle }]} contentFit="cover" cachePolicy="memory-disk" />
               ) : (
@@ -125,7 +163,7 @@ export default function Settings() {
             <AppText style={styles.sectionTitle}>Preferences</AppText>
             <View style={styles.card}>
               <SettingRow icon="bell-outline" label="Push Notifications" description="Manage granular alerts" onPress={() => router.push('/account/notification-settings')} />
-              <SettingRow icon="brightness-6" label="Theme Mode" description={isDark ? "Dark theme active" : "Light theme active"} onPress={toggleTheme} value={isDark ? 'Dark' : 'Light'} />
+              <SettingRow icon="brightness-6" label="Theme Mode" description={isDark ? "Dark theme active" : "Light theme active"} onPress={() => router.push('/settings/theme')} value={isDark ? 'Dark' : 'Light'} />
               <SettingRow icon="translate" label="App Language" description="Choose interface language" onPress={() => router.push('/settings/language')} value="English" />
               <SettingRow icon="database-outline" label="Storage & Cache" description="Manage app storage" onPress={() => router.push('/settings/data-storage')} isLast />
             </View>
@@ -139,8 +177,10 @@ export default function Settings() {
               <SettingRow icon="information-outline" label="About App" description="Version, licenses, share" onPress={() => router.push('/settings/about-app')} isLast />
             </View>
 
-            <Pressable style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleLogout}>
-              <MaterialCommunityIcons name="logout-variant" size={20} color="#EF4444" />
+            <Pressable style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleLogoutAction}>
+              <Animated.View style={logoutIconStyle}>
+                  <MaterialCommunityIcons name="logout-variant" size={20} color="#EF4444" />
+              </Animated.View>
               <AppText style={styles.logoutText}>Log Out Session</AppText>
             </Pressable>
 

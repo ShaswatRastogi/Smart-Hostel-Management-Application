@@ -18,6 +18,9 @@ import {
   useDerivedValue,
   Easing,
 } from 'react-native-reanimated';
+import { useAuthStore } from '../store/useAuthStore';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { isAdmin } from '../utils/authUtils';
 
 const FONT_SIZE = 52;
 const SHINE_WIDTH = 100;
@@ -48,18 +51,17 @@ export default function Index() {
   const textX = 10;
   const textY = FONT_SIZE + 2;
 
+  const { user, isLoading } = useAuthStore();
+
   // ── Background preload ──
   useEffect(() => {
     (async () => {
-      try {
-        const { setStoredUser } = await import('../utils/authUtils');
-        await setStoredUser(null);
-      } catch (err) {
-        console.log('Splash preload error:', err);
+      if (!isLoading) {
+        await useSettingsStore.getState().loadSettings();
+        setIsReady(true);
       }
-      setIsReady(true);
     })();
-  }, []);
+  }, [isLoading]);
 
   // ── Entrance animation ──
   useEffect(() => {
@@ -109,12 +111,23 @@ export default function Index() {
         easing: RNEasing.in(RNEasing.cubic),
         useNativeDriver: true,
       }).start(() => {
-        router.replace('/login');
+        const { onboardingCompleted } = useSettingsStore.getState();
+        if (user) {
+          if (!onboardingCompleted) {
+            router.replace('/onboarding');
+          } else if (isAdmin(user)) {
+            router.replace('/admin');
+          } else {
+            router.replace('/(tabs)');
+          }
+        } else {
+          router.replace('/login');
+        }
       });
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [isReady, font]);
+  }, [isReady, font, user]);
 
   // ── Animated gradient start/end derived from shinePos ──
   const gradientStart = useDerivedValue(() =>

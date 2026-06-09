@@ -2,8 +2,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAlert } from '../../context/AlertContext';
@@ -12,6 +13,94 @@ import { isAdmin, useUser } from '../../utils/authUtils';
 import { Payment } from '../../utils/financeUtils';
 import { useTheme } from '../../utils/ThemeContext';
 import AppText from '../../components/AppText';
+
+const MemoizedRequestRow = React.memo(({ item, handleVerify, styles }: any) => (
+    <View style={[styles.card, item.status === 'paid_unverified' && { borderColor: '#F59E0B', borderWidth: 1 }]}>
+        <View style={styles.cardHeader}>
+            <View style={styles.iconContainer}>
+                <View style={[styles.iconBox, { backgroundColor: item.status === 'paid_unverified' ? '#FFFBEB' : '#F1F5F9' }]}>
+                    <MaterialIcons
+                        name={item.status === 'paid_unverified' ? 'alert-circle' : 'clock-outline'}
+                        size={24}
+                        color={item.status === 'paid_unverified' ? '#D97706' : '#64748B'}
+                    />
+                </View>
+            </View>
+            <View style={styles.info}>
+                <AppText style={styles.name}>{item.studentName}</AppText>
+                <View style={styles.metaContainer}>
+                    <View style={styles.pill}>
+                        <AppText style={styles.detailSmall}>{item.type}</AppText>
+                    </View>
+                </View>
+                {item.status === 'paid_unverified' && (
+                    <AppText style={[styles.detailSmall, { color: '#D97706', marginTop: 4 }]}>
+                        Ref: {item.transactionId || 'N/A'}
+                    </AppText>
+                )}
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+                <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
+                {item.status === 'paid_unverified' ? (
+                    <TouchableOpacity onPress={() => handleVerify(item)} style={styles.verifyBtn}>
+                        <AppText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Verify</AppText>
+                    </TouchableOpacity>
+                ) : (
+                    <View style={[styles.pill, { marginTop: 4, backgroundColor: '#E2E8F0' }]}>
+                        <AppText style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>PENDING</AppText>
+                    </View>
+                )}
+            </View>
+        </View>
+    </View>
+));
+
+const MemoizedHistoryRow = React.memo(({ item, handleDeletePayment, handleDownloadReceipt, generatingReceiptId, colors, styles }: any) => (
+    <View style={styles.card}>
+        <View style={styles.cardHeader}>
+            <View style={styles.iconContainer}>
+                <View style={[styles.iconBox, { backgroundColor: '#ECFEFF' }]}>
+                    <MaterialIcons name="cash" size={24} color="#06B6D4" />
+                </View>
+            </View>
+            <View style={styles.info}>
+                <AppText style={styles.name}>{item.studentName}</AppText>
+                <View style={styles.metaContainer}>
+                    <View style={styles.pill}>
+                        <AppText style={styles.detailSmall}>{item.type}</AppText>
+                    </View>
+                    <AppText style={[styles.detailSmall, { opacity: 0.7 }]}>• {item.method}</AppText>
+                </View>
+                <AppText style={[styles.detailSmall, { marginTop: 2, opacity: 0.5 }]}>
+                    {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </AppText>
+            </View>
+            <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
+                <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity
+                        onPress={() => handleDeletePayment(item)}
+                        style={{ padding: 6 }}
+                    >
+                        <MaterialIcons name="trash-can-outline" size={20} color="#EF4444" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => handleDownloadReceipt(item)}
+                        disabled={generatingReceiptId === item.id}
+                        style={{ padding: 6 }}
+                    >
+                        {generatingReceiptId === item.id ? (
+                            <ActivityIndicator size="small" color={colors.primary} />
+                        ) : (
+                            <MaterialIcons name="file-document-outline" size={20} color={colors.primary} />
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    </View>
+));
 
 export default function FinancePage() {
     const { colors, theme } = useTheme();
@@ -194,6 +283,17 @@ export default function FinancePage() {
     };
 
     const groupedHistory = React.useMemo(() => getGroupedHistory(), [payments, historySearch, isSpecificStudentView]);
+
+    const flattenedHistory = React.useMemo(() => {
+        const flattened: any[] = [];
+        groupedHistory.forEach(section => {
+            flattened.push({ type: 'header', title: section.title });
+            section.data.forEach(item => {
+                flattened.push({ type: 'row', item });
+            });
+        });
+        return flattened;
+    }, [groupedHistory]);
 
     // Search for student when adding payment
     const handleStudentSearch = async (text: string) => {
@@ -587,51 +687,15 @@ export default function FinancePage() {
 
                 {/* TAB 1: REQUESTS (Page 0) */}
                 <View key="requests" style={{ flex: 1 }}>
-                    <FlatList
+                    <FlashList
                         data={requests}
                         keyExtractor={item => item.id}
                         contentContainerStyle={styles.listContent}
+                        estimatedItemSize={120}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
                         ListEmptyComponent={<AppText style={{ textAlign: 'center', marginTop: 40, color: colors.textSecondary }}>No pending requests.</AppText>}
                         renderItem={({ item }) => (
-                            <View style={[styles.card, item.status === 'paid_unverified' && { borderColor: '#F59E0B', borderWidth: 1 }]}>
-                                <View style={styles.cardHeader}>
-                                    <View style={styles.iconContainer}>
-                                        <View style={[styles.iconBox, { backgroundColor: item.status === 'paid_unverified' ? '#FFFBEB' : '#F1F5F9' }]}>
-                                            <MaterialIcons
-                                                name={item.status === 'paid_unverified' ? 'alert-circle' : 'clock-outline'}
-                                                size={24}
-                                                color={item.status === 'paid_unverified' ? '#D97706' : '#64748B'}
-                                            />
-                                        </View>
-                                    </View>
-                                    <View style={styles.info}>
-                                        <AppText style={styles.name}>{item.studentName}</AppText>
-                                        <View style={styles.metaContainer}>
-                                            <View style={styles.pill}>
-                                                <AppText style={styles.detailSmall}>{item.type}</AppText>
-                                            </View>
-                                        </View>
-                                        {item.status === 'paid_unverified' && (
-                                            <AppText style={[styles.detailSmall, { color: '#D97706', marginTop: 4 }]}>
-                                                Ref: {item.transactionId || 'N/A'}
-                                            </AppText>
-                                        )}
-                                    </View>
-                                    <View style={{ alignItems: 'flex-end' }}>
-                                        <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
-                                        {item.status === 'paid_unverified' ? (
-                                            <TouchableOpacity onPress={() => handleVerify(item)} style={styles.verifyBtn}>
-                                                <AppText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Verify</AppText>
-                                            </TouchableOpacity>
-                                        ) : (
-                                            <View style={[styles.pill, { marginTop: 4, backgroundColor: '#E2E8F0' }]}>
-                                                <AppText style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>PENDING</AppText>
-                                            </View>
-                                        )}
-                                    </View>
-                                </View>
-                            </View>
+                            <MemoizedRequestRow item={item} handleVerify={handleVerify} styles={styles} />
                         )}
                     />
                 </View>
@@ -715,67 +779,36 @@ export default function FinancePage() {
                         )}
                     </View>
 
-                    <SectionList
-                        sections={groupedHistory}
-                        keyExtractor={item => item.id}
+                    <FlashList
+                        data={flattenedHistory}
+                        keyExtractor={(item, index) => item.type === 'header' ? `header-${item.title}-${index}` : item.item.id}
+                        getItemType={(item) => item.type}
+                        estimatedItemSize={100}
                         contentContainerStyle={styles.listContent}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-                        stickySectionHeadersEnabled={false}
-                        renderSectionHeader={({ section: { title } }) => (
-                            <View style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginRight: 12 }} />
-                                <AppText style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
-                                    {title}
-                                </AppText>
-                                <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginLeft: 12 }} />
-                            </View>
-                        )}
-                        renderItem={({ item }) => (
-                            <View style={styles.card}>
-                                <View style={styles.cardHeader}>
-                                    <View style={styles.iconContainer}>
-                                        <View style={[styles.iconBox, { backgroundColor: '#ECFEFF' }]}>
-                                            <MaterialIcons name="cash" size={24} color="#06B6D4" />
-                                        </View>
-                                    </View>
-                                    <View style={styles.info}>
-                                        <AppText style={styles.name}>{item.studentName}</AppText>
-                                        <View style={styles.metaContainer}>
-                                            <View style={styles.pill}>
-                                                <AppText style={styles.detailSmall}>{item.type}</AppText>
-                                            </View>
-                                            <AppText style={[styles.detailSmall, { opacity: 0.7 }]}>• {item.method}</AppText>
-                                        </View>
-                                        <AppText style={[styles.detailSmall, { marginTop: 2, opacity: 0.5 }]}>
-                                            {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        renderItem={({ item }) => {
+                            if (item.type === 'header') {
+                                return (
+                                    <View style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}>
+                                        <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginRight: 12 }} />
+                                        <AppText style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                            {item.title}
                                         </AppText>
+                                        <View style={{ height: 1, backgroundColor: colors.border, flex: 1, marginLeft: 12 }} />
                                     </View>
-                                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                                        <AppText style={styles.amount}>₹{item.amount.toLocaleString()}</AppText>
-                                        <View style={{ flexDirection: 'row' }}>
-                                            <TouchableOpacity
-                                                onPress={() => handleDeletePayment(item)}
-                                                style={{ padding: 6 }}
-                                            >
-                                                <MaterialIcons name="trash-can-outline" size={20} color="#EF4444" />
-                                            </TouchableOpacity>
-
-                                            <TouchableOpacity
-                                                onPress={() => handleDownloadReceipt(item)}
-                                                disabled={generatingReceiptId === item.id}
-                                                style={{ padding: 6 }}
-                                            >
-                                                {generatingReceiptId === item.id ? (
-                                                    <ActivityIndicator size="small" color={colors.primary} />
-                                                ) : (
-                                                    <MaterialIcons name="file-document-outline" size={20} color={colors.primary} />
-                                                )}
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-                        )}
+                                );
+                            }
+                            return (
+                                <MemoizedHistoryRow 
+                                    item={item.item} 
+                                    handleDeletePayment={handleDeletePayment} 
+                                    handleDownloadReceipt={handleDownloadReceipt} 
+                                    generatingReceiptId={generatingReceiptId} 
+                                    colors={colors} 
+                                    styles={styles} 
+                                />
+                            );
+                        }}
                         ListEmptyComponent={
                             <View style={{ alignItems: 'center', marginTop: 40, opacity: 0.5 }}>
                                 <MaterialIcons name="history" size={48} color={colors.textSecondary} />

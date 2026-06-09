@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View, Modal, TextInput, Image, ActivityIndicator, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View, Modal, TextInput, ActivityIndicator, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { Image } from 'expo-image';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -88,6 +90,30 @@ export default function TwoFactorAuth() {
 
   const isActive = appEnabled || smsEnabled;
 
+  const ScanningLaser = () => {
+      const laserY = useSharedValue(0);
+
+      useEffect(() => {
+          laserY.value = withRepeat(
+              withSequence(
+                  withTiming(40, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                  withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+              ), -1, true
+          );
+      }, []);
+
+      const laserStyle = useAnimatedStyle(() => ({
+          transform: [{ translateY: laserY.value }]
+      }));
+
+      return (
+          <View style={{ position: 'absolute', right: 0, top: 0, width: 48, height: 48, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="shield-check-outline" size={48} color={isActive ? "#10B981" : textMuted} />
+              <Animated.View style={[{ position: 'absolute', top: 4, width: '80%', height: 2, backgroundColor: isActive ? '#10B981' : textMuted, shadowColor: isActive ? '#10B981' : textMuted, shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } }, laserStyle]} />
+          </View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -98,9 +124,10 @@ export default function TwoFactorAuth() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>Two-Factor{"\n"}Auth</AppText>
           <AppText style={[styles.heroSub, { color: textMuted }]}>Add an extra layer of security to your account to prevent unauthorized access.</AppText>
+          <ScanningLaser />
         </View>
 
         <View style={[styles.statusPill, { backgroundColor: pillBg }, isActive && styles.statusPillActive]}>

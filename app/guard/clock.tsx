@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, FlatList, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../../components/AppText';
 import { useTheme } from '../../utils/ThemeContext';
 import { API_BASE_URL } from '../../utils/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureToken } from '../../utils/tokenStorage';
 import { Image } from 'expo-image';
 
 export default function GuardClockScreen() {
@@ -21,7 +22,7 @@ export default function GuardClockScreen() {
     const searchStudents = useCallback(async (query: string) => {
         try {
             setLoading(true);
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await getSecureToken('userToken');
             const res = await fetch(`${API_BASE_URL}/api/guard/students?q=${encodeURIComponent(query)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -62,7 +63,7 @@ export default function GuardClockScreen() {
                     onPress: async () => {
                         try {
                             setActionLoading(studentId);
-                            const token = await AsyncStorage.getItem('userToken');
+                            const token = await getSecureToken('userToken');
                             const res = await fetch(`${API_BASE_URL}/api/guard/clock`, {
                                 method: 'POST',
                                 headers: { 
@@ -176,9 +177,10 @@ export default function GuardClockScreen() {
                     <ActivityIndicator size="large" color={colors.primary} />
                 </View>
             ) : (
-                <FlatList
+                <FlashList
                     data={students}
                     keyExtractor={item => item.id.toString()}
+                    estimatedItemSize={150}
                     renderItem={renderStudent}
                     contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                     showsVerticalScrollIndicator={false}

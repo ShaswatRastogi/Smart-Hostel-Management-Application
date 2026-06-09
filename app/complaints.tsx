@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { faqData } from '../utils/complaintsUtils';
 import { useTheme } from '../utils/ThemeContext';
@@ -22,6 +24,29 @@ export default function Complaints() {
     const iconBgSecondary = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
     const iconTextSecondary = isDark ? '#FFFFFF' : '#111111';
 
+    const AnimatedWrench = () => {
+        const rotation = useSharedValue(0);
+        useEffect(() => {
+            rotation.value = withRepeat(
+                withSequence(
+                    withTiming(-45, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(0, { duration: 600, easing: Easing.inOut(Easing.ease) })
+                ), -1, true
+            );
+        }, []);
+        
+        const rStyle = useAnimatedStyle(() => ({ transform: [{ rotateZ: `${rotation.value}deg` }] }));
+        
+        return (
+            <View style={{ position: 'absolute', right: 24, top: -10 }} pointerEvents="none">
+                <Animated.View style={[{ width: 80, height: 80, justifyContent: 'center', alignItems: 'center' }, rStyle]}>
+                    <MaterialCommunityIcons name="wrench" size={60} color="#94A3B8" />
+                </Animated.View>
+                <MaterialCommunityIcons name="nut" size={24} color="#64748B" style={{ position: 'absolute', bottom: 10, left: 30 }} />
+            </View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: themeBg }]}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -33,9 +58,10 @@ export default function Complaints() {
             </View>
 
             <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
-                <View style={styles.hero}>
+                <View style={[styles.hero, { position: 'relative' }]}>
                     <AppText style={[styles.heroTitle, { color: textMain }]}>Complaints</AppText>
                     <AppText style={[styles.heroSubtitle, { color: textMuted }]}>Resolve Issues & Queries</AppText>
+                    <AnimatedWrench />
                 </View>
 
                 <View style={styles.section}>

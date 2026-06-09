@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { triggerHaptic } from '../utils/haptics';
 
 /**
  * Custom hook for Pull-to-Refresh functionality.
@@ -14,6 +15,7 @@ export const useRefresh = (
     const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = useCallback(async () => {
+        triggerHaptic('light');
         setRefreshing(true);
         try {
             // Execute the data fetching logic

@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Application from 'expo-application';
 import { Stack, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, Pressable, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlert } from '../../context/AlertContext';
 import { useTheme } from '../../utils/ThemeContext';
@@ -29,6 +30,35 @@ export default function AboutApp() {
     { icon: 'update', color: '#10B981', bg: 'rgba(16,185,129,0.1)', label: 'Check for Updates', desc: 'See if a newer version is available', onPress: handleCheckUpdates },
   ];
 
+  const SparklingLogo = () => {
+      const sparkleRotation = useSharedValue(0);
+      const sparkleScale = useSharedValue(0);
+
+      useEffect(() => {
+          sparkleRotation.value = withRepeat(withTiming(360, { duration: 3000, easing: Easing.linear }), -1, false);
+          sparkleScale.value = withRepeat(
+              withSequence(
+                  withTiming(1, { duration: 1000 }),
+                  withTiming(0, { duration: 1000 }),
+                  withTiming(0, { duration: 1000 })
+              ), -1, false
+          );
+      }, []);
+
+      const style1 = useAnimatedStyle(() => ({
+          transform: [{ rotate: `${sparkleRotation.value}deg` }, { scale: sparkleScale.value }]
+      }));
+
+      return (
+          <View style={{ position: 'absolute', right: 0, top: 0, width: 64, height: 64, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="shield-home" size={48} color="#10B981" />
+              <Animated.View style={[{ position: 'absolute', top: -4, right: -4 }, style1]}>
+                  <MaterialCommunityIcons name="star-four-points" size={24} color="#F59E0B" />
+              </Animated.View>
+          </View>
+      );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeBg }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -40,12 +70,13 @@ export default function AboutApp() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <View style={[styles.hero, { position: 'relative' }]}>
           <AppText style={[styles.heroTitle, { color: textMain }]}>About{"\n"}App</AppText>
           <AppText style={[styles.heroSub, { color: textMain }]}>SmartStay Hostels</AppText>
           <View style={[styles.badge, { backgroundColor: borderSubtle }]}>
             <AppText style={[styles.badgeText, { color: textMain }]}>v{appVersion} ({buildNumber})</AppText>
           </View>
+          <SparklingLogo />
         </View>
 
         <View style={styles.section}>

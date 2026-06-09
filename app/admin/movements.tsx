@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -114,9 +115,10 @@ export default function MovementsLogPage() {
                 <AppText style={styles.headerTitle}>Clock In/Out Log</AppText>
             </LinearGradient>
 
-            <FlatList
+            <FlashList
                 data={movements}
                 keyExtractor={(item) => item.id.toString()}
+                estimatedItemSize={150}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 refreshing={refreshing}
