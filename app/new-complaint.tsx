@@ -142,7 +142,7 @@ export default function NewComplaintPage() {
                     <>
                         <AppText style={[styles.buttonText, { color: primaryBtnText }]}>SUBMIT COMPLAINT</AppText>
                         <Animated.View style={planeStyle}>
-                            <MaterialCommunityIcons name="paperplane" size={20} color={primaryBtnText} />
+                            <MaterialCommunityIcons name="airplane" size={20} color={primaryBtnText} />
                         </Animated.View>
                     </>
                 )}

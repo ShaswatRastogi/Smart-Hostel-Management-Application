@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSecureToken, removeSecureToken } from './tokenStorage';
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import Constants from 'expo-constants';
 
 const getApiUrl = () => {
@@ -17,7 +18,19 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Bypass-Tunnel-Reminder': 'true',
     },
-    timeout: 60000,
+    timeout: 30000,
+});
+
+// Configure automatic retries for cold starts and flaky networks
+axiosRetry(api, {
+    retries: 3,
+    retryDelay: (retryCount) => {
+        console.log(`[API] Retrying request (${retryCount}/3)...`);
+        return retryCount * 3000; // 3s, 6s, 9s
+    },
+    retryCondition: (error) => {
+        return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.code === 'ECONNABORTED';
+    }
 });
 
 
@@ -37,20 +50,22 @@ api.interceptors.response.use(
     error => {
         const { useAlertStore } = require('../store/useAlertStore');
         
+        // We only show the alert if all retries have failed
+        if (error.config && error.config['axios-retry'] && error.config['axios-retry'].retryCount < 3) {
+            // Still retrying, do not show alert yet
+            return Promise.reject(error);
+        }
+
         if (error.code === 'ECONNABORTED') {
-            // Timeout — just show popup, no noisy log
             useAlertStore.getState().showAlert('Connection Timeout', 'The server took too long to respond. Please check your connection.', [], 'warning');
         } else if (error.response) {
-            // Server responded with error status
             if (error.response.status >= 500) {
                 useAlertStore.getState().showAlert('Server Error', 'Our servers are having a moment. Please try again later.', [], 'error');
             }
-            // 400/401/403/404 are handled silently by calling pages
         } else if (error.request) {
-            // No response at all (network unreachable)
             useAlertStore.getState().showAlert('Network Error', 'Could not reach the server. Please check your internet connection.', [], 'error');
         }
-        // Silently reject — no console.error (prevents noisy call stacks in Metro)
+        
         return Promise.reject(error);
     }
 );
