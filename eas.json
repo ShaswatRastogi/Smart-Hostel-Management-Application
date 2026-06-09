@@ -28,6 +28,13 @@
                 "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com",
                 "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "939850531410-6l0rm5d3r4r4q0p6747pso7invi62e1i.apps.googleusercontent.com"
             }
+        },
+        "apk": {
+            "extends": "production",
+            "distribution": "internal",
+            "android": {
+                "buildType": "apk"
+            }
         }
     },
     "submit": {
